@@ -1,7 +1,12 @@
 import "./index.css";
+import Map from "./map/Map";
 
 function App() {
-  return <div>hello</div>;
+  return (
+    <div>
+      <Map />
+    </div>
+  );
 }
 
 export default App;
