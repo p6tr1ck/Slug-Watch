@@ -13,28 +13,26 @@ async function scrapeUCSC() {
     timeout: 60000
   });
 
-  // Wait for the table to render
   await page.waitForSelector('table.mat-mdc-table');
 
-  // Get the full HTML after JS renders
   const html = await page.content();
   const $ = cheerio.load(html);
 
   const rows = [];
   $('table.mat-mdc-table tbody tr').each((i, el) => {
-    const nature = $(el).find('td.mat-column-nature').text().trim();
+    const category = $(el).find('td.mat-column-nature').text().trim();
     const number = $(el).find('td.mat-column-number').text().trim();
-    const occurred = $(el).find('td.mat-column-occurred').text().trim();
+    const date_time = $(el).find('td.mat-column-occurred').text().trim();
     const location = $(el).find('td.mat-column-location').text().trim();
     const disposition = $(el).find('td.mat-column-disposition').text().trim();
 
-    if (nature) {
-      rows.push({ nature, number, occurred, location, disposition });
+    if (category) {
+      rows.push({ category, number, date_time, location, disposition });
     }
   });
 
-  console.log(`✅ Found ${rows.length} records.`);
-  console.log(rows.slice(0, 5)); // print first few
+  //console.log(`Found ${rows.length} records.`);
+  console.log(rows.slice(0, 5)); // just printingfirst 5 to check
 
   fs.writeFileSync('crime_log.json', JSON.stringify(rows, null, 2));
   console.log('Saved to crime_log.json');
