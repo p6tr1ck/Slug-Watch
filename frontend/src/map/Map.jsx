@@ -19,9 +19,8 @@ export default function Map() {
       zoomSnap={0.1} // allow decimal zooming by 0.1, 0.2, 0.3, etc.
     >
       <TileLayer
-        url={`https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=${
-          import.meta.env.VITE_MAPTILER_KEY
-        }`}
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
     </MapContainer>
   );
