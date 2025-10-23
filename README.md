@@ -25,6 +25,5 @@ VITE_MAPTILER_KEY=REPLACE_WITH_API_KEY
 ## Start a local development server
 
 ```
-cd frontend
 npm run dev
 ```

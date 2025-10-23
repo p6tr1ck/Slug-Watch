@@ -12,6 +12,7 @@
   "dependencies": {
     "@maptiler/leaflet-maptilersdk": "^4.1.1",
     "@tailwindcss/vite": "^4.1.14",
+    "react-router-dom": "^6.18.0",
     "leaflet": "^1.9.4",
     "react": "^19.0.0-rc.1",
     "react-dom": "^19.0.0-rc.1",
