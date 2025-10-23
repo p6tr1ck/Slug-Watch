@@ -7,12 +7,14 @@ import NavBar from "./pages/NavBar";
 function App() {
   return (
     <BrowserRouter>
-      <NavBar/>
-      <Routes>
-        <Route path="/" element={<Navigate to="/home" replace />} />
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/home" element={<Home />} />
-      </Routes>
+      <div className="overflow-hidden h-screen">
+        <NavBar/>
+        <Routes>
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/home" element={<Home />} />
+        </Routes>
+      </div>
     </BrowserRouter>
   );
 }

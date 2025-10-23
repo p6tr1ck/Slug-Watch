@@ -4,8 +4,6 @@ import NavBar from "../pages/NavBar";
 
 export default function Home() {
   return (
-    <div className="overflow-hidden">
-      <Map className="w-screen h-screen"></Map>
-    </div>
+    <Map className="w-screen h-screen"></Map>
   );
 }

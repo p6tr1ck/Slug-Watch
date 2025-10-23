@@ -30,7 +30,7 @@ export default function Map() {
   return (
     <MapContainer
       center={[36.992255, -122.058763]}
-      zoom={14.9}
+      zoom={14.8}
       className="h-screen"
       maxBounds={bounds}
       maxBoundsViscosity={1.0} // prevents user from panning outside bounds
