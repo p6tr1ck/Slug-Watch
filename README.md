@@ -6,7 +6,7 @@ https://nodejs.org/en/download
 
 ```
 cd frontend
-npm install
+npm ci
 ```
 
 ## Start a local development server
