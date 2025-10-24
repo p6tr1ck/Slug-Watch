@@ -31,11 +31,11 @@ export default function Map() {
     <MapContainer
       center={[36.992255, -122.058763]}
       zoom={14.8}
-      className="h-screen"
+      className="h-full"
       maxBounds={bounds}
       maxBoundsViscosity={1.0} // prevents user from panning outside bounds
-      scrollWheelZoom={false} // prevent zooming out from bounds
-      zoomControl={false} // remove zoom in/out buttons
+      minZoom={14.5} // restricts min zoom
+      maxZoom={17} // restricts max zoom
       zoomSnap={0.1} // allow decimal zooming by 0.1, 0.2, 0.3, etc.
     >
       <TileLayer
