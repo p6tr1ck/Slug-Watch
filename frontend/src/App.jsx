@@ -7,7 +7,7 @@ import NavBar from "./pages/NavBar";
 function App() {
   return (
     <BrowserRouter>
-      <div className="overflow-hidden h-screen">
+      <div className="flex flex-col overflow-hidden h-screen">
         <NavBar/>
         <Routes>
           <Route path="/" element={<Navigate to="/home" replace />} />
