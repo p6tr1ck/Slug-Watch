@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "@aashari/nodejs-geocoding": "^2.7.2",
+    "cheerio": "^1.1.2",
+    "puppeteer": "^24.26.1"
+  },
+  "name": "slug-watch",
+  "version": "1.0.0",
+  "description": "https://nodejs.org/en/download",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/p6tr1ck/Slug-Watch.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/p6tr1ck/Slug-Watch/issues"
+  },
+  "homepage": "https://github.com/p6tr1ck/Slug-Watch#readme"
+}
