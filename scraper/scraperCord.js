@@ -38,49 +38,45 @@ async function scrapeUCSC() {
     if (lowerRow.includes('no records found')) return; //exclude days with no reported activity
     if (disposition.toLowerCase().includes('log note')) return; //exclude log notes
 
-    let tLoc = location.split(',').map(p => p.trim());
-
-    let place = tLoc[0]
-    let city = tLoc[tLoc.length-1]
-
-    place = place
+    location = location // cleaning up address, excess fluff
+      .replace(/\b(\d+)\s+block\s+of\s+/i, '$1 ')
+      .replace(/\s*\(Campus\)/gi, '')
+      .replace(/\*/g, '')
       .replace(/\bCllg\b/gi, 'College')
       .replace(/\bBuil\b/gi, 'Building')
       .replace(/Mc\s+Laughlin/gi, 'McLaughlin')
       .replace(/\bMchenry\b/gi, 'McHenry')
+      .replace(/Stevenson Service Rd\b/gi, 'Stevenson Service Road')
+      .replace(/\bRd\b/gi, 'Road')
+      .replace(/\bDr\b/gi, 'Drive')
+      .replace(/\bSt\b/gi, 'Street')
       .replace(/Cowell-?stevenson/gi, 'Cowell Stevenson')
       .replace(/Porter-?kresge/gi, 'Porter Kresge')
       .trim();
 
-    city = city
-      .replace(/\(.*?\)/gi, '')  // remove "(Campus)"
-      .trim();
+    //adding city state, and zip for encode
+    location = `${location} CA 95064`;
 
-    const direction = `${place}, ${city}`
-
-
-    jobs.push({category, number, date_time, direction, disposition}); //queue push
+    jobs.push({category, number, date_time, location, disposition}); //queue push
   });
 
   await browser.close();
 
   const rows = []; //rows to push to json
   for (const job of jobs) {
-    const { category, number, date_time, direction, disposition } = job;
+    const { category, number, date_time, location, disposition } = job;
 
-    const coords = await fetchCoordinates(direction); //calls encode for coords
+    const coords = await fetchCoordinates(location); //calls encode for coords
 
     
     if (!coords || coords.latitude == null || coords.longitude == null) { //checks for existence
       continue;
     }
 
-    rows.push({category, number, date_time, direction, lat: coords.latitude, long: coords.longitude ,disposition}); //push to finshed array
+    rows.push({category, number, date_time, location, lat: coords.latitude, long: coords.longitude ,disposition}); //push to finshed array
   }
 
 
   fs.writeFileSync('crime_log.json', JSON.stringify(rows, null, 2));
   console.log('Saved to crime_log.json');
 }
-
-scrapeUCSC();
