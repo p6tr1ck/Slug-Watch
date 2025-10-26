@@ -70,6 +70,7 @@ async function scrapeUCSC() {
 
     
     if (!coords || coords.latitude == null || coords.longitude == null) { //checks for existence
+      console.error("couldn't get coords for the following: %s", job);
       continue;
     }
 
@@ -80,3 +81,5 @@ async function scrapeUCSC() {
   fs.writeFileSync('crime_log.json', JSON.stringify(rows, null, 2));
   console.log('Saved to crime_log.json');
 }
+
+scrapeUCSC();
