@@ -1,22 +1,57 @@
-import React from "react";
+import { React, useEffect, useState} from "react";
+import { supabase } from "../../supabaseClient"
 
 export default function SignIn() {
-  return (
-    <div className="max-w-md mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Sign In</h1>
-      <form className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium">Email</label>
-          <input type="email" className="mt-1 block w-full border rounded p-2" placeholder="you@example.com" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Password</label>
-          <input type="password" className="mt-1 block w-full border rounded p-2" />
-        </div>
-        <div>
-          <button type="button" className="px-4 py-2 bg-blue-600 text-white rounded">Sign in</button>
-        </div>
-      </form>
-    </div>
-  );
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+  };
+
+  const signUp = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/home` }
+    });
+  };
+
+  useEffect(() => {
+    if (session) {
+      const userDomainName = session.user.email.split("@")[1];
+      const domainName = "ucsc.edu";
+      console.log(userDomainName, domainName);
+      if (userDomainName !== domainName) {
+        supabase.auth.signOut();
+      }
+    }
+  }, [session])
+
+  if (!session) {
+    return (
+      <>
+        <button onClick={signUp}>Sign in with Google</button>
+      </>
+    );
+  } else {
+    return (
+      <div>
+        <h2>Welcome, {session.user.email}</h2>
+        <button onClick={signOut}>Sign out</button>
+      </div>
+    );
+  }
 }
