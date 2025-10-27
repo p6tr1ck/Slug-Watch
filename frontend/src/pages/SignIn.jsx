@@ -1,24 +1,11 @@
-import { React, useEffect, useState} from "react";
-import { supabase } from "../../supabaseClient"
-import GoogleButton from 'react-google-button'
+import { React, useEffect, useContext } from "react";
+import { supabase } from "../../supabaseClient";
+import GoogleButton from "react-google-button";
 import { Button } from "@mui/material";
+import { AuthContext } from "../App";
 
 export default function SignIn() {
-  const [session, setSession] = useState(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const { session, setSession } = useContext(AuthContext);
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -27,7 +14,7 @@ export default function SignIn() {
   const signUp = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/home` }
+      options: { redirectTo: `${window.location.origin}/home` },
     });
   };
 
@@ -35,27 +22,30 @@ export default function SignIn() {
     if (session) {
       const userDomainName = session.user.email.split("@")[1];
       const domainName = "ucsc.edu";
-      
       // If email is not a ucsc one, sign out
       if (userDomainName !== domainName) {
         supabase.auth.signOut();
       }
     }
-  }, [session])
+  }, [session]);
 
   if (!session) {
     return (
       <div className="h-50 flex justify-center items-center flex-col space-y-5">
         <div className="text-lg">Welcome!</div>
         <div className="text-lg">Sign in with your UCSC email to continue:</div>
-        <GoogleButton onClick={signUp}/>
+        <GoogleButton onClick={signUp} />
       </div>
     );
   } else {
     return (
       <div className="h-50 flex justify-center items-center flex-col space-y-5">
-        <h2 className="text-lg">Welcome, {session.user.email}!</h2>
-        <Button variant="outlined" className="text-lg" onClick={signOut}>Sign out</Button>
+        <h2 className="text-lg">
+          Welcome, {session.user.user_metadata.full_name}!
+        </h2>
+        <Button variant="outlined" className="text-lg" onClick={signOut}>
+          Sign out
+        </Button>
       </div>
     );
   }
