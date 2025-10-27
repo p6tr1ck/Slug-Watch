@@ -7,7 +7,7 @@ async function fetchCoordinates(address) {
   try {
     const results = await geocoding.encode(address); // conversion from clean address to coords
     if (results) return results[0];
-    if (results && typeof results === 'object') return results[0];
+    //if (results && typeof results === 'object') return results[0];
   } catch {
     return null;
   }
@@ -39,11 +39,10 @@ async function scrapeUCSC() {
     if (disposition.toLowerCase().includes('log note')) return; //exclude log notes
 
     location = location // cleaning up address, excess fluff
-      .replace(/\b(\d+)\s+block\s+of\s+/i, '$1 ')
-      .replace(/\s*\(Campus\)/gi, '')
-      .replace(/\*/g, '')
-      .replace(/\bCllg\b/gi, 'College')
-      .replace(/\bBuil\b/gi, 'Building')
+      .replace(/\b(\d+)\s+block\s+of\s+/i, '$1 ') //blocks
+      .replace(/\s*\(Campus\)/gi, '') //removes campus tag
+      .replace(/^.*?,\s*(?=\d)/, '')
+      .replace(/Cllge/gi, 'College')
       .replace(/Mc\s+Laughlin/gi, 'McLaughlin')
       .replace(/\bMchenry\b/gi, 'McHenry')
       .replace(/Stevenson Service Rd\b/gi, 'Stevenson Service Road')
@@ -54,8 +53,10 @@ async function scrapeUCSC() {
       .replace(/Porter-?kresge/gi, 'Porter Kresge')
       .trim();
 
+    if (!/^\s*\d/.test(location)) return; //makes sure that theres a numerical address
+
     //adding city state, and zip for encode
-    location = `${location} CA 95064`;
+    location = `${location}, CA 95064`;
 
     jobs.push({category, number, date_time, location, disposition}); //queue push
   });
@@ -70,7 +71,7 @@ async function scrapeUCSC() {
 
     
     if (!coords || coords.latitude == null || coords.longitude == null) { //checks for existence
-      console.error("couldn't get coords for the following: %s", job);
+      console.log("couldn't find lat/long for the following: %s", job);
       continue;
     }
 
@@ -78,7 +79,7 @@ async function scrapeUCSC() {
   }
 
 
-  fs.writeFileSync('crime_log.json', JSON.stringify(rows, null, 2));
+  fs.writeFileSync('crime_log1.json', JSON.stringify(rows, null, 2));
   console.log('Saved to crime_log.json');
 }
 
