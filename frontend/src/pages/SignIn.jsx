@@ -1,5 +1,7 @@
 import { React, useEffect, useState} from "react";
 import { supabase } from "../../supabaseClient"
+import GoogleButton from 'react-google-button'
+import { Button } from "@mui/material";
 
 export default function SignIn() {
   const [session, setSession] = useState(null);
@@ -33,7 +35,8 @@ export default function SignIn() {
     if (session) {
       const userDomainName = session.user.email.split("@")[1];
       const domainName = "ucsc.edu";
-      console.log(userDomainName, domainName);
+      
+      // If email is not a ucsc one, sign out
       if (userDomainName !== domainName) {
         supabase.auth.signOut();
       }
@@ -42,15 +45,17 @@ export default function SignIn() {
 
   if (!session) {
     return (
-      <>
-        <button onClick={signUp}>Sign in with Google</button>
-      </>
+      <div className="h-50 flex justify-center items-center flex-col space-y-5">
+        <div className="text-lg">Welcome!</div>
+        <div className="text-lg">Sign in with your UCSC email to continue:</div>
+        <GoogleButton onClick={signUp}/>
+      </div>
     );
   } else {
     return (
-      <div>
-        <h2>Welcome, {session.user.email}</h2>
-        <button onClick={signOut}>Sign out</button>
+      <div className="h-50 flex justify-center items-center flex-col space-y-5">
+        <h2 className="text-lg">Welcome, {session.user.email}!</h2>
+        <Button variant="outlined" className="text-lg" onClick={signOut}>Sign out</Button>
       </div>
     );
   }
