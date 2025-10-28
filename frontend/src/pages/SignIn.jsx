@@ -14,20 +14,14 @@ export default function SignIn() {
   const signUp = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/home` },
+      options: {
+        redirectTo: `${window.location.origin}/signin`,
+        queryParams: {
+          hd: "ucsc.edu",
+        },
+      },
     });
   };
-
-  useEffect(() => {
-    if (session) {
-      const userDomainName = session.user.email.split("@")[1];
-      const domainName = "ucsc.edu";
-      // If email is not a ucsc one, sign out
-      if (userDomainName !== domainName) {
-        supabase.auth.signOut();
-      }
-    }
-  }, [session]);
 
   if (!session) {
     return (
