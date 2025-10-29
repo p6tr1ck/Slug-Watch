@@ -6,10 +6,10 @@ https://nodejs.org/en/download
 
 ```
 cd frontend
-npm install
+npm ci
 ```
 
-## Starting a local development server
+## Start a local development server
 
 ```
 cd frontend

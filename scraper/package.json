@@ -1,15 +1,15 @@
 {
   "dependencies": {
-<<<<<<< HEAD
-    "axios": "^1.12.2",
+    "@aashari/nodejs-geocoding": "^2.7.2",
+    "@supabase/supabase-js": "^2.76.1",
     "cheerio": "^1.1.2",
-    "csv-writer": "^1.6.0",
+    "dotenv": "^17.2.3",
     "puppeteer": "^24.26.1"
   },
   "name": "slug-watch",
   "version": "1.0.0",
   "description": "https://nodejs.org/en/download",
-  "main": "scraper.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -20,15 +20,8 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/p6tr1ck/Slug-Watch/issues"
   },
   "homepage": "https://github.com/p6tr1ck/Slug-Watch#readme"
-=======
-    "@aashari/nodejs-geocoding": "^2.7.2",
-    "@supabase/supabase-js": "^2.76.1",
-    "postgres": "^3.4.7"
-  }
->>>>>>> gladys_leo_branch
 }
