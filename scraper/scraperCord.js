@@ -65,7 +65,7 @@ async function scrapeUCSC() {
     location = location // cleaning up address, excess fluff
       .replace(/\b(\d+)\s+block\s+of\s+/i, '$1 ') //blocks
       .replace(/\s*\(Campus\)/gi, '') //removes campus tag
-      .replace(/^.*?,\s*(?=\d)/, '')
+      .replace(/^.*?,\s*(?=\d)/, '') //all before comma deleted
       .replace(/Cllge/gi, 'College')
       .replace(/Mc\s+Laughlin/gi, 'McLaughlin')
       .replace(/\bMchenry\b/gi, 'McHenry')
@@ -105,15 +105,12 @@ async function scrapeUCSC() {
     //console.log(rows);
 
     const lat = coords.latitude;
-    const long = coords.longitude
-    const cate = Object.values(category);
-    const fD = Object.values(form_date);
-    const lat_coord = Object.values(lat);
-    const long_coord = Object.values(long);
+    const long = coords.longitude;
 
-    console.log("%s, %s, %s, %s", cate, fD, lat_coord, long_coord);
 
-    supaRow.push({ cate, fD, lat_coord, long_coord});
+    console.log("heres the parsed shit, %s, %s, %s, %s", category, form_date, lat, long);
+
+    supaRow.push({ crime:category, date:form_date, lat: lat, longi:long});
     //console.log(supaRow);
     const {data, err} = await supabase.from("police_logs").insert([supaRow]);
 
