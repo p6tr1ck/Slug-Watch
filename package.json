@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@aashari/nodejs-geocoding": "^2.7.2",
+    "@supabase/supabase-js": "^2.76.1",
+    "postgres": "^3.4.7"
+  }
+}
