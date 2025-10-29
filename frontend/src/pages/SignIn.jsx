@@ -9,8 +9,9 @@ export default function SignIn() {
 
   useEffect(() => {
     if (session) {
+      // upload the user information to Supabase
       async function uploadUserInfo() {
-        // insert user information to sign ups table
+        // insert user information to users table
         // if the user already exists, it ignores the query
         const { error } = await supabase
           .from("users")
