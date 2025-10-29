@@ -32,6 +32,7 @@ export default function SignIn() {
   };
 
   const signUp = async () => {
+    // redirect user to the sign in page after logging in
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
