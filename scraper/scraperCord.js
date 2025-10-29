@@ -84,6 +84,7 @@ async function scrapeUCSC() {
     const form_date = parseDateTime(date_time)
 
     jobs.push({category, number, form_date, location, disposition}); //queue push
+    
   });
 
   await browser.close();
@@ -92,6 +93,12 @@ async function scrapeUCSC() {
   const supaRow = []
   for (const job of jobs) {
     const { category, number, form_date, location, disposition } = job;
+    // console.log("cat",category);
+    // console.log("num",number);
+    // console.log("date",form_date);
+    // console.log("loc",location);
+    // console.log("dis",disposition);
+
 
     const coords = await fetchCoordinates(location); //calls encode for coords
 
@@ -102,26 +109,25 @@ async function scrapeUCSC() {
     }
 
     rows.push({category, number, form_date, location, lat: coords.latitude, long: coords.longitude ,disposition}); //push to finshed array
-    //console.log(rows);
+    console.log(rows);
 
     const lat = coords.latitude;
     const long = coords.longitude
-    const cate = Object.values(category);
-    const fD = Object.values(form_date);
-    const lat_coord = Object.values(lat);
-    const long_coord = Object.values(long);
+    const cate =  Object.values(category)[0];
+    JSON.stringify(cate, "," , "");
+    const fD = Object.values(form_date)[0];
+    
+    console.log("%s, %s, %s, %s", cate, fD, lat, long);
 
-    console.log("%s, %s, %s, %s", cate, fD, lat_coord, long_coord);
-
-    supaRow.push({ cate, fD, lat_coord, long_coord});
-    //console.log(supaRow);
+    supaRow.push({ cate, fD, lat, long});
+    console.log(supaRow);
     const {data, err} = await supabase.from("police_logs").insert([supaRow]);
 
-    // if (err){
-    //   console.log("Couldn't append this to supabase: %s", data);
-    // }else{
-    //   console.log("pushed into supabase: %s", supaRow);
-    // }
+    if (err){
+      console.log("Couldn't append this to supabase: %s", data);
+    }else{
+      console.log("pushed into supabase: %s", supaRow);
+    }
   }
 
 
