@@ -5,7 +5,27 @@ import { Button } from "@mui/material";
 import { AuthContext } from "../App";
 
 export default function SignIn() {
-  const { session, setSession } = useContext(AuthContext);
+  const { session } = useContext(AuthContext);
+
+  useEffect(() => {
+    if (session) {
+      async function uploadUserInfo() {
+        // insert user information to sign ups table
+        // if the user already exists, it ignores the query
+        const { error } = await supabase
+          .from("users")
+          .upsert(
+            { email: session.user.email, rep: 0 },
+            { onConflict: "UID", ignoreDuplicates: true }
+          )
+          .select();
+        if (error) {
+          console.error(error);
+        }
+      }
+      uploadUserInfo();
+    }
+  }, [session]);
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
