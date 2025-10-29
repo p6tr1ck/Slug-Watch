@@ -1,7 +1,14 @@
+require("dotenv").config()
 const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 const fs = require('fs');
 const geocoding = require('@aashari/nodejs-geocoding');
+const { createClient } = require('@supabase/supabase-js')
+
+const supabase = createClient(
+  process.env.supabaseUrl,
+  process.env.supabaseRoleKey
+);
 
 async function fetchCoordinates(address) {
   try {
@@ -12,6 +19,23 @@ async function fetchCoordinates(address) {
     return null;
   }
   return null;
+}
+function parseDateTime(dtString) {
+  const match = dtString.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/);
+  if (!match) {
+    return dtString;
+  }
+
+  const [_, mm, dd, yyyy, HH, MM] = match;
+
+  const monthIndex = Number(mm) - 1;
+  const dayNum = Number(dd);
+  const yearNum = Number(yyyy);
+  const hourNum = Number(HH);
+  const minNum = Number(MM);
+
+  const d = new Date(yearNum, monthIndex, dayNum, hourNum, minNum, 0, 0);
+  return d.toISOString();
 }
 
 async function scrapeUCSC() {
@@ -57,15 +81,17 @@ async function scrapeUCSC() {
 
     //adding city state, and zip for encode
     location = `${location}, CA 95064`;
+    const form_date = parseDateTime(date_time)
 
-    jobs.push({category, number, date_time, location, disposition}); //queue push
+    jobs.push({category, number, form_date, location, disposition}); //queue push
   });
 
   await browser.close();
 
   const rows = []; //rows to push to json
+  const supaRow = []
   for (const job of jobs) {
-    const { category, number, date_time, location, disposition } = job;
+    const { category, number, form_date, location, disposition } = job;
 
     const coords = await fetchCoordinates(location); //calls encode for coords
 
@@ -75,11 +101,31 @@ async function scrapeUCSC() {
       continue;
     }
 
-    rows.push({category, number, date_time, location, lat: coords.latitude, long: coords.longitude ,disposition}); //push to finshed array
+    rows.push({category, number, form_date, location, lat: coords.latitude, long: coords.longitude ,disposition}); //push to finshed array
+    //console.log(rows);
+
+    const lat = coords.latitude;
+    const long = coords.longitude
+    const cate = Object.values(category);
+    const fD = Object.values(form_date);
+    const lat_coord = Object.values(lat);
+    const long_coord = Object.values(long);
+
+    console.log("%s, %s, %s, %s", cate, fD, lat_coord, long_coord);
+
+    supaRow.push({ cate, fD, lat_coord, long_coord});
+    //console.log(supaRow);
+    const {data, err} = await supabase.from("police_logs").insert([supaRow]);
+
+    // if (err){
+    //   console.log("Couldn't append this to supabase: %s", data);
+    // }else{
+    //   console.log("pushed into supabase: %s", supaRow);
+    // }
   }
 
 
-  fs.writeFileSync('crime_log1.json', JSON.stringify(rows, null, 2));
+  fs.writeFileSync('crime_log.json', JSON.stringify(rows, null, 2));
   console.log('Saved to crime_log.json');
 }
 
