@@ -27,8 +27,9 @@ export default function SignIn() {
     }
   }, [session]);
 
+  // sign out the user and deletes the stored session
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
+    await supabase.auth.signOut().catch(console.error);
   };
 
   const signUp = async () => {
