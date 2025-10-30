@@ -13,10 +13,15 @@ function App() {
   const [session, setSession] = useState(currentSession);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
+    // checks if a user is already logged in
+    const init = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+    };
 
+    init();
+
+    // update the session whenever it changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {

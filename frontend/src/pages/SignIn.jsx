@@ -9,8 +9,9 @@ export default function SignIn() {
 
   useEffect(() => {
     if (session) {
+      // upload the user information to Supabase
       async function uploadUserInfo() {
-        // insert user information to sign ups table
+        // insert user information to users table
         // if the user already exists, it ignores the query
         const { error } = await supabase
           .from("users")
@@ -27,11 +28,13 @@ export default function SignIn() {
     }
   }, [session]);
 
+  // sign out the user and deletes the stored session
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
+    await supabase.auth.signOut().catch(console.error);
   };
 
   const signUp = async () => {
+    // redirect user to the sign in page after logging in
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
