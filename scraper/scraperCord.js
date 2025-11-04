@@ -3,7 +3,8 @@ const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 const fs = require('fs');
 const geocoding = require('@aashari/nodejs-geocoding');
-const { createClient } = require('@supabase/supabase-js')
+const { createClient } = require('@supabase/supabase-js');
+const { format } = require("path");
 
 const supabase = createClient(
   process.env.supabaseUrl,
@@ -140,9 +141,16 @@ async function scrapeUCSC() {
     const long = coords.longitude;
 
 
-    console.log("heres the parsed shit, %s, %s, %s, %s", category, format_date, lat, long);
+    //console.log("heres the parsed shit, %s, %s, %s, %s", category, format_date, lat, long);
 
-    const supaRow = {crime: category, date: format_date, lat: lat, longi: long};
+    let supaRow = {};
+    if (format_date == null){
+       supaRow = {crime: category, lat: lat, longi: long};
+    }else{
+       supaRow = {crime: category, date: format_date, lat: lat, longi: long};
+    }
+    console.log(supaRow);
+  
     //console.log(supaRow);
     const {data, error} = await supabase.from("police_logs").insert([supaRow]);
 
@@ -153,9 +161,6 @@ async function scrapeUCSC() {
      }
   }
 
-
-  fs.writeFileSync('crime_log.json', JSON.stringify(rows, null, 2));
-  console.log('Saved to crime_log.json');
 }
 
 scrapeUCSC();
