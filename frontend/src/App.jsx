@@ -11,6 +11,7 @@ export const AuthContext = createContext(null);
 function App() {
   const currentSession = supabase.auth.session?.() ?? null;
   const [session, setSession] = useState(currentSession);
+  const [viewMyPins, setViewMyPins] = useState(false);
 
   useEffect(() => {
     // checks if a user is already logged in
@@ -32,7 +33,9 @@ function App() {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, setSession }}>
+    <AuthContext.Provider
+      value={{ session, setSession, viewMyPins, setViewMyPins }}
+    >
       <BrowserRouter>
         <div className="flex flex-col overflow-hidden h-screen">
           <NavBar />

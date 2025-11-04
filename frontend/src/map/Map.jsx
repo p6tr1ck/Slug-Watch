@@ -5,8 +5,9 @@ import iconUrl from "leaflet/dist/images/marker-icon.png";
 import iconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
 import shadowUrl from "leaflet/dist/images/marker-shadow.png";
 import { supabase } from "../../supabaseClient";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect, useCallback, useContext } from "react";
+import { AuthContext } from "../App";
+import PoliceCar from "../assets/police-car-emoji.png";
 
 // --- Example pin data ---
 function makeIcon(className) {
@@ -21,42 +22,54 @@ function makeIcon(className) {
   });
 }
 
-const position1 = [36.98946, -122.06124];
-const position2 = [36.99456, -122.05432];
+function determineIcon(category) {
+  if (category == "TAPS") {
+    return new L.Icon({
+      iconUrl: PoliceCar,
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [1, -34],
+    });
+  } else {
+    return makeIcon("marker-blue");
+  }
+}
 
 const bounds = [
-  [36.972521, -122.071543], // southwest corner
-  [37.003957, -122.045296], // northeast corner
+  [36.97818, -122.07764],
+  [37.004057, -122.035647],
+  // [36.972521, -122.071543], // southwest corner
+  // [37.003957, -122.045296], // northeast corner
 ];
+
+const center = [36.992077, -122.058739];
 
 export default function Map() {
   const [pins, setPins] = useState([]);
+  const { session, viewMyPins } = useContext(AuthContext);
 
   useEffect(() => {
-    const getPins = async () => {
-      const { data } = await supabase.from("example_pins").select();
-      data.forEach((e) => {
-        setPins([
-          ...pins,
-          {
-            id: e.id,
-            user_id: e.id,
-            title: e.title,
-            category: e.category,
-            lat: e.lat,
-            long: e.long,
-            created_at: e.created_at,
-            description: e.description,
-          },
-        ]);
-      });
-    };
     getPins();
   }, []);
 
-  useEffect(() => {
-    console.log(pins);
-  }, [pins]);
+  const getPins = useCallback(async () => {
+    const { data, error } = await supabase.from("example_pins").select("*");
+    if (error) {
+      console.error(error);
+      return;
+    }
+    const mapped = data.map((e) => ({
+      id: e.id,
+      user_id: e.user_id,
+      title: e.title,
+      category: e.category,
+      lat: e.lat,
+      long: e.long,
+      created_at: e.created_at,
+      description: e.description,
+    }));
+    setPins(mapped);
+  }, []);
 
   // useEffect(() => {
   //   const channel = supabase.channel("example_pins_channel");
@@ -80,7 +93,7 @@ export default function Map() {
 
   return (
     <MapContainer
-      center={[36.992255, -122.058763]}
+      center={center}
       zoom={14.8}
       className="h-full"
       maxBounds={bounds}
@@ -99,20 +112,44 @@ export default function Map() {
         .leaflet-marker-icon.marker-green { filter: hue-rotate(250deg); }
         .leaflet-marker-icon.marker-red  { filter: hue-rotate(130deg); }
       `}</style>
-      {pins.map((pin) => {
-        return (
-          <Marker position={[pin.lat, pin.long]} icon={makeIcon("marker-blue")}>
-            <Popup>
-              <b>{pin.title}</b>
-              <br />
-              Category: <b>{pin.category}</b>
-              <br />
-              Description: {pin.description}
-            </Popup>
-          </Marker>
-        );
-      })}
-      {/* Example markers in different colors */}
+      {session && viewMyPins
+        ? pins.map((pin) => {
+            if (pin.user_id === session.user.id) {
+              return (
+                <Marker
+                  position={[pin.lat, pin.long]}
+                  icon={determineIcon(pin.category)}
+                  key={pin.id}
+                >
+                  <Popup>
+                    <b>{pin.title}</b>
+                    <br />
+                    Category: <b>{pin.category}</b>
+                    <br />
+                    Description: {pin.description}
+                  </Popup>
+                </Marker>
+              );
+            }
+          })
+        : pins.map((pin) => {
+            return (
+              <Marker
+                position={[pin.lat, pin.long]}
+                icon={determineIcon(pin.category)}
+                key={pin.id}
+              >
+                <Popup>
+                  <b>{pin.title}</b>
+                  <br />
+                  Category: <b>{pin.category}</b>
+                  <br />
+                  Description: {pin.description}
+                </Popup>
+              </Marker>
+            );
+          })}
+      {/* Example markers in different colors
       <Marker position={position1} icon={makeIcon("marker-blue")}>
         <Popup>
           <b>Custom colored marker</b>
@@ -131,7 +168,7 @@ export default function Map() {
           <br />
           Detail: Example red pin
         </Popup>
-      </Marker>
+      </Marker> */}
     </MapContainer>
   );
 }
