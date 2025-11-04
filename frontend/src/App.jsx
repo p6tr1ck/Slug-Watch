@@ -4,6 +4,7 @@ import { useState, createContext, useEffect } from "react";
 import SignIn from "./pages/SignIn";
 import Home from "./pages/Home";
 import NavBar from "./pages/NavBar";
+import BottomBar from "./pages/BottomBar";
 import { supabase } from "../supabaseClient";
 import useWindowDimensions from "./WindowDimensions";
 
@@ -34,22 +35,19 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    console.log(width);
-  }, [width]);
-
   return (
     <AuthContext.Provider
       value={{ session, setSession, viewMyPins, setViewMyPins }}
     >
       <BrowserRouter>
         <div className="flex flex-col overflow-hidden h-screen">
-          <NavBar />
+          {width > 600 ? <NavBar /> : <></>}
           <Routes>
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/home" element={<Home />} />
           </Routes>
+          {width <= 600 ? <BottomBar /> : <></>}
         </div>
       </BrowserRouter>
     </AuthContext.Provider>
