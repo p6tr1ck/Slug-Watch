@@ -5,6 +5,7 @@ import SignIn from "./pages/SignIn";
 import Home from "./pages/Home";
 import NavBar from "./pages/NavBar";
 import { supabase } from "../supabaseClient";
+import useWindowDimensions from "./WindowDimensions";
 
 export const AuthContext = createContext(null);
 
@@ -12,6 +13,7 @@ function App() {
   const currentSession = supabase.auth.session?.() ?? null;
   const [session, setSession] = useState(currentSession);
   const [viewMyPins, setViewMyPins] = useState(false);
+  const { width } = useWindowDimensions();
 
   useEffect(() => {
     // checks if a user is already logged in
@@ -31,6 +33,10 @@ function App() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    console.log(width);
+  }, [width]);
 
   return (
     <AuthContext.Provider
