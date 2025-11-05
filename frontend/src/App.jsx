@@ -40,7 +40,11 @@ function App() {
       value={{ session, setSession, viewMyPins, setViewMyPins }}
     >
       <BrowserRouter>
-        <div className="flex flex-col overflow-hidden h-screen">
+        <div
+          className={`flex flex-col overflow-hidden h-screen ${
+            width <= 600 ? "pb-20" : ""
+          }`}
+        >
           {width > 600 ? <NavBar /> : <></>}
           <Routes>
             <Route path="/" element={<Navigate to="/home" replace />} />
