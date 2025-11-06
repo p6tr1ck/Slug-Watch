@@ -5,7 +5,7 @@ import iconUrl from "leaflet/dist/images/marker-icon.png";
 import iconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
 import shadowUrl from "leaflet/dist/images/marker-shadow.png";
 import { supabase } from "../../supabaseClient";
-import { useState, useEffect, useCallback, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../App";
 import PoliceCar from "../assets/police-car-emoji.png";
 import useWindowDimensions from "../WindowDimensions";
@@ -23,24 +23,26 @@ function makeIcon(className) {
   });
 }
 
+const tapsIcon = () => {
+  return new L.Icon({
+    iconUrl: PoliceCar,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [1, -34],
+  });
+};
+
 function determineIcon(category) {
   if (category == "TAPS") {
-    return new L.Icon({
-      iconUrl: PoliceCar,
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-      popupAnchor: [1, -34],
-    });
+    return tapsIcon();
   } else {
     return makeIcon("marker-blue");
   }
 }
 
 const bounds = [
-  [36.97818, -122.07764],
-  [37.004057, -122.035647],
-  // [36.972521, -122.071543], // southwest corner
-  // [37.003957, -122.045296], // northeast corner
+  [36.97818, -122.07764], // southwest corner
+  [37.004057, -122.035647], // northeast corner
 ];
 
 const center = [36.992077, -122.058739];
@@ -58,26 +60,26 @@ export default function Map() {
   }
 
   useEffect(() => {
-    getPins();
-  }, []);
-
-  const getPins = useCallback(async () => {
-    const { data, error } = await supabase.from("example_pins").select("*");
-    if (error) {
-      console.error(error);
-      return;
+    async function getPins() {
+      const { data, error } = await supabase.from("example_pins").select("*");
+      if (error) {
+        console.error("Error getting pins from database: ", error);
+        return;
+      }
+      const mapped = data.map((e) => ({
+        id: e.id,
+        user_id: e.user_id,
+        title: e.title,
+        category: e.category,
+        lat: e.lat,
+        long: e.long,
+        created_at: e.created_at,
+        description: e.description,
+      }));
+      setPins(mapped);
+      console.log("test");
     }
-    const mapped = data.map((e) => ({
-      id: e.id,
-      user_id: e.user_id,
-      title: e.title,
-      category: e.category,
-      lat: e.lat,
-      long: e.long,
-      created_at: e.created_at,
-      description: e.description,
-    }));
-    setPins(mapped);
+    getPins();
   }, []);
 
   return (
