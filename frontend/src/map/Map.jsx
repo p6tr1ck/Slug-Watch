@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import { useEffect, useRef, useState, useContext } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -35,10 +35,10 @@ const bounds = [
 ];
 
 function MarkerWithPopup({ m, updateMarker, removeMarker, canModify }) {
-  const markerRef = React.useRef(null);
+  const markerRef = useRef(null);
   const categories = ["TAPS", "ICE", "Suspicious Activity", "Theft", "Other"];
 
-  const [form, setForm] = React.useState({
+  const [form, setForm] = useState({
     title: m.title || "",
     address: m.address || "",
     datetime: m.datetime || "",
@@ -46,7 +46,7 @@ function MarkerWithPopup({ m, updateMarker, removeMarker, canModify }) {
     description: m.description || "",
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     // keep local form in sync when parent marker changes
     setForm({
       title: m.title || "",
@@ -57,13 +57,13 @@ function MarkerWithPopup({ m, updateMarker, removeMarker, canModify }) {
     });
   }, [m.id]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // open the popup automatically for newly created markers
     if (m.isNew && markerRef.current) {
       try {
         markerRef.current.openPopup();
       } catch (e) {
-        // ignore
+        console.error("Error opening popup: ", e);
       }
     }
   }, [m.isNew]);
@@ -76,7 +76,9 @@ function MarkerWithPopup({ m, updateMarker, removeMarker, canModify }) {
     updateMarker(m.id, { ...form, isNew: false });
     try {
       markerRef.current.closePopup();
-    } catch (e) {}
+    } catch (e) {
+      console.error("Error saving pin: ", e)
+    }
   }
 
   function onDelete() {
@@ -84,7 +86,9 @@ function MarkerWithPopup({ m, updateMarker, removeMarker, canModify }) {
     removeMarker(m.id);
     try {
       markerRef.current.closePopup();
-    } catch (e) {}
+    } catch (e) {
+      console.error("Error deleting pin: ", e)
+    }
   }
 
   function stop(e) {
@@ -144,7 +148,7 @@ export default function Map() {
     { id: 2, position: position2, title: "Alert", address: "", datetime: "", category: "Theft", description: "Category: Safety\nDetail: Example red pin", className: "marker-red", ownerId: null },
   ]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!currentUserId && createMode) {
       setCreateMode(false);
     }
