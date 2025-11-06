@@ -8,6 +8,7 @@ import { supabase } from "../../supabaseClient";
 import { useState, useEffect, useCallback, useContext } from "react";
 import { AuthContext } from "../App";
 import PoliceCar from "../assets/police-car-emoji.png";
+import useWindowDimensions from "../WindowDimensions";
 
 // --- Example pin data ---
 function makeIcon(className) {
@@ -46,7 +47,15 @@ const center = [36.992077, -122.058739];
 
 export default function Map() {
   const [pins, setPins] = useState([]);
-  const { session, viewMyPins } = useContext(AuthContext);
+  const { session, viewMyPins, setViewMyPins } = useContext(AuthContext);
+  const { width } = useWindowDimensions();
+  function clickMyPins() {
+    if (viewMyPins) {
+      setViewMyPins(false);
+    } else {
+      setViewMyPins(true);
+    }
+  }
 
   useEffect(() => {
     getPins();
@@ -71,50 +80,49 @@ export default function Map() {
     setPins(mapped);
   }, []);
 
-  // useEffect(() => {
-  //   const channel = supabase.channel("example_pins_channel");
-  //   channel
-  //     .on(
-  //       "postgres_changes",
-  //       {
-  //         event: "*",
-  //         schema: "public",
-  //         table: "example_pins",
-  //       },
-  //       (payload) => {
-  //         const newPin = payload.new;
-  //         console.log(newPin);
-  //       }
-  //     )
-  //     .subscribe((status) => {
-  //       console.log("Subscription: ", status);
-  //     });
-  // }, []);
-
   return (
-    <MapContainer
-      center={center}
-      zoom={14.8}
-      className="h-full"
-      maxBounds={bounds}
-      maxBoundsViscosity={1.0} // prevents user from panning outside bounds
-      minZoom={14.5} // restricts min zoom
-      maxZoom={17} // restricts max zoom
-      zoomSnap={0.1} // allow decimal zooming by 0.1, 0.2, 0.3, etc.
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {/* CSS filters to recolor the default marker icon */}
-      <style>{`
+    <div className="relative h-full">
+      <MapContainer
+        center={center}
+        zoom={14.8}
+        className="h-full"
+        maxBounds={bounds}
+        maxBoundsViscosity={1.0} // prevents user from panning outside bounds
+        minZoom={14.5} // restricts min zoom
+        maxZoom={17} // restricts max zoom
+        zoomSnap={0.1} // allow decimal zooming by 0.1, 0.2, 0.3, etc.
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        {/* CSS filters to recolor the default marker icon */}
+        <style>{`
         .leaflet-marker-icon.marker-blue { filter: hue-rotate(0deg); }
         .leaflet-marker-icon.marker-green { filter: hue-rotate(250deg); }
         .leaflet-marker-icon.marker-red  { filter: hue-rotate(130deg); }
       `}</style>
-      {session && viewMyPins
-        ? pins.map((pin) => {
-            if (pin.user_id === session.user.id) {
+        {session && viewMyPins
+          ? pins.map((pin) => {
+              if (pin.user_id === session.user.id) {
+                return (
+                  <Marker
+                    position={[pin.lat, pin.long]}
+                    icon={determineIcon(pin.category)}
+                    key={pin.id}
+                  >
+                    <Popup>
+                      <b>{pin.title}</b>
+                      <br />
+                      Category: <b>{pin.category}</b>
+                      <br />
+                      Description: {pin.description}
+                    </Popup>
+                  </Marker>
+                );
+              }
+            })
+          : pins.map((pin) => {
               return (
                 <Marker
                   position={[pin.lat, pin.long]}
@@ -130,45 +138,31 @@ export default function Map() {
                   </Popup>
                 </Marker>
               );
-            }
-          })
-        : pins.map((pin) => {
-            return (
-              <Marker
-                position={[pin.lat, pin.long]}
-                icon={determineIcon(pin.category)}
-                key={pin.id}
-              >
-                <Popup>
-                  <b>{pin.title}</b>
-                  <br />
-                  Category: <b>{pin.category}</b>
-                  <br />
-                  Description: {pin.description}
-                </Popup>
-              </Marker>
-            );
-          })}
-      {/* Example markers in different colors
-      <Marker position={position1} icon={makeIcon("marker-blue")}>
-        <Popup>
-          <b>Custom colored marker</b>
-          <br />
-          Category: Example
-          <br />
-          Detail: Example
-        </Popup>
-      </Marker>
-
-      <Marker position={position2} icon={makeIcon("marker-red")}>
-        <Popup>
-          <b>Alert</b>
-          <br />
-          Category: Safety
-          <br />
-          Detail: Example red pin
-        </Popup>
-      </Marker> */}
-    </MapContainer>
+            })}
+      </MapContainer>
+      {session && width >= 600 ? (
+        <button
+          type="button"
+          onClick={() => clickMyPins()}
+          style={{
+            position: "absolute",
+            top: "1rem",
+            right: "1rem",
+            zIndex: 1000,
+            background: session ? "white" : "#f2f2f2",
+            border: "1px solid #ccc",
+            borderRadius: "0.375rem",
+            padding: "0.5rem 1rem",
+            cursor: session ? "pointer" : "not-allowed",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+          }}
+          title={session ? undefined : "Sign in to filter by your pins"}
+        >
+          {viewMyPins ? "View all pins" : "View my pins"}
+        </button>
+      ) : (
+        <></>
+      )}
+    </div>
   );
 }
