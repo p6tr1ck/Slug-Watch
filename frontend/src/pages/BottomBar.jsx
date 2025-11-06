@@ -5,11 +5,11 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import PersonIcon from "@mui/icons-material/Person";
 import { Link } from "react-router-dom";
-import { useState, useContext } from "react";
+import { useContext } from "react";
 import { AuthContext } from "../App";
 
 export default function BottomBar() {
-  const { viewMyPins, setViewMyPins } = useContext(AuthContext);
+  const { viewMyPins, setViewMyPins, session } = useContext(AuthContext);
   function userPinVisibility() {
     if (!viewMyPins) {
       setViewMyPins(true);
@@ -29,16 +29,27 @@ export default function BottomBar() {
           <LocalPoliceIcon />
           <p>Police Logs</p>
         </div>
-        <div>
-          <AddIcon />
+        <div className="border border-black">
+          <button className="border border-black">
+            <AddIcon />
+          </button>
         </div>
         <button onClick={() => userPinVisibility()}>
           {viewMyPins ? <VisibilityIcon /> : <VisibilityOffIcon />}
           <p>My Pins</p>
         </button>
         <Link to="/signin">
-          <PersonIcon />
-          <p>Profile</p>
+          <div className="items-center justify-center text-center">
+            {session ? (
+              <img
+                src={session.user.user_metadata.avatar_url}
+                className="rounded-4xl h-9 block ml-auto mr-auto"
+              />
+            ) : (
+              <PersonIcon />
+            )}
+            <p>Profile</p>
+          </div>
         </Link>
       </div>
     </div>
