@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -11,6 +11,7 @@ import L from "leaflet";
 import iconUrl from "leaflet/dist/images/marker-icon.png";
 import iconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
 import shadowUrl from "leaflet/dist/images/marker-shadow.png";
+import { AuthContext } from "../App";
 
 // --- Example pin data ---
 function makeIcon(className) {
@@ -33,7 +34,7 @@ const bounds = [
   [37.003957, -122.045296], // northeast corner
 ];
 
-function MarkerWithPopup({ m, updateMarker, removeMarker }) {
+function MarkerWithPopup({ m, updateMarker, removeMarker, canModify }) {
   const markerRef = React.useRef(null);
   const categories = ["TAPS", "ICE", "Suspicious Activity", "Theft", "Other"];
 
@@ -68,9 +69,10 @@ function MarkerWithPopup({ m, updateMarker, removeMarker }) {
   }, [m.isNew]);
 
   const allFilled = form.title.trim() && form.address.trim() && form.datetime && form.category && form.description.trim();
+  const disabled = !canModify;
 
   function onSave() {
-    if (!allFilled) return;
+    if (disabled || !allFilled) return;
     updateMarker(m.id, { ...form, isNew: false });
     try {
       markerRef.current.closePopup();
@@ -78,6 +80,7 @@ function MarkerWithPopup({ m, updateMarker, removeMarker }) {
   }
 
   function onDelete() {
+    if (disabled) return;
     removeMarker(m.id);
     try {
       markerRef.current.closePopup();
@@ -93,34 +96,38 @@ function MarkerWithPopup({ m, updateMarker, removeMarker }) {
       <Popup>
         <div className="w-72" onClick={stop} onMouseDown={stop}>
           <label className="block text-sm font-medium">Title</label>
-          <input className="w-full border p-1 rounded mb-2" value={form.title} onChange={(e) => setForm((s) => ({ ...s, title: e.target.value }))} />
+          <input className="w-full border p-1 rounded mb-2" value={form.title} disabled={disabled} onChange={(e) => setForm((s) => ({ ...s, title: e.target.value }))} />
 
           <label className="block text-sm font-medium">Address</label>
-          <input className="w-full border p-1 rounded mb-2" value={form.address} onChange={(e) => setForm((s) => ({ ...s, address: e.target.value }))} />
+          <input className="w-full border p-1 rounded mb-2" value={form.address} disabled={disabled} onChange={(e) => setForm((s) => ({ ...s, address: e.target.value }))} />
 
           <label className="block text-sm font-medium">Date & Time</label>
-          <input type="datetime-local" className="w-full border p-1 rounded mb-2" value={form.datetime} onChange={(e) => setForm((s) => ({ ...s, datetime: e.target.value }))} />
+          <input type="datetime-local" className="w-full border p-1 rounded mb-2" value={form.datetime} disabled={disabled} onChange={(e) => setForm((s) => ({ ...s, datetime: e.target.value }))} />
 
           <label className="block text-sm font-medium">Category</label>
-          <select className="w-full border p-1 rounded mb-2" value={form.category} onChange={(e) => setForm((s) => ({ ...s, category: e.target.value }))}>
+          <select className="w-full border p-1 rounded mb-2" value={form.category} disabled={disabled} onChange={(e) => setForm((s) => ({ ...s, category: e.target.value }))}>
             {categories.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
 
           <label className="block text-sm font-medium">Description</label>
-          <textarea className="w-full border p-1 rounded mb-2" rows={3} value={form.description} onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))} />
+          <textarea className="w-full border p-1 rounded mb-2" rows={3} value={form.description} disabled={disabled} onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))} />
 
-          <div className="flex justify-between">
-            <button
-              className="px-2 py-1 bg-green-600 text-white rounded disabled:opacity-50"
-              onClick={onSave}
-              disabled={!allFilled}
-            >
-              Save
-            </button>
-            <button className="px-2 py-1 bg-red-600 text-white rounded" onClick={onDelete}>Delete</button>
-          </div>
+          {canModify ? (
+            <div className="flex justify-between">
+              <button
+                className="px-2 py-1 bg-green-600 text-white rounded disabled:opacity-50"
+                onClick={onSave}
+                disabled={!allFilled}
+              >
+                Save
+              </button>
+              <button className="px-2 py-1 bg-red-600 text-white rounded" onClick={onDelete}>Delete</button>
+            </div>
+          ) : (
+            <div className="text-xs text-gray-500 text-center">You can only edit your own pins.</div>
+          )}
         </div>
       </Popup>
     </Marker>
@@ -129,11 +136,19 @@ function MarkerWithPopup({ m, updateMarker, removeMarker }) {
 
 
 export default function Map() {
+  const { session } = useContext(AuthContext);
+  const currentUserId = session?.user?.id ?? null;
   const [createMode, setCreateMode] = useState(false);
   const [markers, setMarkers] = useState([
-    { id: 1, position: position1, title: "Custom colored marker", address: "", datetime: "", category: "TAPS", description: "Category: Example\nDetail: Example", className: "marker-blue" },
-    { id: 2, position: position2, title: "Alert", address: "", datetime: "", category: "Theft", description: "Category: Safety\nDetail: Example red pin", className: "marker-red" },
+    { id: 1, position: position1, title: "Custom colored marker", address: "", datetime: "", category: "TAPS", description: "Category: Example\nDetail: Example", className: "marker-blue", ownerId: null },
+    { id: 2, position: position2, title: "Alert", address: "", datetime: "", category: "Theft", description: "Category: Safety\nDetail: Example red pin", className: "marker-red", ownerId: null },
   ]);
+
+  React.useEffect(() => {
+    if (!currentUserId && createMode) {
+      setCreateMode(false);
+    }
+  }, [currentUserId, createMode]);
 
   function MapClickHandler({ createMode, onMapClick }) {
     useMapEvents({
@@ -147,17 +162,33 @@ export default function Map() {
   }
 
   function handleMapClick(latlng) {
-    const newMarker = { id: Date.now(), position: latlng, title: "", address: "", datetime: "", category: "TAPS", description: "", className: "marker-green", isNew: true };
+    if (!currentUserId) {
+      setCreateMode(false);
+      return;
+    }
+    const newMarker = { id: Date.now(), position: latlng, title: "", address: "", datetime: "", category: "TAPS", description: "", className: "marker-green", isNew: true, ownerId: currentUserId };
     setMarkers((m) => [...m, newMarker]);
     setCreateMode(false);
   }
 
   function updateMarker(id, patch) {
-    setMarkers((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+    setMarkers((prev) =>
+      prev.map((m) => {
+        if (m.id !== id) return m;
+        if (!currentUserId || m.ownerId !== currentUserId) return m;
+        return { ...m, ...patch };
+      })
+    );
   }
 
   function removeMarker(id) {
-    setMarkers((prev) => prev.filter((m) => m.id !== id));
+    setMarkers((prev) =>
+      prev.filter((m) => {
+        if (m.id !== id) return true;
+        if (!currentUserId || m.ownerId !== currentUserId) return true;
+        return false;
+      })
+    );
   }
 
   return (
@@ -167,6 +198,7 @@ export default function Map() {
           onClick={() => setCreateMode((v) => !v)}
           aria-pressed={createMode}
           aria-label={createMode ? 'Cancel create pin' : 'Create pin'}
+          disabled={!currentUserId}
           style={{
             backgroundColor: createMode ? '#dc2626' : '#2563eb',
             color: '#fff',
@@ -174,9 +206,10 @@ export default function Map() {
             borderRadius: 8,
             boxShadow: '0 8px 22px rgba(0,0,0,0.18)',
             border: 'none',
-            cursor: 'pointer',
+            cursor: !currentUserId ? 'not-allowed' : 'pointer',
             fontWeight: 700,
             fontSize: 14,
+            opacity: !currentUserId ? 0.6 : 1,
           }}
         >
           {createMode ? 'Cancel' : 'Create pin'}
@@ -207,8 +240,9 @@ export default function Map() {
         <MapClickHandler createMode={createMode} onMapClick={handleMapClick} />
 
         {markers.map((m) => {
+          const canModify = Boolean(currentUserId) && m.ownerId === currentUserId;
           return (
-            <MarkerWithPopup key={m.id} m={m} updateMarker={updateMarker} removeMarker={removeMarker} />
+            <MarkerWithPopup key={m.id} m={m} updateMarker={updateMarker} removeMarker={removeMarker} canModify={canModify} />
           );
         })}
       </MapContainer>
