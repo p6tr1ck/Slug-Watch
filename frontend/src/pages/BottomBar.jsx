@@ -27,7 +27,7 @@ export default function BottomBar() {
         </Link>
         <div>
           <LocalPoliceIcon />
-          <p>Police Logs</p>
+          <p>Police Pins</p>
         </div>
         <div className="border border-black">
           <button className="border border-black">
