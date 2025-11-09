@@ -77,7 +77,6 @@ export default function Map() {
         description: e.description,
       }));
       setPins(mapped);
-      console.log("test");
     }
     getPins();
   }, []);
