@@ -2,14 +2,15 @@ import { Marker, Popup } from "react-leaflet";
 import { useState } from "react";
 import makeIcon from "./MakeIcon";
 
-// Optional: map categories to nice chip colors
 const categoryChip = (category = "") => {
   const c = category.toLowerCase();
   if (c.includes("theft")) return "bg-amber-100 text-amber-800 ring-amber-200";
-  if (c.includes("assault")) return "bg-rose-100 text-rose-800 ring-rose-200";
   if (c.includes("suspicious"))
     return "bg-indigo-100 text-indigo-800 ring-indigo-200";
-  if (c.includes("traffic")) return "bg-sky-100 text-sky-800 ring-sky-200";
+  if (c.includes("verified")) return "bg-sky-100 text-sky-800 ring-sky-200";
+  if (c.includes("taps"))
+    return "bg-orange-100 text-orange-800 ring-orange-200";
+  if (c.includes("ice")) return "bg-red-100 text-red-800 ring-red-200";
   return "bg-slate-100 text-slate-800 ring-slate-200";
 };
 
