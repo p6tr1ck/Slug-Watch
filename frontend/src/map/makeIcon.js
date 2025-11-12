@@ -1,0 +1,61 @@
+import L from "leaflet";
+import iconUrl from "leaflet/dist/images/marker-icon.png";
+import iconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
+import shadowUrl from "leaflet/dist/images/marker-shadow.png";
+import PoliceCar from "../assets/police-car-emoji.png";
+import SuspiciousPerson from "../assets/suspicious-person-icon.png";
+import VerifiedCheckmark from "../assets/verified-checkmark.png";
+
+const tapsIcon = (category) => {
+  return new L.Icon({
+    iconUrl: PoliceCar,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [1, -34],
+    category,
+  });
+};
+
+const suspiciousPerson = (category) => {
+  return new L.Icon({
+    iconUrl: SuspiciousPerson,
+    iconSize: [50, 50],
+    iconAnchor: [16, 32],
+    popupAnchor: [8, -34],
+    category,
+  });
+};
+
+const verifiedCheckmark = (category) => {
+  return new L.Icon({
+    iconUrl: VerifiedCheckmark,
+    iconSize: [30, 30],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    category,
+  });
+};
+
+const blueMarker = (category) => {
+  return new L.Icon({
+    iconUrl,
+    iconRetinaUrl,
+    shadowUrl,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    category,
+  });
+};
+
+export default function makeIcon(category) {
+  if (category == "TAPS") {
+    return tapsIcon(category);
+  } else if (category == "Suspicious Activity") {
+    return suspiciousPerson(category);
+  } else if (category == "Verified") {
+    return verifiedCheckmark(category);
+  } else {
+    return blueMarker(category);
+  }
+}

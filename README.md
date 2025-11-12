@@ -9,7 +9,7 @@ cd frontend
 npm ci
 ```
 
-## Create env file
+## Create .env file
 
 ```
 cd frontend
