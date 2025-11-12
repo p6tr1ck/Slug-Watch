@@ -7,6 +7,7 @@ import MarkerWithPopup from "./MarkerWithPopup";
 import { AuthContext } from "../App";
 import UserPins from "./UserPins";
 import PolicePins from "./PolicePins";
+import FilterPins from "./FilterPins";
 
 // --- Example pin data ---
 const position1 = [36.98946, -122.06124];
@@ -137,48 +138,9 @@ export default function Map() {
         .leaflet-marker-icon.marker-green { filter: hue-rotate(250deg); }
         .leaflet-marker-icon.marker-red  { filter: hue-rotate(130deg); }
       `}</style>
-        {/* If logged in user is not on a mobile device, then put the view pin button 
+        {/* If user is not on a mobile device, then put the filter pins button 
         at the top right of screen. */}
-        {session && width >= 600 && (
-          <button
-            type="button"
-            onClick={() => setViewMyPins((v) => !v)}
-            style={{
-              position: "absolute",
-              top: "1rem",
-              right: "1rem",
-              zIndex: 1000,
-              background: "white",
-              border: "1px solid #ccc",
-              borderRadius: "0.375rem",
-              padding: "0.5rem 1rem",
-              cursor: "pointer",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-            }}
-            title={session ? undefined : "Sign in to filter by your pins"}
-          >
-            {viewMyPins ? "View all pins" : "View my pins"}
-          </button>
-        )}
-        {width >= 600 && (
-          <button
-            type="button"
-            onClick={() => setViewPolicePins((v) => !v)}
-            style={{
-              position: "absolute",
-              top: session ? "3.5rem" : "0.5rem",
-              right: "1rem",
-              zIndex: 1000,
-              background: session ? "white" : "#f2f2f2",
-              border: "1px solid #ccc",
-              borderRadius: "0.375rem",
-              padding: "0.5rem 1rem",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-            }}
-          >
-            {viewPolicePins ? "View all pins" : "View police pins"}
-          </button>
-        )}
+        {width >= 600 && <FilterPins />}
         <UserPins />
         <PolicePins />
         <MapClickHandler createMode={createMode} onMapClick={handleMapClick} />
