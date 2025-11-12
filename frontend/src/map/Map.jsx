@@ -1,62 +1,22 @@
-import { useEffect, useRef, useState, useContext } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  useMapEvents,
-  Marker,
-  Popup,
-} from "react-leaflet";
+import { useEffect, useState, useContext } from "react";
+import { MapContainer, TileLayer, useMapEvents } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import iconUrl from "leaflet/dist/images/marker-icon.png";
-import iconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
-import shadowUrl from "leaflet/dist/images/marker-shadow.png";
 import { supabase } from "../../supabaseClient";
-import PoliceCar from "../assets/police-car-emoji.png";
 import useWindowDimensions from "../WindowDimensions";
 import MarkerWithPopup from "./MarkerWithPopup";
 import { AuthContext } from "../App";
+import UserPins from "./UserPins";
 
 // --- Example pin data ---
 const position1 = [36.98946, -122.06124];
 const position2 = [36.99456, -122.05432];
 
-function makeIcon(className) {
-  return new L.Icon({
-    iconUrl,
-    iconRetinaUrl,
-    shadowUrl,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    className,
-  });
-}
-
-const tapsIcon = () => {
-  return new L.Icon({
-    iconUrl: PoliceCar,
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [1, -34],
-  });
-};
-
-function determineIcon(category) {
-  if (category == "TAPS") {
-    return tapsIcon();
-  } else {
-    return makeIcon("marker-blue");
-  }
-}
-
 const bounds = [
   [36.97818, -122.07764], // southwest corner
   [37.004057, -122.035647], // northeast corner
 ];
-
-const center = [36.992077, -122.058739];
 
 export default function Map() {
   const [pins, setPins] = useState([]);
@@ -87,14 +47,6 @@ export default function Map() {
       ownerId: null,
     },
   ]);
-
-  function clickMyPins() {
-    if (viewMyPins) {
-      setViewMyPins(false);
-    } else {
-      setViewMyPins(true);
-    }
-  }
 
   useEffect(() => {
     async function getPins() {
@@ -176,6 +128,17 @@ export default function Map() {
     );
   }
 
+  // If user wants to view their own pins, then set
+  // viewMyPins to be true. If user wants to view all pins
+  // then set viewMyPins to be false.
+  function clickMyPins() {
+    if (viewMyPins) {
+      setViewMyPins(false);
+    } else {
+      setViewMyPins(true);
+    }
+  }
+
   return (
     <div className="relative h-full w-full">
       {session ? ( // Show the create button only for logged in users.
@@ -212,6 +175,7 @@ export default function Map() {
         minZoom={14.5}
         maxZoom={17}
         zoomSnap={0.1}
+        doubleClickZoom={false}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -223,44 +187,8 @@ export default function Map() {
         .leaflet-marker-icon.marker-green { filter: hue-rotate(250deg); }
         .leaflet-marker-icon.marker-red  { filter: hue-rotate(130deg); }
       `}</style>
-        {session && viewMyPins // User only wants to see their pins on the map
-          ? pins.map((pin) => {
-              if (pin.user_id === session.user.id) {
-                return (
-                  <Marker
-                    position={[pin.lat, pin.long]}
-                    icon={determineIcon(pin.category)}
-                    key={pin.id}
-                  >
-                    <Popup>
-                      <b>{pin.title}</b>
-                      <br />
-                      Category: <b>{pin.category}</b>
-                      <br />
-                      Description: {pin.description}
-                    </Popup>
-                  </Marker>
-                );
-              }
-            })
-          : pins.map((pin) => {
-              return (
-                <Marker
-                  position={[pin.lat, pin.long]}
-                  icon={determineIcon(pin.category)}
-                  key={pin.id}
-                >
-                  <Popup>
-                    <b>{pin.title}</b>
-                    <br />
-                    Category: <b>{pin.category}</b>
-                    <br />
-                    Description: {pin.description}
-                  </Popup>
-                </Marker>
-              );
-            })}
-        {/* If logged in user is not on a mobile device, then put the create button to the bottom right of the screen*/}
+        {/* If logged in user is not on a mobile device, then put the create pin button 
+        to the bottom right of the screen*/}
         {session && width >= 600 ? (
           <button
             type="button"
@@ -284,6 +212,7 @@ export default function Map() {
         ) : (
           <></>
         )}
+        <UserPins />
         <MapClickHandler createMode={createMode} onMapClick={handleMapClick} />
         {markers.map((m) => {
           const canModify = Boolean(session) && m.ownerId === session;
