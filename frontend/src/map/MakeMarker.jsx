@@ -17,12 +17,20 @@ export default function MakeMarker({
           <div>
             <span className="font-semibold">Incident Time:</span> {time}
           </div>
-          <div>
-            <span className="font-semibold">Category:</span> {category}
-          </div>
-          <div>
-            <span className="font-semibold">Description:</span> {description}
-          </div>
+          {category ? (
+            <div>
+              <span className="font-semibold">Category:</span> {category}
+            </div>
+          ) : (
+            <></>
+          )}
+          {description ? (
+            <div>
+              <span className="font-semibold">Description:</span> {description}
+            </div>
+          ) : (
+            <></>
+          )}
         </div>
       </Popup>
     </Marker>

@@ -35,10 +35,6 @@ export default function PolicePins() {
     getPins();
   }, []);
 
-  useEffect(() => {
-    console.log(pins);
-  }, [pins]);
-
   return (
     <>
       {session && viewMyPins // User only wants to see their pins on the map
@@ -61,6 +57,7 @@ export default function PolicePins() {
                 title={pin.title}
                 time={pin.created_at}
                 position={[pin.lat, pin.long]}
+                category={"Verified"}
               />
             );
           })}
