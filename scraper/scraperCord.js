@@ -145,9 +145,9 @@ async function scrapeUCSC() {
 
     let supaRow = {};
     if (format_date == null){
-       supaRow = {crime: category, lat: lat, longi: long};
+       supaRow = {crime: category, lat: lat, long: long};
     }else{
-       supaRow = {crime: category, date: format_date, lat: lat, longi: long};
+       supaRow = {crime: category, date: format_date, lat: lat, long: long};
     }
     console.log(supaRow);
   
