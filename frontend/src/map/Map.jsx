@@ -2,12 +2,11 @@ import { useEffect, useState, useContext } from "react";
 import { MapContainer, TileLayer, useMapEvents } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-import { supabase } from "../../supabaseClient";
 import useWindowDimensions from "../WindowDimensions";
 import MarkerWithPopup from "./MarkerWithPopup";
 import { AuthContext } from "../App";
 import UserPins from "./UserPins";
+import PolicePins from "./PolicePins";
 
 // --- Example pin data ---
 const position1 = [36.98946, -122.06124];
@@ -19,7 +18,6 @@ const bounds = [
 ];
 
 export default function Map() {
-  const [pins, setPins] = useState([]);
   const { session, viewMyPins, setViewMyPins, createMode, setCreateMode } =
     useContext(AuthContext);
   const { width } = useWindowDimensions();
@@ -47,28 +45,6 @@ export default function Map() {
       ownerId: null,
     },
   ]);
-
-  useEffect(() => {
-    async function getPins() {
-      const { data, error } = await supabase.from("example_pins").select("*");
-      if (error) {
-        console.error("Error getting pins from database: ", error);
-        return;
-      }
-      const mapped = data.map((e) => ({
-        id: e.id,
-        user_id: e.user_id,
-        title: e.title,
-        category: e.category,
-        lat: e.lat,
-        long: e.long,
-        created_at: e.created_at,
-        description: e.description,
-      }));
-      setPins(mapped);
-    }
-    getPins();
-  }, []);
 
   useEffect(() => {
     if (!session && createMode) {
@@ -214,6 +190,7 @@ export default function Map() {
           <></>
         )}
         <UserPins />
+        <PolicePins />
         <MapClickHandler createMode={createMode} onMapClick={handleMapClick} />
         {markers.map((m) => {
           const canModify = Boolean(session) && m.ownerId === session;

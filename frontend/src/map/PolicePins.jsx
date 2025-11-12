@@ -3,7 +3,7 @@ import { supabase } from "../../supabaseClient";
 import { AuthContext } from "../App";
 import MakeMarker from "./MakeMarker";
 
-export default function UserPins() {
+export default function PolicePins() {
   const { session, viewMyPins } = useContext(AuthContext);
   const [pins, setPins] = useState([]);
 
@@ -11,7 +11,7 @@ export default function UserPins() {
   useEffect(() => {
     async function getPins() {
       // Select all the rows from the example pins database table.
-      const { data, error } = await supabase.from("example_pins").select("*");
+      const { data, error } = await supabase.from("police_logs").select("*");
       if (error) {
         console.error("Error getting pins from database: ", error);
         return;
@@ -20,13 +20,11 @@ export default function UserPins() {
       // Create an array of all the pins fetched from the database table.
       const mapped = data.map((e) => ({
         id: e.id,
-        user_id: e.user_id,
-        title: e.title,
-        category: e.category,
+        title: e.crime,
         lat: e.lat,
         long: e.long,
-        created_at: `${new Date(e.created_at).toLocaleDateString()} ${new Date(
-          e.created_at
+        created_at: `${new Date(e.date).toLocaleDateString()} ${new Date(
+          e.date
         ).toLocaleTimeString()}`, // Format as MM/DD/YY Time
         description: e.description,
       }));
@@ -37,6 +35,10 @@ export default function UserPins() {
     getPins();
   }, []);
 
+  useEffect(() => {
+    console.log(pins);
+  }, [pins]);
+
   return (
     <>
       {session && viewMyPins // User only wants to see their pins on the map
@@ -46,8 +48,6 @@ export default function UserPins() {
                 <MakeMarker
                   key={pin.id}
                   title={pin.title}
-                  category={pin.category}
-                  description={pin.description}
                   time={pin.time}
                   position={[pin.lat, pin.long]}
                 />
@@ -59,8 +59,6 @@ export default function UserPins() {
               <MakeMarker
                 key={pin.id}
                 title={pin.title}
-                category={pin.category}
-                description={pin.description}
                 time={pin.created_at}
                 position={[pin.lat, pin.long]}
               />
