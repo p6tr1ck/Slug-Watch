@@ -14,6 +14,7 @@ function App() {
   const currentSession = supabase.auth.session?.() ?? null;
   const [session, setSession] = useState(currentSession);
   const [viewMyPins, setViewMyPins] = useState(false);
+  const [createMode, setCreateMode] = useState(false);
   const { width } = useWindowDimensions();
 
   useEffect(() => {
@@ -37,7 +38,14 @@ function App() {
 
   return (
     <AuthContext.Provider
-      value={{ session, setSession, viewMyPins, setViewMyPins }}
+      value={{
+        session,
+        setSession,
+        viewMyPins,
+        setViewMyPins,
+        createMode,
+        setCreateMode,
+      }}
     >
       <BrowserRouter>
         <div

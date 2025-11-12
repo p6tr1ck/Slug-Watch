@@ -20,9 +20,9 @@ const bounds = [
 
 export default function Map() {
   const [pins, setPins] = useState([]);
-  const { session, viewMyPins, setViewMyPins } = useContext(AuthContext);
+  const { session, viewMyPins, setViewMyPins, createMode, setCreateMode } =
+    useContext(AuthContext);
   const { width } = useWindowDimensions();
-  const [createMode, setCreateMode] = useState(false);
   const [markers, setMarkers] = useState([
     {
       id: 1,
@@ -141,7 +141,8 @@ export default function Map() {
 
   return (
     <div className="relative h-full w-full">
-      {session ? ( // Show the create button only for logged in users.
+      {/* Show the create pin button on the bottom right of the screen for logged in users */}
+      {session && width >= 600 ? (
         <div
           style={{ position: "absolute", right: 16, bottom: 16, zIndex: 1000 }}
         >
@@ -187,8 +188,8 @@ export default function Map() {
         .leaflet-marker-icon.marker-green { filter: hue-rotate(250deg); }
         .leaflet-marker-icon.marker-red  { filter: hue-rotate(130deg); }
       `}</style>
-        {/* If logged in user is not on a mobile device, then put the create pin button 
-        to the bottom right of the screen*/}
+        {/* If logged in user is not on a mobile device, then put the view pin button 
+        at the top right of screen. */}
         {session && width >= 600 ? (
           <button
             type="button"

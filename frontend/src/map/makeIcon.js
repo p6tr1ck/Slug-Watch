@@ -18,9 +18,9 @@ const tapsIcon = (category) => {
 const suspiciousPerson = (category) => {
   return new L.Icon({
     iconUrl: SuspiciousPerson,
-    iconSize: [48, 48],
+    iconSize: [50, 50],
     iconAnchor: [16, 32],
-    popupAnchor: [1, -34],
+    popupAnchor: [8, -34],
     category,
   });
 };
