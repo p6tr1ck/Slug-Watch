@@ -61,7 +61,7 @@ export default function MultipleSelectCheckmarks() {
       >
         <InputLabel id="demo-multiple-checkbox-label">
           <TuneIcon className="mr-2" />
-          Filters
+          Filter Pins
         </InputLabel>
         <Select
           labelId="demo-multiple-checkbox-label"
