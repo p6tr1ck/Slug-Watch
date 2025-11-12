@@ -24,6 +24,7 @@ export default function Map() {
     setViewMyPins,
     createMode,
     setCreateMode,
+    setViewPolicePins,
     viewPolicePins,
   } = useContext(AuthContext);
   const { width } = useWindowDimensions();
@@ -87,17 +88,6 @@ export default function Map() {
     );
   }
 
-  // If user wants to view their own pins, then set
-  // viewMyPins to be true. If user wants to view all pins
-  // then set viewMyPins to be false.
-  function clickMyPins() {
-    if (viewMyPins) {
-      setViewMyPins(false);
-    } else {
-      setViewMyPins(true);
-    }
-  }
-
   return (
     <div className="relative h-full w-full">
       {/* Show the create pin button on the bottom right of the screen for logged in users */}
@@ -149,28 +139,45 @@ export default function Map() {
       `}</style>
         {/* If logged in user is not on a mobile device, then put the view pin button 
         at the top right of screen. */}
-        {session && width >= 600 ? (
+        {session && width >= 600 && (
           <button
             type="button"
-            onClick={() => clickMyPins()}
+            onClick={() => setViewMyPins((v) => !v)}
             style={{
               position: "absolute",
               top: "1rem",
               right: "1rem",
               zIndex: 1000,
-              background: session ? "white" : "#f2f2f2",
+              background: "white",
               border: "1px solid #ccc",
               borderRadius: "0.375rem",
               padding: "0.5rem 1rem",
-              cursor: session ? "pointer" : "not-allowed",
+              cursor: "pointer",
               boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
             }}
             title={session ? undefined : "Sign in to filter by your pins"}
           >
             {viewMyPins ? "View all pins" : "View my pins"}
           </button>
-        ) : (
-          <></>
+        )}
+        {width >= 600 && (
+          <button
+            type="button"
+            onClick={() => setViewPolicePins((v) => !v)}
+            style={{
+              position: "absolute",
+              top: session ? "3.5rem" : "0.5rem",
+              right: "1rem",
+              zIndex: 1000,
+              background: session ? "white" : "#f2f2f2",
+              border: "1px solid #ccc",
+              borderRadius: "0.375rem",
+              padding: "0.5rem 1rem",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+            }}
+          >
+            {viewPolicePins ? "View all pins" : "View police pins"}
+          </button>
         )}
         <UserPins />
         <PolicePins />
