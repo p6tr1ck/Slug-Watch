@@ -71,7 +71,7 @@ export async function delInSupa({id}){
 
 export async function editToSupa({id, form, m}){
     const [lat, lng] = m.position;
-    const edit = {title:form.title, category: form.category, description: form.description, lat: lat, long: lng,};
+    const edit = {title: form.title, category: form.category, description: form.description, lat: lat, long: lng,};
     const {data, error} = await supabase.from("example_pins").update(edit).eq("id",id).select("id, title, category, description, lat, long, created_at, user_id").single();
     if (error) throw error;
     return data;
