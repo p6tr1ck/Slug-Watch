@@ -143,6 +143,7 @@ export default function Map() {
   const { session } = useContext(AuthContext);
   const currentUserId = session?.user?.id ?? null;
   const [createMode, setCreateMode] = useState(false);
+  const [activePanelTab, setActivePanelTab] = useState("pins");
   const [markers, setMarkers] = useState([
     { id: 1, position: position1, title: "Custom colored marker", address: "", datetime: "", category: "TAPS", description: "Category: Example\nDetail: Example", className: "marker-blue", ownerId: null },
     { id: 2, position: position2, title: "Alert", address: "", datetime: "", category: "Theft", description: "Category: Safety\nDetail: Example red pin", className: "marker-red", ownerId: null },
@@ -197,6 +198,38 @@ export default function Map() {
 
   return (
     <div className="relative h-full w-full">
+      <div className="absolute left-4 top-4 z-40 w-80 rounded-xl bg-white/95 shadow-lg border border-slate-200 backdrop-blur-sm">
+        <div className="flex text-sm font-semibold text-slate-500">
+          {[
+            { id: "pins", label: "Pins" },
+            { id: "moderation", label: "Moderation" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActivePanelTab(tab.id)}
+              className={`flex-1 px-3 py-2 border-b-2 ${activePanelTab === tab.id ? "text-blue-700 border-blue-600" : "border-transparent hover:text-slate-700"}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="p-4 min-h-[96px] text-sm text-slate-700">
+          {activePanelTab === "moderation" ? (
+            <div className="text-slate-400 italic">
+              Moderation tools will live here. This tab is intentionally blank until the feature is ready.
+            </div>
+          ) : (
+            <div>
+              <p className="font-semibold text-slate-900 mb-1">Create and manage pins</p>
+              <p>
+                Use the map to drop pins, then fill out the popup form. Only the creator of a pin can edit or delete it.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div style={{ position: 'absolute', right: 16, bottom: 16, zIndex: 1000 }}>
         <button
           onClick={() => setCreateMode((v) => !v)}

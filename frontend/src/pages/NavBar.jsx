@@ -15,6 +15,7 @@ export default function NavBar() {
       </Link>
       <div className="flex items-center space-x-4">
         <Link to="/home">Home</Link>
+        <Link to="/moderation">Moderation</Link>
         <Link to="/signin">
           {session ? (
             <img
