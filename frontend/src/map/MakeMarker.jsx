@@ -23,20 +23,6 @@ export default function MakeMarker({
 }) {
   const [expanded, setExpanded] = useState(false);
 
-  const copyDetails = async () => {
-    const [lat, lng] = position || [];
-    const text = [
-      `Title: ${title ?? ""}`,
-      category ? `Category: ${category}` : "",
-      time ? `Time: ${time}` : "",
-      description ? `Description: ${description}` : "",
-      lat && lng ? `Location: ${lat}, ${lng}` : "",
-    ]
-      .filter(Boolean)
-      .join("\n");
-    await navigator.clipboard.writeText(text);
-  };
-
   const directionsUrl = () => {
     const [lat, lng] = position || [];
     return lat && lng
@@ -110,7 +96,7 @@ export default function MakeMarker({
               rel="noreferrer"
               className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm hover:bg-slate-50 transition"
             >
-              {/* Simple pin glyph */}
+              {/* Simple options */}
               <svg
                 width="16"
                 height="16"
