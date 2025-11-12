@@ -18,33 +18,16 @@ const bounds = [
 ];
 
 export default function Map() {
-  const { session, viewMyPins, setViewMyPins, createMode, setCreateMode } =
-    useContext(AuthContext);
+  const {
+    session,
+    viewMyPins,
+    setViewMyPins,
+    createMode,
+    setCreateMode,
+    viewPolicePins,
+  } = useContext(AuthContext);
   const { width } = useWindowDimensions();
-  const [markers, setMarkers] = useState([
-    {
-      id: 1,
-      position: position1,
-      title: "Custom colored marker",
-      address: "",
-      datetime: "",
-      category: "TAPS",
-      description: "Category: Example\nDetail: Example",
-      className: "marker-blue",
-      ownerId: null,
-    },
-    {
-      id: 2,
-      position: position2,
-      title: "Alert",
-      address: "",
-      datetime: "",
-      category: "Theft",
-      description: "Category: Safety\nDetail: Example red pin",
-      className: "marker-red",
-      ownerId: null,
-    },
-  ]);
+  const [markers, setMarkers] = useState([]);
 
   useEffect(() => {
     if (!session && createMode) {

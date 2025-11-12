@@ -14,6 +14,7 @@ function App() {
   const currentSession = supabase.auth.session?.() ?? null;
   const [session, setSession] = useState(currentSession);
   const [viewMyPins, setViewMyPins] = useState(false);
+  const [viewPolicePins, setViewPolicePins] = useState(false);
   const [createMode, setCreateMode] = useState(false);
   const { width } = useWindowDimensions();
 
@@ -45,6 +46,8 @@ function App() {
         setViewMyPins,
         createMode,
         setCreateMode,
+        viewPolicePins,
+        setViewPolicePins,
       }}
     >
       <BrowserRouter>

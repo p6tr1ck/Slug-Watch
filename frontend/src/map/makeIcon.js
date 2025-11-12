@@ -29,7 +29,7 @@ const suspiciousPerson = (category) => {
 const verifiedCheckmark = (category) => {
   return new L.Icon({
     iconUrl: VerifiedCheckmark,
-    iconSize: [25, 25],
+    iconSize: [30, 30],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
     category,

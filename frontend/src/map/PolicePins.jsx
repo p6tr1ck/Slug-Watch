@@ -4,7 +4,7 @@ import { AuthContext } from "../App";
 import MakeMarker from "./MakeMarker";
 
 export default function PolicePins() {
-  const { session, viewMyPins } = useContext(AuthContext);
+  const { viewPolicePins, viewMyPins } = useContext(AuthContext);
   const [pins, setPins] = useState([]);
 
   // Pull user made pins from the database.
@@ -37,30 +37,21 @@ export default function PolicePins() {
 
   return (
     <>
-      {session && viewMyPins // User only wants to see their pins on the map
-        ? pins.map((pin) => {
-            if (pin.user_id === session.user.id) {
-              return (
-                <MakeMarker
-                  key={pin.id}
-                  title={pin.title}
-                  time={pin.time}
-                  position={[pin.lat, pin.long]}
-                />
-              );
-            }
-          })
-        : pins.map((pin) => {
-            return (
-              <MakeMarker
-                key={pin.id}
-                title={pin.title}
-                time={pin.created_at}
-                position={[pin.lat, pin.long]}
-                category={"Verified"}
-              />
-            );
-          })}
+      {!viewPolicePins && viewMyPins ? (
+        <></>
+      ) : (
+        pins.map((pin) => {
+          return (
+            <MakeMarker
+              key={pin.id}
+              title={pin.title}
+              time={pin.created_at}
+              position={[pin.lat, pin.long]}
+              category={"Verified"}
+            />
+          );
+        })
+      )}
     </>
   );
 }

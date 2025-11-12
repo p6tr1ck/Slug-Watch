@@ -4,7 +4,7 @@ import { AuthContext } from "../App";
 import MakeMarker from "./MakeMarker";
 
 export default function UserPins() {
-  const { session, viewMyPins } = useContext(AuthContext);
+  const { session, viewMyPins, viewPolicePins } = useContext(AuthContext);
   const [pins, setPins] = useState([]);
 
   // Pull user made pins from the database.
@@ -37,6 +37,7 @@ export default function UserPins() {
     getPins();
   }, []);
 
+  if (viewPolicePins && !viewMyPins) return null;
   return (
     <>
       {session && viewMyPins // User only wants to see their pins on the map

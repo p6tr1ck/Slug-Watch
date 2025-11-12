@@ -9,15 +9,14 @@ import { useContext } from "react";
 import { AuthContext } from "../App";
 
 export default function BottomBar() {
-  const { viewMyPins, setViewMyPins, session, setCreateMode } =
-    useContext(AuthContext);
-  function userPinVisibility() {
-    if (!viewMyPins) {
-      setViewMyPins(true);
-    } else {
-      setViewMyPins(false);
-    }
-  }
+  const {
+    viewMyPins,
+    setViewMyPins,
+    session,
+    setCreateMode,
+    viewPolicePins,
+    setViewPolicePins,
+  } = useContext(AuthContext);
 
   return (
     <div className="fixed bottom-0 left-0 w-full h-20">
@@ -27,8 +26,10 @@ export default function BottomBar() {
           <p>Home</p>
         </Link>
         <div>
-          <LocalPoliceIcon />
-          <p>Police Pins</p>
+          <button onClick={() => setViewPolicePins((v) => !v)}>
+            {viewPolicePins ? <LocalPoliceIcon /> : <VisibilityOffIcon />}
+            <p>Police Pins</p>
+          </button>
         </div>
         <div className="border border-black">
           <button
@@ -38,7 +39,7 @@ export default function BottomBar() {
             <AddIcon />
           </button>
         </div>
-        <button onClick={() => userPinVisibility()}>
+        <button onClick={() => setViewMyPins((v) => !v)}>
           {viewMyPins ? <VisibilityIcon /> : <VisibilityOffIcon />}
           <p>My Pins</p>
         </button>
