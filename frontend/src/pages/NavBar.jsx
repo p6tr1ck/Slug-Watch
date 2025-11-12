@@ -13,7 +13,7 @@ export default function NavBar() {
         <img src={Logo} className="h-auto w-10 mr-2"></img>
         <div className="font-bold text-lg">Slug Watch</div>
       </Link>
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-3">
         <Link to="/home">Home</Link>
         <Link to="/signin">
           {session ? (

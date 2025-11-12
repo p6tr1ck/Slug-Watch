@@ -1,46 +1,27 @@
-import { useEffect, useRef, useState, useContext } from "react";
+import { useEffect, useState, useContext } from "react";
 import { MapContainer, TileLayer, useMapEvents } from "react-leaflet";
+
 import "leaflet/dist/leaflet.css";
+import useWindowDimensions from "../WindowDimensions";
 import MarkerWithPopup from "./MarkerWithPopup";
 import { AuthContext } from "../App";
+import UserPins from "./UserPins";
+import PolicePins from "./PolicePins";
+import FilterPins from "./FilterPins";
 
 // --- Example pin data ---
-
 const position1 = [36.98946, -122.06124];
 const position2 = [36.99456, -122.05432];
 
 const bounds = [
-  [36.972521, -122.071543], // southwest corner
-  [37.003957, -122.045296], // northeast corner
+  [36.97818, -122.07764], // southwest corner
+  [37.004057, -122.035647], // northeast corner
 ];
 
 export default function Map() {
-  const { session } = useContext(AuthContext);
-  const [createMode, setCreateMode] = useState(false);
-  const [markers, setMarkers] = useState([
-    {
-      id: 1,
-      position: position1,
-      title: "Custom colored marker",
-      address: "",
-      datetime: "",
-      category: "TAPS",
-      description: "Category: Example\nDetail: Example",
-      className: "marker-blue",
-      ownerId: null,
-    },
-    {
-      id: 2,
-      position: position2,
-      title: "Alert",
-      address: "",
-      datetime: "",
-      category: "Theft",
-      description: "Category: Safety\nDetail: Example red pin",
-      className: "marker-red",
-      ownerId: null,
-    },
-  ]);
+  const { session, createMode, setCreateMode } = useContext(AuthContext);
+  const { width } = useWindowDimensions();
+  const [markers, setMarkers] = useState([]);
 
   useEffect(() => {
     if (!session && createMode) {
@@ -102,7 +83,8 @@ export default function Map() {
 
   return (
     <div className="relative h-full w-full">
-      {session ? (
+      {/* Show the create pin button on the bottom right of the screen for logged in users */}
+      {session && width >= 600 ? (
         <div
           style={{ position: "absolute", right: 16, bottom: 16, zIndex: 1000 }}
         >
@@ -136,20 +118,24 @@ export default function Map() {
         minZoom={14.5}
         maxZoom={17}
         zoomSnap={0.1}
+        doubleClickZoom={false}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-
+        {/* CSS filters to recolor the default marker icon */}
         <style>{`
-          .leaflet-marker-icon.marker-blue { filter: hue-rotate(0deg); }
-          .leaflet-marker-icon.marker-green { filter: hue-rotate(250deg); }
-          .leaflet-marker-icon.marker-red  { filter: hue-rotate(130deg); }
-        `}</style>
-
+        .leaflet-marker-icon.marker-blue { filter: hue-rotate(0deg); }
+        .leaflet-marker-icon.marker-green { filter: hue-rotate(250deg); }
+        .leaflet-marker-icon.marker-red  { filter: hue-rotate(130deg); }
+      `}</style>
+        {/* If user is not on a mobile device, then put the filter pins button 
+        at the top right of screen. */}
+        {width >= 600 && <FilterPins />}
+        <UserPins />
+        <PolicePins />
         <MapClickHandler createMode={createMode} onMapClick={handleMapClick} />
-
         {markers.map((m) => {
           const canModify = Boolean(session) && m.ownerId === session;
           return (
@@ -162,15 +148,15 @@ export default function Map() {
             />
           );
         })}
-      </MapContainer>
 
-      {createMode && (
-        <div className="absolute left-4 top-1/4 z-40 bg-white/90 px-3 py-2 rounded shadow">
-          <div className="text-sm">
-            Click anywhere on the map to place a pin.
+        {createMode && (
+          <div className="absolute left-4 top-1/4 z-40 bg-white/90 px-3 py-2 rounded shadow">
+            <div className="text-sm">
+              Click anywhere on the map to place a pin.
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </MapContainer>
     </div>
   );
 }
