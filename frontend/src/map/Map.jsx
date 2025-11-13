@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import MarkerWithPopup from "./MarkerWithPopup";
 import { AuthContext } from "../App";
+//import { send_report_db } from "../../sbReportHandle";
 
 // --- Example pin data ---
 
@@ -16,6 +17,7 @@ const bounds = [
 
 export default function Map() {
   const { session } = useContext(AuthContext);
+  const currUserID = session?.user?.id ?? (typeof session === "string" ? session : null)
   const [createMode, setCreateMode] = useState(false);
   const [markers, setMarkers] = useState([
     {
@@ -74,7 +76,7 @@ export default function Map() {
       description: "",
       className: "marker-green",
       isNew: true,
-      ownerId: session,
+      ownerId: currUserID,
     };
     setMarkers((m) => [...m, newMarker]);
     setCreateMode(false);
@@ -84,7 +86,7 @@ export default function Map() {
     setMarkers((prev) =>
       prev.map((m) => {
         if (m.id !== id) return m;
-        if (!session || m.ownerId !== session) return m;
+        if (!currUserID || m.ownerId !== currUserID) return m;
         return { ...m, ...patch };
       })
     );
@@ -94,7 +96,7 @@ export default function Map() {
     setMarkers((prev) =>
       prev.filter((m) => {
         if (m.id !== id) return true;
-        if (!session || m.ownerId !== session) return true;
+        if (!currUserID || m.ownerId !== currUserID) return true;
         return false;
       })
     );
