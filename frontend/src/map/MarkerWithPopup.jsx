@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Marker, Popup } from "react-leaflet";
 import makeIcon from "./MakeIcon";
 import { ReportPost } from "./reportPopup.jsx"
+import { insToSupa, delInSupa, editToSupa } from "../supaPins.js";
 
 export default function MarkerWithPopup({
   m,
@@ -23,6 +24,7 @@ export default function MarkerWithPopup({
   });
 
   const [showReport, setShowReport] = useState()
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     // keep local form in sync when parent marker changes
@@ -61,21 +63,32 @@ export default function MarkerWithPopup({
     form.description.trim();
   const disabled = !canModify;
 
-  function onSave() {
+  async function onSave() {
     if (disabled || !allFilled) return;
-    updateMarker(m.id, { ...form, isNew: false });
+    setSaving(true);
     try {
-      markerRef.current.closePopup();
+      let row;
+      if (m.supabaseId){
+        row = await editToSupa({id: m.supabaseId, form, m });
+      }else{
+        row = await insToSupa({form, m});
+      }
+      const upd = {...m, supabaseId: row.id, title: row.title, category: row.category, description: row.description, position: [row.lat, row.long], isNew: false};
+      updateMarker(m.id, upd);
+      markerRef.current?.closePopup();
     } catch (e) {
       console.error("Error saving pin: ", e);
+    }finally{
+      setSaving(false);
     }
   }
 
-  function onDelete() {
+  async function onDelete() {
     if (disabled) return;
-    removeMarker(m.id);
     try {
-      markerRef.current.closePopup();
+      if (m.supabaseId) await delInSupa({id: m.supabaseId});
+      removeMarker(m.id);
+      markerRef.current?.closePopup();
     } catch (e) {
       console.error("Error deleting pin: ", e);
     }

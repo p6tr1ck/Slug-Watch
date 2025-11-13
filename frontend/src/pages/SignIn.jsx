@@ -3,9 +3,11 @@ import { supabase } from "../../supabaseClient";
 import GoogleButton from "react-google-button";
 import { Button } from "@mui/material";
 import { AuthContext } from "../App";
+import useWindowDimensions from "../WindowDimensions";
 
 export default function SignIn() {
   const { session } = useContext(AuthContext);
+  const { width } = useWindowDimensions();
 
   useEffect(() => {
     if (session) {
@@ -56,7 +58,11 @@ export default function SignIn() {
     );
   } else {
     return (
-      <div className="h-50 flex justify-center items-center flex-col space-y-5">
+      <div
+        className={`${
+          width <= 600 ? "h-full" : "h-[50vh]"
+        } flex justify-center items-center flex-col space-y-5`}
+      >
         <h2 className="text-lg">
           Welcome, {session.user.user_metadata.full_name}!
         </h2>
