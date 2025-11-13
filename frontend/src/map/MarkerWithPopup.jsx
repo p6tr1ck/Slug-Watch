@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Marker, Popup } from "react-leaflet";
 import makeIcon from "./MakeIcon";
+import { ReportPost } from "./reportPopup.jsx"
 
 export default function MarkerWithPopup({
   m,
   updateMarker,
   removeMarker,
   canModify,
+  onReport,
+  currUserID
 }) {
   const markerRef = useRef(null);
   const categories = ["TAPS", "ICE", "Suspicious Activity", "Theft", "Other"];
@@ -19,6 +22,8 @@ export default function MarkerWithPopup({
     description: m.description || "",
   });
 
+  const [showReport, setShowReport] = useState()
+
   useEffect(() => {
     // keep local form in sync when parent marker changes
     setForm({
@@ -28,6 +33,7 @@ export default function MarkerWithPopup({
       category: m.category || categories[0],
       description: m.description || "",
     });
+    setShowReport(false);
   }, [m.id]);
 
   useEffect(() => {
@@ -40,6 +46,12 @@ export default function MarkerWithPopup({
       }
     }
   }, [m.isNew]);
+
+  function handleReportSub(data){
+    if (onReport) onReport(data);
+    else console.log("Report sent: ", data);
+    setShowReport(false);
+  }
 
   const allFilled =
     form.title.trim() &&
@@ -154,8 +166,23 @@ export default function MarkerWithPopup({
               You can only edit your own pins.
             </div>
           )}
+           <button
+            className="mt-2 px-2 py-1 rounded border"
+            onClick={() => setShowReport((v) => !v)}>
+            {showReport ? "Close report" : "Report"}
+          </button>
+          {showReport && (
+            <div className="mt-2">
+              <ReportPost
+                pinId={m.id}
+                userId={currUserID}
+                onSubmit={handleReportSub}
+                onCancel={() => setShowReport(false)}/>
+            </div>
+          )}
         </div>
       </Popup>
     </Marker>
   );
+
 }
