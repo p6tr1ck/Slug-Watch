@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 
 export function ReportPost({pID,uID, onSub, onCancel}) {
     const reasons= ["Spam", "Misinformation", "Personal Info/DOXX", "Duplicate", "Other"];
+
+    let w = 0;
     
     /* 
     2 personal info reports should trigger a review
@@ -14,16 +16,13 @@ export function ReportPost({pID,uID, onSub, onCancel}) {
 
 
     const [form, setForm] = useState({ reason: reasons[0], details: "" });
-
     useEffect(() => {
         return () => setForm ({reason:reasons[0], details:""});
-
     }, [pID]);
 
     function submit(){
-        const ticket = {pid:pID, reporter:uID, reason:form.reason, details:form.details.trim()};
+        const ticket = {post_id:pID, reporter_id:uID, category:form.reason, desc:form.details.trim(), weight: w};
         onSub?.(ticket);
-        //send ticket to data base
     }
 
     function stop(e){

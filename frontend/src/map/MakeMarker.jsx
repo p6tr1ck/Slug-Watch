@@ -1,6 +1,8 @@
 import { Marker, Popup } from "react-leaflet";
 import { useState } from "react";
 import makeIcon from "./MakeIcon";
+import { ReportPost } from "./reportPopup";
+
 
 const categoryChip = (category = "") => {
   const c = category.toLowerCase();
@@ -15,13 +17,18 @@ const categoryChip = (category = "") => {
 };
 
 export default function MakeMarker({
+  pId,
   title,
   category,
   description,
   time,
   position, // [lat, lng]
+  currUserID,
+  onReport,
+  canReport = false,
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   const directionsUrl = () => {
     const [lat, lng] = position || [];
@@ -32,6 +39,14 @@ export default function MakeMarker({
 
   const shortText = (t, n = 140) =>
     t && t.length > n ? t.slice(0, n) + "…" : t;
+
+  function handleReportSub(ticket){
+    if(onReport) onReport(ticket);
+    else console.log("report ticket: ", ticket);
+    setShowReport(false);
+  }
+
+  const showReportCtrl = canReport && !!onReport && !!currUserID;
 
   return (
     <Marker position={position} icon={makeIcon(category)}>
@@ -110,7 +125,27 @@ export default function MakeMarker({
               </svg>
               Directions
             </a>
+            {/* button opposite of directions, red outline,leads to report popup*/}
+            {showReportCtrl && (
+              <button
+                type = "button"
+                className="inline-flex-items-center gap-1 rounded-lg border border-rose-300 px-2.5 py-1.5 text-sm test-rose-700 hover:bg-rose-50 transition"
+                onClick={() => setShowReport((v)=>!v)}
+                > 
+                {showReport ? "Close" : "Report Post"}
+              </button>
+            )}
           </div>
+          {showReportCtrl && showReport && (
+            <div className="px-3 pb-3">
+              <ReportPost
+                pID={pId}
+                uID={currUserID}
+                onSub={handleReportSub}
+                onCancel={() => setShowReport(false)}
+              />
+            </div>
+          )}
         </div>
       </Popup>
     </Marker>

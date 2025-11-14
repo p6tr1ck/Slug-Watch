@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 import { AuthContext } from "../App";
 import MakeMarker from "./MakeMarker";
+import { send_report_db } from "../sbReportHandle";
 
 export default function UserPins() {
   const { session, viewMyPins, viewPolicePins } = useContext(AuthContext);
@@ -37,6 +38,12 @@ export default function UserPins() {
     getPins();
   }, []);
 
+  async function handleReport(ticket){
+    //use supabase functions to send data (look at my old supaPins implem)
+    console.log("ticket to submit: ", ticket);
+    send_report_db(ticket);
+  }
+
   if (viewPolicePins && !viewMyPins) return null;
   return (
     <>
@@ -46,11 +53,15 @@ export default function UserPins() {
               return (
                 <MakeMarker
                   key={pin.id}
+                  pId = {pin.id}
                   title={pin.title}
                   category={pin.category}
                   description={pin.description}
+                  currUserID={session.user.id}
                   time={pin.time}
                   position={[pin.lat, pin.long]}
+                  canReport={true}
+                  onReport={handleReport}
                 />
               );
             }
@@ -59,11 +70,15 @@ export default function UserPins() {
             return (
               <MakeMarker
                 key={pin.id}
+                pId={pin.id}
                 title={pin.title}
                 category={pin.category}
                 description={pin.description}
                 time={pin.created_at}
                 position={[pin.lat, pin.long]}
+                currUserID={session.user.id}
+                canReport={!!session}
+                onReport={handleReport}
               />
             );
           })}

@@ -44,10 +44,12 @@ export default function PolicePins() {
           return (
             <MakeMarker
               key={pin.id}
+              pId={pin.id}
               title={pin.title}
               time={pin.created_at}
               position={[pin.lat, pin.long]}
               category={"Verified"}
+              canReport={false}
             />
           );
         })
