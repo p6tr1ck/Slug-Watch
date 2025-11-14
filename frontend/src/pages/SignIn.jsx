@@ -9,6 +9,10 @@ export default function SignIn() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
+  const buttonEvent = (e) => {
+    console.log(e);
+  };
+
   useEffect(() => {
     if (!session) return;
     let cancelled = false;
@@ -119,7 +123,10 @@ export default function SignIn() {
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <button className="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-400 transition">
+            <button
+              className="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-400 transition"
+              onClick={(e) => buttonEvent(e.target.textContent)}
+            >
               College Nine
             </button>
             <button className="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-400 transition">
@@ -145,6 +152,9 @@ export default function SignIn() {
             </button>
             <button className="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-400 transition">
               Stevenson College
+            </button>
+            <button className="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-400 transition">
+              All
             </button>
           </div>
         </div>
