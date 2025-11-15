@@ -3,15 +3,13 @@ import { useEffect, useContext, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import GoogleButton from "react-google-button";
 import { AuthContext } from "../App";
+import Locations from "./Locations";
+import SaveLocations from "./SaveLocations";
 
 export default function SignIn() {
   const { session } = useContext(AuthContext);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-
-  const buttonEvent = (e) => {
-    console.log(e);
-  };
 
   useEffect(() => {
     if (!session) return;
@@ -115,50 +113,7 @@ export default function SignIn() {
             <p className="text-slate-600">{email}</p>
           </div>
         </div>
-
-        <div className="mt-6">
-          <p className="text-slate-800 font-medium">Notification areas</p>
-          <p className="text-slate-500 dark:text-slate-700 text-sm">
-            Select locations to receive alerts.
-          </p>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              className="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-400 transition"
-              onClick={(e) => buttonEvent(e.target.textContent)}
-            >
-              College Nine
-            </button>
-            <button className="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-400 transition">
-              Cowell College
-            </button>
-            <button className="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-400 transition">
-              Crown College
-            </button>
-            <button className="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-400 transition">
-              John R. Lewis College
-            </button>
-            <button className="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-400 transition">
-              Kresge College
-            </button>
-            <button className="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-400 transition">
-              Merrill College
-            </button>
-            <button className="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-400 transition">
-              Oakes College
-            </button>
-            <button className="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-400 transition">
-              Porter College
-            </button>
-            <button className="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-400 transition">
-              Stevenson College
-            </button>
-            <button className="px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-400 transition">
-              All
-            </button>
-          </div>
-        </div>
-
+        <Locations />
         <div className="mt-8 flex justify-between">
           <Button
             variant="outlined"
@@ -168,12 +123,7 @@ export default function SignIn() {
           >
             {busy ? "Signing out…" : "Sign out"}
           </Button>
-          <Button
-            variant="contained"
-            sx={{ textTransform: "none", fontSize: 16, borderRadius: 2 }}
-          >
-            Save preferences
-          </Button>
+          <SaveLocations />
         </div>
 
         {busy && (
