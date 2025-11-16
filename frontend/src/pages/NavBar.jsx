@@ -3,6 +3,7 @@ import Logo from "../assets/slug_watch_logo.PNG";
 import PersonIcon from "@mui/icons-material/Person";
 import { useContext } from "react";
 import { AuthContext } from "../App";
+import Notifications from "./Notifications";
 
 export default function NavBar() {
   const { session } = useContext(AuthContext);
@@ -15,6 +16,7 @@ export default function NavBar() {
       </Link>
       <div className="flex items-center space-x-3">
         <Link to="/home">Home</Link>
+        <Notifications />
         <Link to="/signin">
           {session ? (
             <img
