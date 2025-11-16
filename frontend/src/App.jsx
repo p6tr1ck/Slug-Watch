@@ -49,8 +49,6 @@ function App() {
         setCreateMode,
         viewPolicePins,
         setViewPolicePins,
-        locations,
-        setLocations,
       }}
     >
       <BrowserRouter>

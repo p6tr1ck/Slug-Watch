@@ -2,10 +2,9 @@ import { useContext, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import { AuthContext } from "../App";
 import { Button } from "@mui/material";
-import { useEffect } from "react";
 
-export default function SaveLocations() {
-  const { session, locations } = useContext(AuthContext);
+export default function SaveLocations({ locations }) {
+  const { session } = useContext(AuthContext);
   const [text, setText] = useState("Save preferences");
 
   const buttonEvent = async () => {

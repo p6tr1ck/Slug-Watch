@@ -1,5 +1,7 @@
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { AuthContext } from "../App";
+import { supabase } from "../../supabaseClient";
+import { useState } from "react";
 
 const areas = [
   "College Nine",
@@ -16,8 +18,29 @@ const areas = [
   "All",
 ];
 
-export default function Locations() {
-  const { locations, setLocations } = useContext(AuthContext);
+export default function Locations({ locations, setLocations }) {
+  const { session } = useContext(AuthContext);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    async function getLocations() {
+      if (!session) return;
+      const { data, error } = await supabase
+        .from("users")
+        .select("locations")
+        .eq("UID", session.user.id)
+        .single();
+
+      if (error) {
+        console.error("Could not get locations from user, error: ", error);
+      }
+
+      // Make sure data exists and default to [] if null
+      setLocations(data?.locations ?? []);
+      setIsLoaded(true);
+    }
+    getLocations();
+  }, []);
 
   const buttonEvent = (e) => {
     // Unselect "None" if a location is clicked.
@@ -74,7 +97,8 @@ export default function Locations() {
               className={`px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 transition
           hover:bg-slate-50 dark:hover:bg-slate-400
           ${
-            isSelected || (label === "None" && locations.length === 0)
+            isSelected ||
+            (isLoaded && label === "None" && locations.length === 0)
               ? "bg-blue-500 text-white"
               : "bg-white"
           }`}

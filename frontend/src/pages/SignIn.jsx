@@ -6,8 +6,16 @@ import { AuthContext } from "../App";
 import Locations from "./Locations";
 import SaveLocations from "./SaveLocations";
 
+// Background + centering wrapper
+const Wrapper = ({ children }) => (
+  <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-4">
+    <div className="w-full max-w-lg mt-[-25vh]">{children}</div>
+  </div>
+);
+
 export default function SignIn() {
   const { session } = useContext(AuthContext);
+  const [locations, setLocations] = useState([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -59,13 +67,6 @@ export default function SignIn() {
     });
   };
 
-  // Background + centering wrapper
-  const Wrapper = ({ children }) => (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-4">
-      <div className="w-full max-w-lg mt-[-25vh]">{children}</div>
-    </div>
-  );
-
   if (!session) {
     return (
       <Wrapper>
@@ -113,7 +114,7 @@ export default function SignIn() {
             <p className="text-slate-600">{email}</p>
           </div>
         </div>
-        <Locations />
+        <Locations locations={locations} setLocations={setLocations} />
         <div className="mt-8 flex justify-between">
           <Button
             variant="outlined"
@@ -123,7 +124,7 @@ export default function SignIn() {
           >
             {busy ? "Signing out…" : "Sign out"}
           </Button>
-          <SaveLocations />
+          <SaveLocations locations={locations} />
         </div>
 
         {busy && (
