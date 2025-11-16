@@ -19,15 +19,7 @@ const bounds = [
 ];
 
 export default function Map() {
-  const {
-    session,
-    viewMyPins,
-    setViewMyPins,
-    createMode,
-    setCreateMode,
-    setViewPolicePins,
-    viewPolicePins,
-  } = useContext(AuthContext);
+  const { session, createMode, setCreateMode } = useContext(AuthContext);
   const { width } = useWindowDimensions();
   const [markers, setMarkers] = useState([]);
 
