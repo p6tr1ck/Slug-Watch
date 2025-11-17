@@ -4,16 +4,14 @@ import { supabase } from "../../supabaseClient";
 import { useState } from "react";
 
 const areas = [
-  "College Nine",
-  "Cowell College",
-  "Crown College",
+  "College Nine & John R. Lewis College",
+  "Cowell & Stevenson College",
+  "Crown & Merrill College",
+  "Porter & Kresge College",
+  "Oakes & Rachel Carson College",
   "Family Student Housing",
-  "John R. Lewis College",
-  "Kresge College",
-  "Merrill College",
-  "Oakes College",
-  "Porter College",
-  "Stevenson College",
+  "West Remote Parking Lot",
+  "East Remote Parking Lot",
   "None",
   "All",
 ];
