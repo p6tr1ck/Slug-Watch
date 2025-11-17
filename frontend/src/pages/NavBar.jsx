@@ -16,7 +16,7 @@ export default function NavBar() {
       </Link>
       <div className="flex items-center space-x-3">
         <Link to="/home">Home</Link>
-        <Notifications />
+        {session && <Notifications />}
         <Link to="/signin">
           {session ? (
             <img

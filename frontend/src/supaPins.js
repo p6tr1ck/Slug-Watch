@@ -1,4 +1,5 @@
 import { supabase } from "../supabaseClient.js";
+import isInBounds from "./map/boundsCheck.js";
 
 function normDateTime(raw) {
   if (!raw) return null;
@@ -59,6 +60,7 @@ export async function insToSupa({ form, m }) {
     throw err;
   }
   const [lat, lng] = m.position;
+  const location = isInBounds(lat, lng);
   const supaRow = {
     title: form.title,
     category: form.category,
@@ -67,6 +69,7 @@ export async function insToSupa({ form, m }) {
     user_id: uid,
     description: form.description,
     created_at: normDateTime(form.datetime),
+    location: location,
   };
   const { data, error } = await supabase
     .from("example_pins")

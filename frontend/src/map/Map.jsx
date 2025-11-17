@@ -58,7 +58,6 @@ export default function Map() {
       isNew: true,
       ownerId: session,
     };
-    console.log(isInBounds(latlng[0], latlng[1]));
     setMarkers((m) => [...m, newMarker]);
     setCreateMode(false);
   }

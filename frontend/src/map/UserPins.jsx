@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 import { AuthContext } from "../App";
 import MakeMarker from "./MakeMarker";
+import isInBounds from "./boundsCheck";
 
 function mapPin(data) {
   return {
@@ -24,33 +25,45 @@ export default function UserPins() {
 
   // subscribe to real time changes
   useEffect(() => {
+    // handler for INSERT events
     const channel = supabase
       .channel("realtime:example_pins")
+      // INSERT → use handler that can do async/notifications
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
           schema: "public",
           table: "example_pins",
         },
         (payload) => {
-          if (payload.eventType === "INSERT") {
-            setPins((pins) => [...pins, mapPin(payload.new)]);
-          }
-
-          if (payload.eventType === "UPDATE") {
-            // replace the pin
-            setPins((pins) =>
-              pins.map((p) =>
-                p.id === payload.new.id ? mapPin(payload.new) : p
-              )
-            );
-          }
-
-          if (payload.eventType === "DELETE") {
-            // remove it
-            setPins((pins) => pins.filter((p) => p.id !== payload.old.id));
-          }
+          setPins((prev) => [...prev, mapPin(payload.new)]);
+        }
+      )
+      // UPDATE → replace the pin in state
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "example_pins",
+        },
+        (payload) => {
+          setPins((prev) =>
+            prev.map((p) => (p.id === payload.new.id ? mapPin(payload.new) : p))
+          );
+        }
+      )
+      // DELETE → remove the pin
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "example_pins",
+        },
+        (payload) => {
+          setPins((prev) => prev.filter((p) => p.id !== payload.old.id));
         }
       )
       .subscribe();
