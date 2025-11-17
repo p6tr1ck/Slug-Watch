@@ -3,39 +3,67 @@ const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 const fs = require('fs');
 const geocoding = require('@aashari/nodejs-geocoding');
-const { createClient } = require('@supabase/supabase-js')
+const { createClient } = require('@supabase/supabase-js');
+const { format } = require("path");
 
 const supabase = createClient(
   process.env.supabaseUrl,
   process.env.supabaseRoleKey
 );
 
+function normDateTime(raw) {
+  // Take only first part if it's a range like
+  // "10/20/2025 5:00 PM - 10/23/2025 2:30 PM"
+  const firstPart = raw.split(" - ")[0].trim();
+
+  // Handle "Unknown Time"
+  if (/unknown time/i.test(firstPart)) {
+    return null;
+  }
+
+  // match: MM/DD/YYYY HH:MM AM/PM or MM/DD/YYYY
+  const m = firstPart.match(
+    /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})\s*(AM|PM))?$/i
+  );
+
+  if (!m) {
+    return null;
+  }
+
+  const mm = Number(m[1]);
+  const dd = Number(m[2]);
+  const yyyy = Number(m[3]);
+  const hhStr = m[4];
+  const minStr = m[5];
+  const ampm = m[6];
+
+  let hour = 0;
+  let minute = 0;
+
+  if (hhStr !== undefined && minStr !== undefined && ampm !== undefined) {
+    hour = Number(hhStr);
+    minute = Number(minStr);
+
+    // 12-hour → 24-hour
+    if (/AM/i.test(ampm)) {
+      if (hour === 12) hour = 0; // 12 AM → 00
+    } else {
+      if (hour !== 12) hour += 12; // PM conversion
+    }
+  }
+
+  const dt = new Date(yyyy, mm - 1, dd, hour, minute, 0, 0);
+  return dt.toISOString();
+}
+
 async function fetchCoordinates(address) {
   try {
-    const results = await geocoding.encode(address); // conversion from clean address to coords
+    const results = await geocoding.encode(address);
     if (results) return results[0];
-    //if (results && typeof results === 'object') return results[0];
   } catch {
     return null;
   }
   return null;
-}
-function parseDateTime(dtString) {
-  const match = dtString.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/);
-  if (!match) {
-    return dtString;
-  }
-
-  const [_, mm, dd, yyyy, HH, MM] = match;
-
-  const monthIndex = Number(mm) - 1;
-  const dayNum = Number(dd);
-  const yearNum = Number(yyyy);
-  const hourNum = Number(HH);
-  const minNum = Number(MM);
-
-  const d = new Date(yearNum, monthIndex, dayNum, hourNum, minNum, 0, 0);
-  return d.toISOString();
 }
 
 async function scrapeUCSC() {
@@ -49,7 +77,7 @@ async function scrapeUCSC() {
   const html = await page.content();
   const $ = cheerio.load(html);
 
-  const jobs = []; //queue to allow time for encode to work
+  const jobs = [];
 
   $('table.mat-mdc-table tbody tr').each((i, el) => {
     const category = $(el).find('td.mat-column-nature').text().trim();
@@ -59,14 +87,14 @@ async function scrapeUCSC() {
     let location = $(el).find('td.mat-column-location').text().trim();
 
     const lowerRow = $(el).text().trim().toLowerCase();
-    if (lowerRow.includes('no records found')) return; //exclude days with no reported activity
-    if (disposition.toLowerCase().includes('log note')) return; //exclude log notes
+    if (lowerRow.includes('no records found')) return;
+    if (disposition.toLowerCase().includes('log note')) return;
 
-    location = location // cleaning up address, excess fluff
-      .replace(/\b(\d+)\s+block\s+of\s+/i, '$1 ') //blocks
-      .replace(/\s*\(Campus\)/gi, '') //removes campus tag
-      .replace(/^.*?,\s*(?=\d)/, '')
-      .replace(/Cllge/gi, 'College')
+    // Clean & normalize address
+    location = location
+      .replace(/\s*\(Campus\)/gi, '')
+      .replace(/\b(\d+)\s+block\s+of\s+/i, '$1 ')
+      .replace(/\bCllge\b/gi, 'College')
       .replace(/Mc\s+Laughlin/gi, 'McLaughlin')
       .replace(/\bMchenry\b/gi, 'McHenry')
       .replace(/Stevenson Service Rd\b/gi, 'Stevenson Service Road')
@@ -77,62 +105,59 @@ async function scrapeUCSC() {
       .replace(/Porter-?kresge/gi, 'Porter Kresge')
       .trim();
 
-    if (!/^\s*\d/.test(location)) return; //makes sure that theres a numerical address
+    const placeMatch = location.match(/^([^,]+)/);
+    const placeName = placeMatch ? placeMatch[1].trim() : location;
 
-    //adding city state, and zip for encode
-    location = `${location}, CA 95064`;
-    const form_date = parseDateTime(date_time)
+    // Standardize final address
+    location = `${placeName}, Santa Cruz, CA 95064`;
 
-    jobs.push({category, number, form_date, location, disposition}); //queue push
-    
+    jobs.push({ category, number, date_time, location, disposition });
   });
 
   await browser.close();
 
-  const rows = []; //rows to push to json
-  const supaRow = []
+  const rows = [];
   for (const job of jobs) {
-    const { category, number, form_date, location, disposition } = job;
-    // console.log("cat",category);
-    // console.log("num",number);
-    // console.log("date",form_date);
-    // console.log("loc",location);
-    // console.log("dis",disposition);
+    const { category, number, date_time, location, disposition } = job;
 
+    const coords = await fetchCoordinates(location);
 
-    const coords = await fetchCoordinates(location); //calls encode for coords
-
-    
-    if (!coords || coords.latitude == null || coords.longitude == null) { //checks for existence
-      console.log("couldn't find lat/long for the following: %s", job);
+    if (!coords || coords.latitude == null || coords.longitude == null) {
+      console.log("Couldn't find lat/long for:", job);
       continue;
     }
 
-    rows.push({category, number, form_date, location, lat: coords.latitude, long: coords.longitude ,disposition}); //push to finshed array
-    console.log(rows);
-
     const lat = coords.latitude;
-    const long = coords.longitude
-    const cate =  Object.values(category)[0];
-    JSON.stringify(cate, "," , "");
-    const fD = Object.values(form_date)[0];
-    
-    console.log("%s, %s, %s, %s", cate, fD, lat, long);
+    const long = coords.longitude;
+    const format_date = normDateTime(date_time);
 
-    supaRow.push({ cate, fD, lat, long});
+    const supaRow =
+      format_date == null
+        ? { crime: category, lat: lat, long: long }
+        : { crime: category, date: format_date, lat: lat, long: long };
+
     console.log(supaRow);
-    const {data, err} = await supabase.from("police_logs").insert([supaRow]);
 
-    if (err){
-      console.log("Couldn't append this to supabase: %s", data);
-    }else{
-      console.log("pushed into supabase: %s", supaRow);
+    const { data, error } = await supabase
+      .from("police_logs")
+      .insert([supaRow]);
+
+    if (error) {
+      console.log("Couldn't append to supabase:", supaRow);
+    } else {
+      console.log("Pushed into supabase:", supaRow);
     }
+
+    rows.push({
+      category,
+      number,
+      date_time,
+      location,
+      lat,
+      long,
+      disposition
+    });
   }
-
-
-  fs.writeFileSync('crime_log.json', JSON.stringify(rows, null, 2));
-  console.log('Saved to crime_log.json');
 }
 
 scrapeUCSC();
