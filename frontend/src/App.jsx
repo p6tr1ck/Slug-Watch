@@ -52,11 +52,7 @@ function App() {
       }}
     >
       <BrowserRouter>
-        <div
-          className={`flex flex-col overflow-hidden h-screen ${
-            width <= 600 ? "pb-20" : ""
-          }`}
-        >
+        <div className={`flex flex-col overflow-hidden h-screen `}>
           {width > 600 ? <NavBar /> : <></>}
           <Routes>
             <Route path="/" element={<Navigate to="/home" replace />} />

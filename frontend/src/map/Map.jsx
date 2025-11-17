@@ -1,6 +1,5 @@
 import { useEffect, useState, useContext } from "react";
 import { MapContainer, TileLayer, useMapEvents } from "react-leaflet";
-
 import "leaflet/dist/leaflet.css";
 import useWindowDimensions from "../WindowDimensions";
 import MarkerWithPopup from "./MarkerWithPopup";
@@ -8,6 +7,7 @@ import { AuthContext } from "../App";
 import UserPins from "./UserPins";
 import PolicePins from "./PolicePins";
 import FilterPins from "./FilterPins";
+import isInBounds from "./boundsCheck";
 
 // --- Example pin data ---
 const position1 = [36.98946, -122.06124];
@@ -57,6 +57,7 @@ export default function Map() {
       isNew: true,
       ownerId: session,
     };
+    console.log(isInBounds(latlng[0], latlng[1]));
     setMarkers((m) => [...m, newMarker]);
     setCreateMode(false);
   }
