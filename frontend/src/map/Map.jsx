@@ -1,5 +1,6 @@
 import { useEffect, useState, useContext } from "react";
 import { MapContainer, TileLayer, useMapEvents } from "react-leaflet";
+
 import "leaflet/dist/leaflet.css";
 import useWindowDimensions from "../WindowDimensions";
 import MarkerWithPopup from "./MarkerWithPopup";
