@@ -1,5 +1,4 @@
 import { supabase } from "../supabaseClient.js";
-import isInBounds from "./map/boundsCheck.js";
 
 function normDateTime(raw) {
   if (!raw) return null;
@@ -100,9 +99,4 @@ export async function editToSupa({ id, form, m }) {
     .single();
   if (error) throw error;
   return data;
-}
-
-export async function createNotification({ form, m }) {
-  const [lat, lng] = m.position;
-  console.log(isInBounds(lat, lng));
 }

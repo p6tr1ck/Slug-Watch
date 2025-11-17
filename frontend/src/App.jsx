@@ -16,7 +16,6 @@ function App() {
   const [viewMyPins, setViewMyPins] = useState(false);
   const [viewPolicePins, setViewPolicePins] = useState(false);
   const [createMode, setCreateMode] = useState(false);
-  const [locations, setLocations] = useState([]);
   const { width } = useWindowDimensions();
 
   useEffect(() => {
