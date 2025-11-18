@@ -8,7 +8,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function loadData() {
       const { data, error } = await supabase
-        .from("your_table")  // <-- change this
+        .from("police_logs")  // <-- change this
         .select("*");
 
       if (error) console.error(error);
