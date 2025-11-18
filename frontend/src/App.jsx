@@ -4,6 +4,7 @@ import { useState, createContext, useEffect } from "react";
 import SignIn from "./pages/SignIn";
 import Home from "./pages/Home";
 import NavBar from "./pages/NavBar";
+import Moderation from "./pages/Moderation";
 import BottomBar from "./pages/BottomBar";
 import { supabase } from "../supabaseClient";
 import useWindowDimensions from "./WindowDimensions";
@@ -60,6 +61,7 @@ function App() {
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/home" element={<Home />} />
+            <Route path="/moderation" element={<Moderation />} />
           </Routes>
           {width <= 600 ? <BottomBar /> : <></>}
         </div>
