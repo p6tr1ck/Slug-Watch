@@ -7,6 +7,7 @@ import { send_report_db } from "../sbReportHandle";
 export default function UserPins() {
   const { session, viewMyPins, viewPolicePins } = useContext(AuthContext);
   const [pins, setPins] = useState([]);
+  const currUser = session?.user?.id ?? null;
 
   // Pull user made pins from the database.
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function UserPins() {
   async function handleReport(ticket){
     //use supabase functions to send data (look at my old supaPins implem)
     console.log("ticket to submit: ", ticket);
-    send_report_db(ticket);
+    await send_report_db(ticket);
   }
 
   if (viewPolicePins && !viewMyPins) return null;
@@ -57,7 +58,7 @@ export default function UserPins() {
                   title={pin.title}
                   category={pin.category}
                   description={pin.description}
-                  currUserID={session.user.id}
+                  currUserID={currUser}
                   time={pin.time}
                   position={[pin.lat, pin.long]}
                   canReport={true}
@@ -65,6 +66,7 @@ export default function UserPins() {
                 />
               );
             }
+            return null;
           })
         : pins.map((pin) => {
             return (
@@ -76,7 +78,7 @@ export default function UserPins() {
                 description={pin.description}
                 time={pin.created_at}
                 position={[pin.lat, pin.long]}
-                currUserID={session.user.id}
+                currUserID={currUser}
                 canReport={!!session}
                 onReport={handleReport}
               />

@@ -75,49 +75,72 @@ export function ReportPost({pID,uID, onSub, onCancel}) {
     }
 
     return (
-    <div className="w-72" onClick={stop} onMouseDown={stop}>
-      <div className="mb-2">
-        <h2 className="text-lg font-semibold">Report this pin</h2>
-        <p className="text-xs text-gray-500">
+    <div
+      className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden"
+      onClick={stop}
+      onMouseDown={stop}
+    >
+      <div className="px-3 pt-3 pb-2">
+        <h2 className="text-base font-semibold text-slate-900 leading-tight">
+          Report this pin
+        </h2>
+        <p className="text-xs text-gray-500 mt-1">
           Choose a reason and add optional context.
         </p>
       </div>
+      <div className="h-px bg-slate-200" />
+      <div className="px-3 py-3 space-y-3 text-[15px] text-slate-700">
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-slate-900">
+            Reason
+          </label>
+          <select
+            className="w-full border rounded px-2 py-1.5 text-sm"
+            value={form.reason}
+            onChange={(e) =>
+              setForm((s) => ({ ...s, reason: e.target.value }))
+            }
+          >
+            {reasons.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <label className="block text-sm font-medium">Reason</label>
-      <select
-        className="w-full border p-1 rounded mb-2"
-        value={form.reason}
-        onChange={(e) => setForm((s) => ({ ...s, reason: e.target.value }))}
-      >
-        {reasons.map((r) => (
-          <option key={r} value={r}>
-            {r}
-          </option>
-        ))}
-      </select>
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-slate-900">
+            Details (optional)
+          </label>
+          <textarea
+            className="w-full border rounded px-2 py-1.5 text-sm"
+            rows={3}
+            placeholder="Add context or links…"
+            value={form.details}
+            onChange={(e) =>
+              setForm((s) => ({ ...s, details: e.target.value }))
+            }
+          />
+        </div>
+      </div>
 
-      <label className="block text-sm font-medium">Details (optional)</label>
-      <textarea
-        className="w-full border p-1 rounded mb-3"
-        rows={3}
-        placeholder="Add context or links…"
-        value={form.details}
-        onChange={(e) => setForm((s) => ({ ...s, details: e.target.value }))}
-      />
-
-      <div className="flex items-center justify-between">
-        <button className="px-2 py-1 rounded border" onClick={onCancel}>
+      {/* Footer actions (copied spacing from MakeMarker footer) */}
+      <div className="px-3 pb-3 pt-2 flex items-center justify-between gap-2">
+        <button
+          className="px-3 py-1.5 rounded-lg border border-slate-300 text-sm hover:bg-slate-50"
+          onClick={onCancel}
+        >
           Back
         </button>
         <button
-          className="px-2 py-1 rounded bg-rose-600 text-white"
+          className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-sm hover:bg-rose-700"
           onClick={submit}
         >
-          Submit report
+          Submit
         </button>
       </div>
     </div>
   );
-
 }
 
