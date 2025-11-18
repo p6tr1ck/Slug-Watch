@@ -27,9 +27,13 @@ export default function MakeMarker({
   const [expanded, setExpanded] = useState(false);
   const markerRef = useRef(null);
 
+  // User clicked on a notification, make the pin popup on the map
   useEffect(() => {
+    // If the current pin ID is == the selected notification, then
+    // make the pin popup
     if (selectedPinId && selectedPinId === id && markerRef.current) {
       markerRef.current.openPopup();
+      // Reset the state of selectedPinId, so value does not persist
       setSelectedPinId(null);
     }
   }, [selectedPinId, id]);

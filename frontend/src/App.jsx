@@ -17,6 +17,7 @@ function App() {
   const [viewMyPins, setViewMyPins] = useState(false);
   const [viewPolicePins, setViewPolicePins] = useState(false);
   const [createMode, setCreateMode] = useState(false);
+  // When user clicks on notification, pin should popup on map
   const [selectedPinId, setSelectedPinId] = useState(null);
   const { width } = useWindowDimensions();
 
