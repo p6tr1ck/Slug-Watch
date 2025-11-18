@@ -1,8 +1,6 @@
 import MapIcon from "@mui/icons-material/Map";
 import LocalPoliceIcon from "@mui/icons-material/LocalPolice";
 import AddIcon from "@mui/icons-material/Add";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import PersonIcon from "@mui/icons-material/Person";
 import { Link } from "react-router-dom";
 import { useContext, useState } from "react";
@@ -45,32 +43,34 @@ export default function BottomBar() {
             </button>
 
             {showFilters && (
-              <div className="absolute bottom-12 left-1/2 z-51 w-40 -translate-x-1/2 rounded-xl bg-white p-2 text-xs shadow-xl border border-gray-200">
+              <div className="absolute bottom-12 left-1/2 z-51 w-44 -translate-x-1/2 rounded-xl bg-white p-2 text-xs shadow-xl border border-gray-200">
                 <p className="mb-1 text-[11px] font-semibold text-gray-500">
                   Show:
                 </p>
-                <button
-                  className="flex w-full items-center justify-between rounded-lg px-2 py-1 hover:bg-gray-100"
-                  onClick={() => setViewMyPins((v) => !v)}
-                >
-                  <span>My Pins</span>
-                  {viewMyPins ? (
-                    <VisibilityIcon fontSize="small" />
-                  ) : (
-                    <VisibilityOffIcon fontSize="small" />
-                  )}
-                </button>
-                <button
-                  className="mt-1 flex w-full items-center justify-between rounded-lg px-2 py-1 hover:bg-gray-100"
-                  onClick={() => setViewPolicePins((v) => !v)}
-                >
+
+                {/* Police Pins checkbox */}
+                <label className="flex w-full items-center gap-2 rounded-lg px-2 py-1 hover:bg-gray-100 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3"
+                    checked={viewPolicePins}
+                    onChange={(e) => setViewPolicePins(e.target.checked)}
+                  />
                   <span>Police Pins</span>
-                  {viewPolicePins ? (
-                    <VisibilityIcon fontSize="small" />
-                  ) : (
-                    <VisibilityOffIcon fontSize="small" />
-                  )}
-                </button>
+                </label>
+
+                {/* My Pins checkbox (only if logged in) */}
+                {session && (
+                  <label className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1 hover:bg-gray-100 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="h-3 w-3"
+                      checked={viewMyPins}
+                      onChange={(e) => setViewMyPins(e.target.checked)}
+                    />
+                    <span>My Pins</span>
+                  </label>
+                )}
               </div>
             )}
           </div>

@@ -19,8 +19,13 @@ function mapPin(data) {
 }
 
 export default function UserPins() {
-  const { session, viewMyPins, viewPolicePins, selectedPinId } =
-    useContext(AuthContext);
+  const {
+    session,
+    viewMyPins,
+    viewPolicePins,
+    selectedPinId,
+    setSelectedPinId,
+  } = useContext(AuthContext);
   const [pins, setPins] = useState([]);
 
   // subscribe to real time changes
@@ -111,6 +116,7 @@ export default function UserPins() {
                   time={pin.time}
                   position={[pin.lat, pin.long]}
                   selectedPinId={selectedPinId}
+                  setSelectedPinId={setSelectedPinId}
                 />
               );
             }
@@ -126,6 +132,7 @@ export default function UserPins() {
                 time={pin.created_at}
                 position={[pin.lat, pin.long]}
                 selectedPinId={selectedPinId}
+                setSelectedPinId={setSelectedPinId}
               />
             );
           })}

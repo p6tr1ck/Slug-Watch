@@ -7,6 +7,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { supabase } from "../../supabaseClient";
 import { AuthContext } from "../App";
+import Box from "@mui/material/Box";
 
 export default function Notification() {
   const { session, setSelectedPinId } = useContext(AuthContext);
@@ -61,7 +62,7 @@ export default function Notification() {
     setPins((prev) => prev.filter((p) => p.id !== id));
   };
 
-  // Clear all notifications (UI only)
+  // Clear all notifications
   const handleClearAll = () => {
     async function deleteAllNotifications() {
       const { error } = await supabase
@@ -175,6 +176,12 @@ export default function Notification() {
         aria-haspopup="true"
         aria-expanded={open ? "true" : undefined}
         onClick={handleClick}
+        color="inherit"
+        sx={{
+          minWidth: 0,
+          padding: 0,
+          lineHeight: 1,
+        }}
       >
         <Badge
           color="secondary"
@@ -193,17 +200,21 @@ export default function Notification() {
         slotProps={{
           list: {
             "aria-labelledby": "notifications-button",
+            sx: { p: 0 },
           },
         }}
         PaperProps={{
           sx: {
             minWidth: 260,
+            maxWidth: 400,
+            maxHeight: 400, // overall max height for the menu
+            overflow: "hidden", // hide anything beyond this
           },
         }}
       >
         {/* Header row */}
         <MenuItem
-          disabled
+          disabled={pins.length === 0}
           sx={{
             display: "flex",
             justifyContent: "space-between",
@@ -225,40 +236,50 @@ export default function Notification() {
             </Button>
           )}
         </MenuItem>
+        {/* Scrollable list area */}
+        <Box
+          sx={{
+            maxHeight: 340,
+            overflowY: "auto", // make this scrollable
+          }}
+        >
+          {pins.length === 0 && (
+            <MenuItem disabled sx={{ fontSize: 14, opacity: 0.7 }}>
+              No notifications
+            </MenuItem>
+          )}
 
-        {pins.length === 0 && (
-          <MenuItem disabled sx={{ fontSize: 14, opacity: 0.7 }}>
-            No notifications
-          </MenuItem>
-        )}
+          {pins.map((pin) => (
+            <MenuItem
+              key={pin.id}
+              onClick={() => {
+                handleClose();
+                setSelectedPinId(pin.id);
+              }}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 1,
+                fontSize: 14,
+              }}
+            >
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontWeight: 500 }}>{pin.title}</span>
+                <span style={{ fontSize: 12, opacity: 0.7 }}>
+                  {new Date(pin.created_at).toLocaleString()}
+                </span>
+              </div>
 
-        {pins.map((pin) => (
-          <MenuItem
-            key={pin.id}
-            onClick={() => {
-              handleClose();
-              setSelectedPinId(pin.id);
-            }}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 1,
-              fontSize: 14,
-            }}
-          >
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <span style={{ fontWeight: 500 }}>{pin.title}</span>
-              <span style={{ fontSize: 12, opacity: 0.7 }}>
-                {new Date(pin.created_at).toLocaleString()}
-              </span>
-            </div>
-
-            <IconButton size="small" onClick={(e) => handleClearOne(e, pin.id)}>
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </MenuItem>
-        ))}
+              <IconButton
+                size="small"
+                onClick={(e) => handleClearOne(e, pin.id)}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </MenuItem>
+          ))}
+        </Box>
       </Menu>
     </div>
   );

@@ -21,6 +21,7 @@ export default function MakeMarker({
   description,
   time,
   position, // [lat, lng]
+  setSelectedPinId,
   selectedPinId,
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -29,6 +30,7 @@ export default function MakeMarker({
   useEffect(() => {
     if (selectedPinId && selectedPinId === id && markerRef.current) {
       markerRef.current.openPopup();
+      setSelectedPinId(null);
     }
   }, [selectedPinId, id]);
 
