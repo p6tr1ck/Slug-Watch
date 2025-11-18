@@ -9,7 +9,7 @@ import { supabase } from "../../supabaseClient";
 import { AuthContext } from "../App";
 
 export default function Notification() {
-  const { session } = useContext(AuthContext);
+  const { session, setSelectedPinId } = useContext(AuthContext);
   const [pinId, setPinId] = useState([]);
   const [pins, setPins] = useState([]);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -235,7 +235,10 @@ export default function Notification() {
         {pins.map((pin) => (
           <MenuItem
             key={pin.id}
-            onClick={handleClose}
+            onClick={() => {
+              handleClose();
+              setSelectedPinId(pin.id);
+            }}
             sx={{
               display: "flex",
               alignItems: "center",

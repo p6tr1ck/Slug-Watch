@@ -2,7 +2,6 @@ import { useState, useContext, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 import { AuthContext } from "../App";
 import MakeMarker from "./MakeMarker";
-import isInBounds from "./boundsCheck";
 
 function mapPin(data) {
   return {
@@ -20,7 +19,8 @@ function mapPin(data) {
 }
 
 export default function UserPins() {
-  const { session, viewMyPins, viewPolicePins } = useContext(AuthContext);
+  const { session, viewMyPins, viewPolicePins, selectedPinId } =
+    useContext(AuthContext);
   const [pins, setPins] = useState([]);
 
   // subscribe to real time changes
@@ -40,7 +40,7 @@ export default function UserPins() {
           setPins((prev) => [...prev, mapPin(payload.new)]);
         }
       )
-      // UPDATE → replace the pin in state
+      // UPDATE
       .on(
         "postgres_changes",
         {
@@ -54,7 +54,7 @@ export default function UserPins() {
           );
         }
       )
-      // DELETE → remove the pin
+      // DELETE
       .on(
         "postgres_changes",
         {
@@ -104,11 +104,13 @@ export default function UserPins() {
               return (
                 <MakeMarker
                   key={pin.id}
+                  id={pin.id}
                   title={pin.title}
                   category={pin.category}
                   description={pin.description}
                   time={pin.time}
                   position={[pin.lat, pin.long]}
+                  selectedPinId={selectedPinId}
                 />
               );
             }
@@ -117,11 +119,13 @@ export default function UserPins() {
             return (
               <MakeMarker
                 key={pin.id}
+                id={pin.id}
                 title={pin.title}
                 category={pin.category}
                 description={pin.description}
                 time={pin.created_at}
                 position={[pin.lat, pin.long]}
+                selectedPinId={selectedPinId}
               />
             );
           })}

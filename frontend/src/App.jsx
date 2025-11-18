@@ -16,6 +16,7 @@ function App() {
   const [viewMyPins, setViewMyPins] = useState(false);
   const [viewPolicePins, setViewPolicePins] = useState(false);
   const [createMode, setCreateMode] = useState(false);
+  const [selectedPinId, setSelectedPinId] = useState(null);
   const { width } = useWindowDimensions();
 
   useEffect(() => {
@@ -48,6 +49,8 @@ function App() {
         setCreateMode,
         viewPolicePins,
         setViewPolicePins,
+        selectedPinId,
+        setSelectedPinId,
       }}
     >
       <BrowserRouter>
