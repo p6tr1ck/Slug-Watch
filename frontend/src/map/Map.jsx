@@ -140,7 +140,7 @@ export default function Map() {
         <PolicePins />
         <MapClickHandler createMode={createMode} onMapClick={handleMapClick} />
         {markers.map((m) => {
-          const canModify = Boolean(session) && m.ownerId === session;
+          const canModify = Boolean(currUserID) && m.ownerId === currUserID;
           return (
             <MarkerWithPopup
               key={m.id}
