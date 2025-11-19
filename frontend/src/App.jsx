@@ -17,6 +17,8 @@ function App() {
   const [viewMyPins, setViewMyPins] = useState(false);
   const [viewPolicePins, setViewPolicePins] = useState(false);
   const [createMode, setCreateMode] = useState(false);
+  // When user clicks on notification, pin should popup on map
+  const [selectedPinId, setSelectedPinId] = useState(null);
   const { width } = useWindowDimensions();
 
   useEffect(() => {
@@ -49,14 +51,12 @@ function App() {
         setCreateMode,
         viewPolicePins,
         setViewPolicePins,
+        selectedPinId,
+        setSelectedPinId,
       }}
     >
       <BrowserRouter>
-        <div
-          className={`flex flex-col overflow-hidden h-screen ${
-            width <= 600 ? "pb-20" : ""
-          }`}
-        >
+        <div className={`flex flex-col overflow-hidden h-screen `}>
           {width > 600 ? <NavBar /> : <></>}
           <Routes>
             <Route path="/" element={<Navigate to="/home" replace />} />
