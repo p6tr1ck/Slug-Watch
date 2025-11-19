@@ -7,10 +7,10 @@ export default function PolicePins() {
   const { viewPolicePins, viewMyPins } = useContext(AuthContext);
   const [pins, setPins] = useState([]);
 
-  // Pull user made pins from the database.
+  // Pull police made pins from the database.
   useEffect(() => {
     async function getPins() {
-      // Select all the rows from the example pins database table.
+      // Select all the rows from the police logs database table.
       const { data, error } = await supabase.from("police_logs").select("*");
       if (error) {
         console.error("Error getting pins from database: ", error);

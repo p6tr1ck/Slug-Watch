@@ -1,20 +1,31 @@
-import { React, useEffect, useContext } from "react";
+import { CircularProgress, Button, Avatar } from "@mui/material";
+import { useEffect, useContext, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import GoogleButton from "react-google-button";
-import { Button } from "@mui/material";
 import { AuthContext } from "../App";
-import useWindowDimensions from "../WindowDimensions";
+import Locations from "./Locations";
+import SaveLocations from "./SaveLocations";
+
+// Background + centering wrapper
+const Wrapper = ({ children }) => (
+  <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-4">
+    <div className="w-full max-w-lg mt-[-25vh]">{children}</div>
+  </div>
+);
 
 export default function SignIn() {
   const { session } = useContext(AuthContext);
-  const { width } = useWindowDimensions();
+  const [locations, setLocations] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
 
   useEffect(() => {
-    if (session) {
-      // upload the user information to Supabase
-      async function uploadUserInfo() {
-        // insert user information to users table
-        // if the user already exists, it ignores the query
+    if (!session) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        setBusy(true);
         const { error } = await supabase
           .from("users")
           .upsert(
@@ -22,54 +33,107 @@ export default function SignIn() {
             { onConflict: "UID", ignoreDuplicates: true }
           )
           .select();
-        if (error) {
-          console.error(error);
-        }
+        if (error && !cancelled) setErr("Couldn’t save your profile.");
+      } catch {
+        if (!cancelled) setErr("Something went wrong.");
+      } finally {
+        if (!cancelled) setBusy(false);
       }
-      uploadUserInfo();
-    }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [session]);
 
-  // sign out the user and deletes the stored session
   const signOut = async () => {
-    await supabase.auth.signOut().catch(console.error);
+    try {
+      setBusy(true);
+      await supabase.auth.signOut();
+    } catch (e) {
+      setErr("Sign out failed.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const signUp = async () => {
-    // redirect user to the sign in page after logging in
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/signin`,
-        queryParams: {
-          hd: "ucsc.edu",
-        },
+        queryParams: { hd: "ucsc.edu" },
       },
     });
   };
 
   if (!session) {
     return (
-      <div className="h-50 flex justify-center items-center flex-col space-y-5">
-        <div className="text-lg">Welcome!</div>
-        <div className="text-lg">Sign in with your UCSC email to continue:</div>
-        <GoogleButton onClick={signUp} />
-      </div>
-    );
-  } else {
-    return (
-      <div
-        className={`${
-          width <= 600 ? "h-full" : "h-[50vh]"
-        } flex justify-center items-center flex-col space-y-5`}
-      >
-        <h2 className="text-lg">
-          Welcome, {session.user.user_metadata.full_name}!
-        </h2>
-        <Button variant="outlined" className="text-lg" onClick={signOut}>
-          Sign out
-        </Button>
-      </div>
+      <Wrapper>
+        <div className="bg-white shadow-xl rounded-2xl p-8 border border-slate-200/70">
+          <h1 className="text-2xl font-semibold text-slate-600 text-center">
+            Welcome
+          </h1>
+          <p className="text-slate-600 text-center mt-2">
+            Sign in with your <span className="font-medium">UCSC</span> email to
+            continue
+          </p>
+
+          <div className="mt-6 flex justify-center">
+            <GoogleButton onClick={() => signUp()}>
+              Continue with Google
+            </GoogleButton>
+          </div>
+
+          {busy && (
+            <div className="mt-6 flex justify-center">
+              <CircularProgress size={24} />
+            </div>
+          )}
+          {err && (
+            <p className="mt-4 text-center text-sm text-red-600">{err}</p>
+          )}
+        </div>
+      </Wrapper>
     );
   }
+
+  const name = session.user.user_metadata.full_name ?? "Student";
+  const email = session.user.email ?? "";
+  const avatarUrl = session.user.user_metadata.avatar_url;
+
+  return (
+    <Wrapper>
+      <div className="bg-white shadow-xl rounded-2xl p-8 border border-slate-200/70">
+        <div className="flex items-center gap-4">
+          <Avatar src={avatarUrl} alt={name} sx={{ width: 56, height: 56 }} />
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">
+              Welcome, {name.split(" ")[0]} 👋
+            </h2>
+            <p className="text-slate-600">{email}</p>
+          </div>
+        </div>
+        <Locations locations={locations} setLocations={setLocations} />
+        <div className="mt-8 flex justify-between">
+          <Button
+            variant="outlined"
+            onClick={signOut}
+            sx={{ textTransform: "none", fontSize: 16, borderRadius: 2 }}
+            disabled={busy}
+          >
+            {busy ? "Signing out…" : "Sign out"}
+          </Button>
+          <SaveLocations locations={locations} />
+        </div>
+
+        {busy && (
+          <div className="mt-4 flex justify-center">
+            <CircularProgress size={22} />
+          </div>
+        )}
+        {err && <p className="mt-4 text-center text-sm text-red-600">{err}</p>}
+      </div>
+    </Wrapper>
+  );
 }

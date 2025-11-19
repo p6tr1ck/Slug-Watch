@@ -1,5 +1,5 @@
 import { Marker, Popup } from "react-leaflet";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import makeIcon from "./MakeIcon";
 import { ReportPost } from "./reportPopup";
 
@@ -17,18 +17,32 @@ const categoryChip = (category = "") => {
 };
 
 export default function MakeMarker({
-  pId,
+  id,
   title,
   category,
   description,
   time,
   position, // [lat, lng]
+  setSelectedPinId,
+  selectedPinId,
   currUserID,
   onReport,
   canReport = false,
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const markerRef = useRef(null);
+
+  // User clicked on a notification, make the pin popup on the map
+  useEffect(() => {
+    // If the current pin ID is == the selected notification, then
+    // make the pin popup
+    if (selectedPinId && selectedPinId === id && markerRef.current) {
+      markerRef.current.openPopup();
+      // Reset the state of selectedPinId, so value does not persist
+      setSelectedPinId(null);
+    }
+  }, [selectedPinId, id]);
 
   const directionsUrl = () => {
     const [lat, lng] = position || [];
@@ -49,7 +63,7 @@ export default function MakeMarker({
   const showReportCtrl = canReport && !!onReport && !!currUserID;
 
   return (
-    <Marker position={position} icon={makeIcon(category)}>
+    <Marker ref={markerRef} position={position} icon={makeIcon(category)}>
       <Popup>
         {/* Card */}
         <div className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden">

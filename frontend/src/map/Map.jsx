@@ -8,7 +8,7 @@ import { AuthContext } from "../App";
 import UserPins from "./UserPins";
 import PolicePins from "./PolicePins";
 import FilterPins from "./FilterPins";
-//import { send_report_db } from "../../sbReportHandle";
+import isInBounds from "./boundsCheck";
 
 // --- Example pin data ---
 const position1 = [36.98946, -122.06124];
