@@ -58,7 +58,7 @@ export default function Dashboard() {
               key={item.id}
               onClick={() => setSelectDashboardItem(item.id)}
               sx={{
-                backgroundColor: isSelected ? "#1e40af" : "white", // match map marker color
+                backgroundColor: isSelected ? "#1e40af" : "white",
                 borderRadius: "1rem",
                 mb: 1,
                 cursor: "pointer",
