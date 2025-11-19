@@ -1,5 +1,5 @@
 import { Marker, Popup } from "react-leaflet";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import makeIcon from "./MakeIcon";
 
 const categoryChip = (category = "") => {
@@ -15,13 +15,28 @@ const categoryChip = (category = "") => {
 };
 
 export default function MakeMarker({
+  id,
   title,
   category,
   description,
   time,
   position, // [lat, lng]
+  setSelectedPinId,
+  selectedPinId,
 }) {
   const [expanded, setExpanded] = useState(false);
+  const markerRef = useRef(null);
+
+  // User clicked on a notification, make the pin popup on the map
+  useEffect(() => {
+    // If the current pin ID is == the selected notification, then
+    // make the pin popup
+    if (selectedPinId && selectedPinId === id && markerRef.current) {
+      markerRef.current.openPopup();
+      // Reset the state of selectedPinId, so value does not persist
+      setSelectedPinId(null);
+    }
+  }, [selectedPinId, id]);
 
   const directionsUrl = () => {
     const [lat, lng] = position || [];
@@ -34,7 +49,7 @@ export default function MakeMarker({
     t && t.length > n ? t.slice(0, n) + "…" : t;
 
   return (
-    <Marker position={position} icon={makeIcon(category)}>
+    <Marker ref={markerRef} position={position} icon={makeIcon(category)}>
       <Popup>
         {/* Card */}
         <div className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden">

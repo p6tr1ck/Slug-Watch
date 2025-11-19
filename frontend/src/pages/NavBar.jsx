@@ -4,6 +4,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../App";
 import { supabase } from "../../supabaseClient";
+import Notifications from "./Notifications";
 
 export default function NavBar() {
   const { session } = useContext(AuthContext);
@@ -52,6 +53,7 @@ export default function NavBar() {
       <div className="flex items-center space-x-3">
         <Link to="/home">Home</Link>
         {canModerate && <Link to="/moderation">Moderation</Link>}
+        {session && <Notifications />}
         <Link to="/signin">
           {session ? (
             <img
