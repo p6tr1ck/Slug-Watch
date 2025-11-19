@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { supabase } from "../../supabaseClient";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import Typography from "@mui/material/Typography";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import { AuthContext } from "../App";
 
 export default function Dashboard() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { setSelectDashboardItem } = useContext(AuthContext);
 
   useEffect(() => {
     async function loadData() {
@@ -50,6 +52,7 @@ export default function Dashboard() {
           <AccordionDetails
             key={item.id}
             sx={{ backgroundColor: "white", borderRadius: "1rem", mb: 1 }}
+            onClick={() => setSelectDashboardItem(item.id)}
           >
             <div className="p-3 rounded-xl border border-blue-200 shadow-sm bg-white">
               <h2 className="text-lg font-semibold text-blue-700">

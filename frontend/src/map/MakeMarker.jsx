@@ -1,6 +1,7 @@
 import { Marker, Popup } from "react-leaflet";
-import { useState } from "react";
+import { useState, useRef, useContext, useEffect } from "react";
 import makeIcon from "./MakeIcon";
+import { AuthContext } from "../App";
 
 const categoryChip = (category = "") => {
   const c = category.toLowerCase();
@@ -15,6 +16,7 @@ const categoryChip = (category = "") => {
 };
 
 export default function MakeMarker({
+  id = null,
   title,
   category,
   description,
@@ -22,6 +24,9 @@ export default function MakeMarker({
   position, // [lat, lng]
 }) {
   const [expanded, setExpanded] = useState(false);
+  const { selectDashboardItem, setSelectDashboardItem } =
+    useContext(AuthContext);
+  const markerRef = useRef(null);
 
   const directionsUrl = () => {
     const [lat, lng] = position || [];
@@ -33,8 +38,17 @@ export default function MakeMarker({
   const shortText = (t, n = 140) =>
     t && t.length > n ? t.slice(0, n) + "…" : t;
 
+  // Show police pin when dashboard item is clicked
+  useEffect(() => {
+    if (id && selectDashboardItem === id) {
+      console.log(id, selectDashboardItem);
+      markerRef.current.openPopup();
+      setSelectDashboardItem(null);
+    }
+  }, [selectDashboardItem]);
+
   return (
-    <Marker position={position} icon={makeIcon(category)}>
+    <Marker ref={markerRef} position={position} icon={makeIcon(category)}>
       <Popup>
         {/* Card */}
         <div className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden">
