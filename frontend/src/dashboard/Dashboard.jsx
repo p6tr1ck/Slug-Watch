@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import Typography from "@mui/material/Typography";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 
 export default function Dashboard() {
@@ -14,42 +13,48 @@ export default function Dashboard() {
   useEffect(() => {
     async function loadData() {
       const { data, error } = await supabase.from("police_logs").select("*");
-
       if (error) console.error(error);
       else setItems(data);
       setLoading(false);
     }
-
     loadData();
   }, []);
-
-  useEffect(() => {
-    console.log(items);
-  }, [items]);
 
   if (loading) return <p className="p-4 text-xl">Loading...</p>;
 
   return (
-    <div className="p-6 absolute top-28 -left-3 z-1000">
-      <h1 className="text-3xl font-bold mb-4"></h1>
-      <Accordion>
+    <div className="p-4 mt-10 ml-4 w-72 bg-blue-50 border border-blue-200 rounded-2xl shadow-md">
+      <Accordion sx={{ borderRadius: "1rem", boxShadow: "none" }}>
         <AccordionSummary
-          expandIcon={<ArrowDropDownIcon />}
+          expandIcon={<ArrowDropDownIcon sx={{ color: "#2c3170" }} />}
           aria-controls="panel2-content"
           id="panel2-header"
+          sx={{
+            backgroundColor: "#85c0ed",
+            borderRadius: "1rem",
+            padding: "12px 16px",
+          }}
         >
-          <Typography component="span">Dashboard List View</Typography>
+          <Typography sx={{ fontWeight: 600, color: "#2c3170" }}>
+            Police Logs
+          </Typography>
         </AccordionSummary>
-        {items.length === 0 && <p>No items found.</p>}
+
+        {items.length === 0 && (
+          <Typography sx={{ padding: "12px", color: "#666" }}>
+            No items found.
+          </Typography>
+        )}
+
         {items.map((item) => (
-          <AccordionDetails>
-            <div
-              key={item.id}
-              className="p-4 rounded-2xl shadow bg-white border"
-            >
-              {item.crime ?? (
-                <h2 className="text-xl font-semibold">{item.crime}</h2>
-              )}
+          <AccordionDetails
+            key={item.id}
+            sx={{ backgroundColor: "white", borderRadius: "1rem", mb: 1 }}
+          >
+            <div className="p-3 rounded-xl border border-blue-200 shadow-sm bg-white">
+              <h2 className="text-lg font-semibold text-blue-700">
+                {item.crime || "Unknown Crime"}
+              </h2>
             </div>
           </AccordionDetails>
         ))}
