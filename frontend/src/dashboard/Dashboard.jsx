@@ -25,7 +25,7 @@ export default function Dashboard() {
   if (loading) return <p className="p-4 text-xl">Loading...</p>;
 
   return (
-    <div className="p-1 mt-7 ml-2 w-52 bg-blue-50 border border-blue-200 rounded-lg shadow">
+    <div className="p-1 mt-8 ml-2 w-52 bg-blue-50 border border-blue-200 rounded-lg shadow">
       <Accordion sx={{ borderRadius: "1rem", boxShadow: "none" }}>
         <AccordionSummary
           expandIcon={<ArrowDropDownIcon sx={{ color: "#2c3170" }} />}
@@ -51,7 +51,12 @@ export default function Dashboard() {
         {items.map((item) => (
           <AccordionDetails
             key={item.id}
-            sx={{ backgroundColor: "white", borderRadius: "1rem", mb: 1 }}
+            sx={{
+              backgroundColor: "white",
+              borderRadius: "1rem",
+              mb: 1,
+              cursor: "pointer",
+            }}
             onClick={() => setSelectDashboardItem(item.id)}
           >
             <div className="p-2 rounded-lg border border-blue-200 shadow-sm bg-white">
