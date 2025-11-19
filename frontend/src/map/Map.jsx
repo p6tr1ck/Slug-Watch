@@ -23,7 +23,7 @@ export default function Map() {
   const { session, createMode, setCreateMode } = useContext(AuthContext);
   const { width } = useWindowDimensions();
   const [markers, setMarkers] = useState([]);
-  const currUserID = session?.user?.id ?? (typeof session === "string" ? session : null)
+  const currUserID = session?.user?.id ?? null;
  
 
   useEffect(() => {

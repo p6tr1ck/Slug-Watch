@@ -143,7 +143,7 @@ export default function UserPins() {
                 description={pin.description}
                 time={pin.created_at}
                 position={[pin.lat, pin.long]}
-                currUserID={pin.user_id === currUser ? false : true}
+                currUserID={pin.user_id}
                 canReport={!!session}
                 onReport={handleReport}
                 selectedPinId={selectedPinId}

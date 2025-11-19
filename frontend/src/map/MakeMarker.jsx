@@ -153,7 +153,7 @@ export default function MakeMarker({
           {showReportCtrl && showReport && (
             <div className="px-3 pb-3">
               <ReportPost
-                pID={pId}
+                pID={id}
                 uID={currUserID}
                 onSub={handleReportSub}
                 onCancel={() => setShowReport(false)}
