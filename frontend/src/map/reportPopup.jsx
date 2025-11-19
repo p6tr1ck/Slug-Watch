@@ -76,9 +76,7 @@ export function ReportPost({pID,uID, onSub, onCancel}) {
 
     return (
     <div
-      className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden"
-      onClick={stop}
-      onMouseDown={stop}
+      className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden" onClick={stop} onMouseDown={stop}
     >
       <div className="px-3 pt-3 pb-2">
         <h2 className="text-base font-semibold text-slate-900 leading-tight">
