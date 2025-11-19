@@ -1,6 +1,7 @@
 import { Marker, Popup } from "react-leaflet";
 import { useState } from "react";
 import makeIcon from "./MakeIcon";
+import CommentsPopup from "./CommentsPopup";
 
 const categoryChip = (category = "") => {
   const c = category.toLowerCase();
@@ -20,8 +21,10 @@ export default function MakeMarker({
   description,
   time,
   position, // [lat, lng]
+  pinId,
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   const directionsUrl = () => {
     const [lat, lng] = position || [];
@@ -96,7 +99,6 @@ export default function MakeMarker({
               rel="noreferrer"
               className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm hover:bg-slate-50 transition"
             >
-              {/* Simple options */}
               <svg
                 width="16"
                 height="16"
@@ -110,7 +112,25 @@ export default function MakeMarker({
               </svg>
               Directions
             </a>
+            
+            {/* Show comments button for non-verified pins */}
+            {category && !category.toLowerCase().includes("verified") && (
+              <button
+                title="Comments"
+                className="p-2 bg-blue-600 text-white rounded-full shadow"
+                onClick={() => setShowComments((s) => !s)}
+              >
+                💬
+              </button>
+            )}
           </div>
+
+          {/* Comments section */}
+          {showComments && pinId && (
+            <div className="px-3 pb-3">
+              <CommentsPopup pinId={pinId} onClose={() => setShowComments(false)} />
+            </div>
+          )}
         </div>
       </Popup>
     </Marker>

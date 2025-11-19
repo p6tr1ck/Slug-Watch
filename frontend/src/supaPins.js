@@ -57,22 +57,136 @@ export async function insToSupa({form, m}){
         throw err;
     }
     const [lat, lng] = m.position;
-    const supaRow = {title: form.title, category: form.category, lat: lat, long: lng,
-                     user_id: uid, description: form.description, created_at: normDateTime(form.datetime)};
+  // Only include created_at when we can parse a valid datetime; otherwise let DB apply its default
+  const created = normDateTime(form.datetime);
+  const supaRow = {
+    title: form.title,
+    category: form.category,
+    lat: lat,
+    long: lng,
+    user_id: uid,
+    description: form.description,
+    location: form.address || null,
+    ...(created ? { created_at: created } : {}),
+  };
     const {data, error} = await supabase.from("example_pins").insert(supaRow).select("id, title, category, description, lat, long, created_at, user_id").single();
     if (error) throw error;
     return data
 }
 
 export async function delInSupa({id}){
-    const {error} = await supabase.from("example_pins").delete().eq("id", id);
-    if (error) throw error;
+    // Attempt to delete the pin directly.
+    // If your DB has ON DELETE CASCADE on FK constraints, dependent rows are removed automatically.
+    // If not, you'll get a foreign key constraint error (see migration file for fix).
+    const del = await supabase.from("example_pins").delete().eq("id", id);
+    if (del.error) {
+      // If it's a foreign key constraint, try to gather more info for actionable error message.
+      const err = del.error;
+      if (err.code === "23503" || /foreign key|violat/i.test(err.message || "")) {
+        // try to fetch notifications referencing this pin (may succeed even if delete is blocked)
+        let noteCount = null;
+        try {
+          const notes = await supabase.from("notifications").select("id").eq("pin_id", id).limit(100);
+          if (!notes.error && Array.isArray(notes.data)) noteCount = notes.data.length;
+        } catch (e) {
+          // ignore
+        }
+
+        const message = `Unable to delete pin ${id} because dependent rows exist (foreign key constraint). ` +
+          (noteCount == null ? "There may be related notifications or other dependent rows." : `Found ${noteCount} notification(s) referencing this pin.`) +
+          " To fix: run the SQL migration in migrations/add_cascade_delete.sql to add ON DELETE CASCADE.";
+
+        const out = new Error(message);
+        out.code = err.code || "FK_CONSTRAINT";
+        throw out;
+      }
+
+      throw del.error;
+    }
 }
 
 export async function editToSupa({id, form, m}){
     const [lat, lng] = m.position;
-    const edit = {title: form.title, category: form.category, description: form.description, lat: lat, long: lng,};
-    const {data, error} = await supabase.from("example_pins").update(edit).eq("id",id).select("id, title, category, description, lat, long, created_at, user_id").single();
-    if (error) throw error;
-    return data;
+    const edit = {
+      title: form.title, 
+      category: form.category, 
+      description: form.description, 
+      lat: lat, 
+      long: lng,
+      location: form.address || m.address || null,
+    };
+    
+    console.log("editToSupa called with:", { id, form, edit, m });
+    
+    if (!id) {
+        const err = new Error("Missing pin id for update");
+        err.code = "MISSING_ID";
+        throw err;
+    }
+
+    // fetch existing row to give clearer errors and check ownership
+    const { data: existing, error: fetchErr } = await supabase
+      .from("example_pins")
+      .select("id, user_id, created_at")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (fetchErr) throw fetchErr;
+    if (!existing) {
+      const err = new Error("Pin not found");
+      err.code = "NOT_FOUND";
+      throw err;
+    }
+
+    // ensure the current user is the owner
+    const uid = await getUserID();
+    if (!uid) {
+      const err = new Error("Not authenticated");
+      err.code = "AUTH_REQUIRED";
+      throw err;
+    }
+
+    if (existing.user_id !== uid) {
+      const err = new Error(`You are not authorized to edit this pin (owner=${existing.user_id} current=${uid})`);
+      err.code = "AUTH_DENIED";
+      throw err;
+    }
+
+    // Perform the update - if no error, assume success (RLS blocks count/select)
+    console.log("Sending update to Supabase:", { id, edit });
+    
+    const { error: updateErr } = await supabase
+      .from("example_pins")
+      .update(edit)
+      .eq("id", id);
+
+    if (updateErr) {
+      console.error("Update failed with error:", updateErr);
+      const err = new Error(`Failed updating pin id=${id}: ${updateErr.message || updateErr}`);
+      err.code = updateErr.code || "UPDATE_ERROR";
+      throw err;
+    }
+
+    console.log(`Update sent for pin ${id} - no errors returned`);
+    
+    // Verify the update by fetching the row again
+    const { data: verifyData, error: verifyErr } = await supabase
+      .from("example_pins")
+      .select("*")
+      .eq("id", id)
+      .single();
+    
+    if (!verifyErr && verifyData) {
+      console.log("Verified data after update:", verifyData);
+    } else {
+      console.warn("Could not verify update:", verifyErr);
+    }
+
+    // Return the updated data (we already verified ownership and have the values)
+    return {
+      id,
+      user_id: existing.user_id,
+      created_at: existing.created_at || new Date().toISOString(),
+      ...edit,
+    };
 }

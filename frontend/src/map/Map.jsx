@@ -55,27 +55,29 @@ export default function Map() {
       description: "",
       className: "marker-green",
       isNew: true,
-      ownerId: session,
+      ownerId: session?.user?.id || session,
     };
     setMarkers((m) => [...m, newMarker]);
     setCreateMode(false);
   }
 
   function updateMarker(id, patch) {
+    const userId = session?.user?.id || session;
     setMarkers((prev) =>
       prev.map((m) => {
         if (m.id !== id) return m;
-        if (!session || m.ownerId !== session) return m;
+        if (!userId || m.ownerId !== userId) return m;
         return { ...m, ...patch };
       })
     );
   }
 
   function removeMarker(id) {
+    const userId = session?.user?.id || session;
     setMarkers((prev) =>
       prev.filter((m) => {
         if (m.id !== id) return true;
-        if (!session || m.ownerId !== session) return true;
+        if (!userId || m.ownerId !== userId) return true;
         return false;
       })
     );
@@ -137,7 +139,8 @@ export default function Map() {
         <PolicePins />
         <MapClickHandler createMode={createMode} onMapClick={handleMapClick} />
         {markers.map((m) => {
-          const canModify = Boolean(session) && m.ownerId === session;
+          const userId = session?.user?.id || session;
+          const canModify = Boolean(userId) && m.ownerId === userId;
           return (
             <MarkerWithPopup
               key={m.id}

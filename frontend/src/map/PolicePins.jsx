@@ -48,6 +48,7 @@ export default function PolicePins() {
               time={pin.created_at}
               position={[pin.lat, pin.long]}
               category={"Verified"}
+              pinId={pin.id}
             />
           );
         })

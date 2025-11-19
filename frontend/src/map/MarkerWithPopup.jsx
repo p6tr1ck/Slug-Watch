@@ -22,6 +22,7 @@ export default function MarkerWithPopup({
   });
 
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(m.isNew || false);
   const [showComments, setShowComments] = useState(false);
 
   useEffect(() => {
@@ -33,6 +34,8 @@ export default function MarkerWithPopup({
       category: m.category || categories[0],
       description: m.description || "",
     });
+    // if a new marker is passed in, start in editing mode
+    setEditing(m.isNew || false);
   }, [m.id]);
 
   useEffect(() => {
@@ -52,7 +55,7 @@ export default function MarkerWithPopup({
     form.datetime &&
     form.category &&
     form.description.trim();
-  const disabled = !canModify;
+  const disabled = !editing;
 
   async function onSave() {
     if (disabled || !allFilled) return;
@@ -67,6 +70,7 @@ export default function MarkerWithPopup({
       const upd = {...m, supabaseId: row.id, title: row.title, category: row.category, description: row.description, position: [row.lat, row.long], isNew: false};
       updateMarker(m.id, upd);
       markerRef.current?.closePopup();
+      setEditing(false);
     } catch (e) {
       console.error("Error saving pin: ", e);
     }finally{
@@ -82,6 +86,10 @@ export default function MarkerWithPopup({
       markerRef.current?.closePopup();
     } catch (e) {
       console.error("Error deleting pin: ", e);
+      // show a simple alert so users get immediate feedback in the UI
+      try {
+        window.alert(`Failed to delete pin: ${e?.message || e}`);
+      } catch (_) {}
     }
   }
 
@@ -150,20 +158,31 @@ export default function MarkerWithPopup({
           />
 
           {canModify ? (
-            <div className="flex justify-between">
-              <button
-                className="px-2 py-1 bg-green-600 text-white rounded disabled:opacity-50"
-                onClick={onSave}
-                disabled={!allFilled}
-              >
-                Save
-              </button>
-              <button
-                className="px-2 py-1 bg-red-600 text-white rounded"
-                onClick={onDelete}
-              >
-                Delete
-              </button>
+            <div className="flex justify-between items-center">
+              {editing ? (
+                <div className="flex gap-2">
+                  <button
+                    className="px-2 py-1 bg-green-600 text-white rounded disabled:opacity-50"
+                    onClick={onSave}
+                    disabled={!allFilled}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="px-2 py-1 bg-red-600 text-white rounded"
+                    onClick={onDelete}
+                  >
+                    Delete
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className="px-2 py-1 bg-blue-600 text-white rounded"
+                  onClick={() => setEditing(true)}
+                >
+                  Edit
+                </button>
+              )}
             </div>
           ) : (
             <div className="text-xs text-gray-500 text-center">

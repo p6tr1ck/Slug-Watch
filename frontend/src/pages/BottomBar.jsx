@@ -13,6 +13,7 @@ export default function BottomBar() {
     viewMyPins,
     setViewMyPins,
     session,
+    createMode,
     setCreateMode,
     viewPolicePins,
     setViewPolicePins,
@@ -31,10 +32,29 @@ export default function BottomBar() {
             <p>Police Pins</p>
           </button>
         </div>
-        <div className="border border-black">
+        <div>
           <button
-            className="border border-black"
-            onClick={() => setCreateMode((v) => !v)}
+            onClick={() => {
+              if (!session) {
+                // if user not signed in, send them to sign in
+                window.location.href = "/signin";
+                return;
+              }
+              setCreateMode((v) => !v);
+            }}
+            aria-pressed={createMode}
+            aria-label={createMode ? "Cancel create pin" : "Create pin"}
+            style={{
+              backgroundColor: createMode ? "#dc2626" : "#2563eb",
+              color: "#fff",
+              padding: "8px",
+              borderRadius: 8,
+              boxShadow: "0 8px 22px rgba(0,0,0,0.18)",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
           >
             <AddIcon />
           </button>
