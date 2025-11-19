@@ -18,6 +18,7 @@ function toDatetimeLocal(ts) {
 
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
+import CommentsPopup from "./CommentsPopup";
 
 export default function MarkerWithPopup({
   m,
@@ -37,6 +38,7 @@ export default function MarkerWithPopup({
   });
 
   const [saving, setSaving] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   useEffect(() => {
     // keep local form in sync when parent marker changes
@@ -129,8 +131,8 @@ export default function MarkerWithPopup({
       position={editClicked ? [m.lat, m.long] : m.position}
       icon={makeIcon(m.category)}
     >
-      <Popup>
-        <div className="w-72" onClick={stop} onMouseDown={stop}>
+      <Popup autoPan={true} maxWidth={320}>
+        <div className="w-72 max-h-[60vh] overflow-auto" onClick={stop} onMouseDown={stop}>
           <label className="block text-sm font-medium">Title</label>
           <input
             className="w-full border p-1 rounded mb-2"
@@ -187,6 +189,23 @@ export default function MarkerWithPopup({
           >
             Delete
           </button>
+
+          {/* chat button and inline comments to avoid viewport overflow */}
+          <div className="mt-2 flex justify-end">
+            <button
+              title="Comments"
+              className="p-2 bg-blue-600 text-white rounded-full shadow"
+              onClick={() => setShowComments((s) => !s)}
+            >
+              💬
+            </button>
+          </div>
+
+          {showComments && (
+            <div className="mt-2">
+              <CommentsPopup pinId={m.supabaseId || `local:${m.position[0]},${m.position[1]}`} onClose={() => setShowComments(false)} />
+            </div>
+          )}
         </div>
       </Popup>
     </Marker>
