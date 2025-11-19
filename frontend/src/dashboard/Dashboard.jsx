@@ -10,7 +10,8 @@ import { AuthContext } from "../App";
 export default function Dashboard() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { setSelectDashboardItem } = useContext(AuthContext);
+  const { selectDashboardItem, setSelectDashboardItem } =
+    useContext(AuthContext);
 
   useEffect(() => {
     async function loadData() {
@@ -48,38 +49,57 @@ export default function Dashboard() {
           </Typography>
         )}
 
-        {items.map((item) => (
-          <AccordionDetails
-            key={item.id}
-            sx={{
-              backgroundColor: "white",
-              borderRadius: "1rem",
-              mb: 1,
-              cursor: "pointer",
-            }}
-            onClick={() => setSelectDashboardItem(item.id)}
-          >
-            <div className="p-2 rounded-lg border border-blue-200 shadow-sm bg-white">
-              <h2 className="text-sm font-semibold text-blue-700">
-                {item.crime || "Unknown Crime"}
-              </h2>
+        {items.map((item) => {
+          // Check if this is the selected dashboard item
+          const isSelected = selectDashboardItem === item.id;
 
-              {/* Date / Time */}
-              <p className="text-xs text-gray-500 mt-1">
-                {new Date(item.date).toLocaleDateString()} •{" "}
-                {new Date(item.date).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </p>
+          return (
+            <AccordionDetails
+              key={item.id}
+              onClick={() => setSelectDashboardItem(item.id)}
+              sx={{
+                backgroundColor: isSelected ? "#1e40af" : "white", // match map marker color
+                borderRadius: "1rem",
+                mb: 1,
+                cursor: "pointer",
+                border: isSelected ? "2px solid #1e40af" : "1px solid #bfdbfe",
+                transition: "0.2s ease",
+              }}
+            >
+              <div className="p-2 rounded-lg">
+                <h2
+                  className={`text-sm font-semibold ${
+                    isSelected ? "text-white" : "text-blue-700"
+                  }`}
+                >
+                  {item.crime || "Unknown Crime"}
+                </h2>
 
-              {/* Location */}
-              <p className="text-xs text-blue-600 font-medium mt-2">
-                📍 {item.lat}, {item.long}
-              </p>
-            </div>
-          </AccordionDetails>
-        ))}
+                {/* Date / Time */}
+                <p
+                  className={`text-xs mt-1 ${
+                    isSelected ? "text-blue-100" : "text-gray-500"
+                  }`}
+                >
+                  {new Date(item.date).toLocaleDateString()} •{" "}
+                  {new Date(item.date).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+
+                {/* Location */}
+                <p
+                  className={`text-xs font-medium mt-2 ${
+                    isSelected ? "text-blue-200" : "text-blue-600"
+                  }`}
+                >
+                  📍 {item.lat}, {item.long}
+                </p>
+              </div>
+            </AccordionDetails>
+          );
+        })}
       </Accordion>
     </div>
   );
