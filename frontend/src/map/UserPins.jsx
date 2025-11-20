@@ -33,7 +33,7 @@ export default function UserPins() {
     // handler for INSERT events
     const channel = supabase
       .channel("realtime:example_pins")
-      // INSERT → use handler that can do async/notifications
+      // INSERT
       .on(
         "postgres_changes",
         {
@@ -127,6 +127,7 @@ export default function UserPins() {
             return (
               <MakeMarker
                 key={pin.id}
+                m={pin}
                 id={pin.id}
                 title={pin.title}
                 category={pin.category}
