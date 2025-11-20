@@ -7,7 +7,8 @@ export default function MarkerWithPopup({
   m,
   updateMarker,
   removeMarker,
-  canModify,
+  // canModify,
+  setMarkers,
 }) {
   const markerRef = useRef(null);
   const categories = ["TAPS", "ICE", "Suspicious Activity", "Theft", "Other"];
@@ -50,24 +51,35 @@ export default function MarkerWithPopup({
     form.datetime &&
     form.category &&
     form.description.trim();
-  const disabled = !canModify;
+  // const disabled = !canModify;
 
   async function onSave() {
     if (disabled || !allFilled) return;
     setSaving(true);
     try {
       let row;
-      if (m.supabaseId){
-        row = await editToSupa({id: m.supabaseId, form, m });
-      }else{
-        row = await insToSupa({form, m});
+      if (m.supabaseId) {
+        row = await editToSupa({ id: m.supabaseId, form, m });
+      } else {
+        row = await insToSupa({ form, m });
       }
-      const upd = {...m, supabaseId: row.id, title: row.title, category: row.category, description: row.description, position: [row.lat, row.long], isNew: false};
+      const upd = {
+        ...m,
+        supabaseId: row.id,
+        title: row.title,
+        category: row.category,
+        description: row.description,
+        position: [row.lat, row.long],
+        isNew: false,
+      };
       updateMarker(m.id, upd);
       markerRef.current?.closePopup();
+      // Delete the local marker in the application
+      // because realtime pulling of pins will reflect on the map
+      setMarkers([]);
     } catch (e) {
       console.error("Error saving pin: ", e);
-    }finally{
+    } finally {
       setSaving(false);
     }
   }
@@ -75,7 +87,7 @@ export default function MarkerWithPopup({
   async function onDelete() {
     if (disabled) return;
     try {
-      if (m.supabaseId) await delInSupa({id: m.supabaseId});
+      if (m.supabaseId) await delInSupa({ id: m.supabaseId });
       removeMarker(m.id);
       markerRef.current?.closePopup();
     } catch (e) {
@@ -146,7 +158,7 @@ export default function MarkerWithPopup({
               setForm((s) => ({ ...s, description: e.target.value }))
             }
           />
-
+          {/* 
           {canModify ? (
             <div className="flex justify-between">
               <button
@@ -167,7 +179,7 @@ export default function MarkerWithPopup({
             <div className="text-xs text-gray-500 text-center">
               You can only edit your own pins.
             </div>
-          )}
+          )} */}
         </div>
       </Popup>
     </Marker>

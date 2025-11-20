@@ -117,6 +117,8 @@ export default function UserPins() {
                   position={[pin.lat, pin.long]}
                   selectedPinId={selectedPinId}
                   setSelectedPinId={setSelectedPinId}
+                  // The person who created the pin can modify their pin
+                  canModify={true}
                 />
               );
             }
@@ -133,6 +135,8 @@ export default function UserPins() {
                 position={[pin.lat, pin.long]}
                 selectedPinId={selectedPinId}
                 setSelectedPinId={setSelectedPinId}
+                // If the person logged in is the creator of the pin, they can modify it
+                canModify={pin.user_id === session?.user?.id ? true : false}
               />
             );
           })}

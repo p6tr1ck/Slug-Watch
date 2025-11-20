@@ -56,7 +56,7 @@ export default function Map() {
       description: "",
       className: "marker-green",
       isNew: true,
-      ownerId: session,
+      ownerId: session?.user?.id,
     };
     setMarkers((m) => [...m, newMarker]);
     setCreateMode(false);
@@ -138,14 +138,13 @@ export default function Map() {
         <PolicePins />
         <MapClickHandler createMode={createMode} onMapClick={handleMapClick} />
         {markers.map((m) => {
-          const canModify = Boolean(session) && m.ownerId === session;
           return (
             <MarkerWithPopup
               key={m.id}
               m={m}
               updateMarker={updateMarker}
               removeMarker={removeMarker}
-              canModify={canModify}
+              setMarkers={setMarkers}
             />
           );
         })}
