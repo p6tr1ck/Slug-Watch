@@ -65,7 +65,11 @@ export default function MakeMarker({
   return (
     <>
       {editClicked ? (
-        <MarkerWithPopup m={m} editClicked={editClicked} />
+        <MarkerWithPopup
+          m={m}
+          editClicked={editClicked}
+          setEditClicked={setEditClicked}
+        />
       ) : (
         <Marker ref={markerRef} position={position} icon={makeIcon(category)}>
           <Popup>
