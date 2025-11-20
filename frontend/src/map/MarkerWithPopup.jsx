@@ -21,10 +21,10 @@ function toDatetimeLocal(ts) {
 
 export default function MarkerWithPopup({
   m,
-  updateMarker,
   removeMarker,
   setMarkers,
   editClicked = false,
+  setEditClicked,
 }) {
   const markerRef = useRef(null);
   const categories = ["TAPS", "ICE", "Suspicious Activity", "Theft", "Other"];
@@ -100,7 +100,7 @@ export default function MarkerWithPopup({
         setMarkers([]);
       } else {
         // Remove the input fields when edit is saved
-        editClicked(false);
+        setEditClicked(false);
       }
     } catch (e) {
       console.error("Error saving pin: ", e);
