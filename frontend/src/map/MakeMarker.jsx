@@ -17,13 +17,7 @@ const categoryChip = (category = "") => {
 };
 
 export default function MakeMarker({
-  m = null,
-  id,
-  title,
-  category,
-  description,
-  time,
-  position, // [lat, lng]
+  m,
   setSelectedPinId,
   selectedPinId,
   canModify = false,
@@ -36,17 +30,16 @@ export default function MakeMarker({
   useEffect(() => {
     // If the current pin ID is == the selected notification, then
     // make the pin popup
-    if (selectedPinId && selectedPinId === id && markerRef.current) {
+    if (selectedPinId && selectedPinId === m.id && markerRef.current) {
       markerRef.current.openPopup();
       // Reset the state of selectedPinId, so value does not persist
       setSelectedPinId(null);
     }
-  }, [selectedPinId, id]);
+  }, [selectedPinId, m.id]);
 
   const directionsUrl = () => {
-    const [lat, lng] = position || [];
-    return lat && lng
-      ? `https://www.google.com/maps?q=${lat},${lng}`
+    return m.lat && m.long
+      ? `https://www.google.com/maps?q=${m.lat},${m.long}`
       : `https://www.google.com/maps`;
   };
 
@@ -55,7 +48,7 @@ export default function MakeMarker({
 
   async function onDelete() {
     try {
-      await delInSupa({ id: id });
+      await delInSupa({ id: m.id });
       markerRef.current?.closePopup();
     } catch (e) {
       console.error("Error deleting pin: ", e);
@@ -67,7 +60,11 @@ export default function MakeMarker({
       {editClicked ? (
         <MarkerWithPopup m={m} editClicked={editClicked} />
       ) : (
-        <Marker ref={markerRef} position={position} icon={makeIcon(category)}>
+        <Marker
+          ref={markerRef}
+          position={[m.lat, m.long]}
+          icon={makeIcon(m.category)}
+        >
           <Popup>
             {/* Card */}
             <div className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden">
@@ -75,19 +72,17 @@ export default function MakeMarker({
               <div className="px-3 pt-3 pb-2">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="text-base font-semibold text-slate-900 leading-tight">
-                    {title || "Incident"}
+                    {m.title || "Incident"}
                   </h3>
 
-                  {category && (
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${categoryChip(
-                        category
-                      )}`}
-                      title={category}
-                    >
-                      {category}
-                    </span>
-                  )}
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${categoryChip(
+                      m.category
+                    )}`}
+                    title={m.category}
+                  >
+                    {m.category}
+                  </span>
                 </div>
               </div>
 
@@ -96,22 +91,22 @@ export default function MakeMarker({
 
               {/* Body */}
               <div className="px-3 py-2 text-[15px] text-slate-700 leading-snug space-y-1.5">
-                {time && (
+                {m.created_at && (
                   <div className="flex gap-2">
                     <span className="font-medium text-slate-900">Time:</span>
-                    <span>{time}</span>
+                    <span>{m.created_at}</span>
                   </div>
                 )}
 
-                {description && (
+                {m.description && (
                   <div>
                     <span className="font-medium text-slate-900">
                       Description:
                     </span>{" "}
                     <span className="text-slate-700">
-                      {expanded ? description : shortText(description)}
+                      {expanded ? m.description : shortText(m.description)}
                     </span>
-                    {description.length > 140 && (
+                    {m.description.length > 140 && (
                       <button
                         onClick={() => setExpanded((v) => !v)}
                         className="ml-1 text-slate-600 underline underline-offset-2 hover:text-slate-900"

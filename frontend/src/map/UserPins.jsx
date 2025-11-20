@@ -110,11 +110,7 @@ export default function UserPins() {
                 <MakeMarker
                   key={pin.id}
                   id={pin.id}
-                  title={pin.title}
-                  category={pin.category}
-                  description={pin.description}
-                  time={pin.time}
-                  position={[pin.lat, pin.long]}
+                  m={pin}
                   selectedPinId={selectedPinId}
                   setSelectedPinId={setSelectedPinId}
                   // The person who created the pin can modify their pin
@@ -128,12 +124,6 @@ export default function UserPins() {
               <MakeMarker
                 key={pin.id}
                 m={pin}
-                id={pin.id}
-                title={pin.title}
-                category={pin.category}
-                description={pin.description}
-                time={pin.created_at}
-                position={[pin.lat, pin.long]}
                 selectedPinId={selectedPinId}
                 setSelectedPinId={setSelectedPinId}
                 // If the person logged in is the creator of the pin, they can modify it
