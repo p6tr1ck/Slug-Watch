@@ -146,7 +146,7 @@ export default function MakeMarker({
                 className="inline-flex-items-center gap-1 rounded-lg border border-rose-300 px-2.5 py-1.5 text-sm test-rose-700 hover:bg-rose-50 transition"
                 onClick={() => setShowReport((v)=>!v)}
                 > 
-                {showReport ? "Close" : "Report Post"}
+                {showReport ? "Close" : "Report"}
               </button>
             )}
           </div>

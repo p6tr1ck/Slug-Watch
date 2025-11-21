@@ -134,6 +134,7 @@ export default function UserPins() {
             return null;
           })
         : pins.map((pin) => {
+          const reportable = !!session && currUser && pin.user_id !== currUser;
             return (
               <MakeMarker
                 key={pin.id}
@@ -143,8 +144,8 @@ export default function UserPins() {
                 description={pin.description}
                 time={pin.created_at}
                 position={[pin.lat, pin.long]}
-                currUserID={pin.user_id}
-                canReport={!!session}
+                currUserID={currUser}
+                canReport={reportable}
                 onReport={handleReport}
                 selectedPinId={selectedPinId}
                 setSelectedPinId={setSelectedPinId}

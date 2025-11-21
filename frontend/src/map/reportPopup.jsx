@@ -26,16 +26,6 @@ function parseThruDesc(w,details){
 
 export function ReportPost({pID,uID, onSub, onCancel}) {
     const reasons= ["Spam", "Misinformation", "Personal Info/DOXX", "Duplicate", "Other"];
-    
-    /* 
-    30 points to trigger review (appending to mod report list for review): 
-    2 personal info reports should trigger a review (a= 15)
-    4 spam reports on the same id should trigger (b=9)
-    3 misinformation on one should also sent to mod team(c=10)
-    4 duplicate reports should also(d=9)
-    5 (at least) other reports should trigger a manual review(e=8)
-    if one of each, still exceeds report thresh (49), at least 4 should make it appear
-    */
 
 
     const [form, setForm] = useState({ reason: reasons[0], details: "" });
