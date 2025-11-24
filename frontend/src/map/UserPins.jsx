@@ -33,7 +33,7 @@ export default function UserPins() {
     // handler for INSERT events
     const channel = supabase
       .channel("realtime:example_pins")
-      // INSERT → use handler that can do async/notifications
+      // INSERT
       .on(
         "postgres_changes",
         {
@@ -110,13 +110,11 @@ export default function UserPins() {
                 <MakeMarker
                   key={pin.id}
                   id={pin.id}
-                  title={pin.title}
-                  category={pin.category}
-                  description={pin.description}
-                  time={pin.time}
-                  position={[pin.lat, pin.long]}
+                  m={pin}
                   selectedPinId={selectedPinId}
                   setSelectedPinId={setSelectedPinId}
+                  // The person who created the pin can modify their pin
+                  canModify={true}
                 />
               );
             }
@@ -125,14 +123,11 @@ export default function UserPins() {
             return (
               <MakeMarker
                 key={pin.id}
-                id={pin.id}
-                title={pin.title}
-                category={pin.category}
-                description={pin.description}
-                time={pin.created_at}
-                position={[pin.lat, pin.long]}
+                m={pin}
                 selectedPinId={selectedPinId}
                 setSelectedPinId={setSelectedPinId}
+                // If the person logged in is the creator of the pin, they can modify it
+                canModify={pin.user_id === session?.user?.id ? true : false}
               />
             );
           })}

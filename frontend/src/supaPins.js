@@ -86,13 +86,14 @@ export async function delInSupa({ id }) {
 }
 
 export async function editToSupa({ id, form, m }) {
-  const [lat, lng] = m.position;
+  const lat = m.lat;
+  const long = m.long;
   const edit = {
     title: form.title,
     category: form.category,
     description: form.description,
     lat: lat,
-    long: lng,
+    long: long,
   };
   const { data, error } = await supabase
     .from("example_pins")
