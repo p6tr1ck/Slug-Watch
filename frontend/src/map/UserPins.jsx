@@ -15,6 +15,10 @@ function mapPin(data) {
       data.created_at
     ).toLocaleTimeString()}`, // Format as MM/DD/YY Time
     description: data.description,
+    // Votes default to 0 when not provided by the backend
+    upvotes: Number(data.upvotes ?? 0),
+    downvotes: Number(data.downvotes ?? 0),
+    certified: Boolean(data.certified),
   };
 }
 
