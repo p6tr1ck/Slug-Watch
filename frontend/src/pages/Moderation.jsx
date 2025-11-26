@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { AuthContext } from "../App";
 import { supabase } from "../../supabaseClient";
 import { del_report } from "../sbReportHandle";
-import { Button } from "@mui/material";
+import { Button , Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
 
 function AccessPanel({ heading, body }) {
   return (
@@ -58,6 +58,8 @@ export default function Moderation() {
     items: [],
   });
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [modReason, setModReason] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -191,6 +193,46 @@ useEffect(() => {
   };
 }, [permissionState.allowed]);
 
+  const handleConfirmDel = async () => {
+    if (!selectedPins.length || deleteState.inFlight) return;
+    setDeleteState({inFlight: true, error: null});
+    console.log("Moderator reason for deletion:", modReason);
+
+    try {
+    const { error: reportsErr } = await supabase.from("reports").delete().in("post_id", selectedPins); // all reports where post_id is one of the pins
+
+    if (reportsErr) {
+      console.error("Failed to delete related reports", reportsErr);
+      setDeleteState({ inFlight: false, error: reportsErr });
+      return;
+    }
+
+    const { error: pinsErr } = await supabase.from("example_pins").delete().in("id", selectedPins);
+
+    if (pinsErr) {
+      console.error("Failed to delete pins", pinsErr);
+      setDeleteState({ inFlight: false, error: pinsErr });
+      return;
+    }
+
+    setPinsState((prev) => ({
+      ...prev, items: prev.items.filter((pin) => !selectedPins.includes(pin.id)),
+    }));
+    setSelectedPins([]);
+
+    setReportState((prev) => ({
+      ...prev, items: prev.items.filter((r) => !selectedPins.includes(r.post_id)),
+    }));
+
+    setModReason("");
+    setConfirmOpen(false);
+    setDeleteState({ inFlight: false, error: null });
+  } catch (err) {
+    console.error("Unexpected error deleting pins + reports", err);
+    setDeleteState({ inFlight: false, error: err });
+  }
+  }
+
   if (!user) {
     return (
       <AccessPanel
@@ -263,26 +305,7 @@ useEffect(() => {
 
   const onDeleteSelected = () => {
     if (!selectedPins.length || deleteState.inFlight) return;
-    (async () => {
-      setDeleteState({ inFlight: true, error: null });
-      const { error } = await supabase
-        .from("example_pins")
-        .delete()
-        .in("id", selectedPins);
-
-      if (error) {
-        console.error("Failed to delete pins", error);
-        setDeleteState({ inFlight: false, error });
-        return;
-      }
-
-      setPinsState((prev) => ({
-        ...prev,
-        items: prev.items.filter((pin) => !selectedPins.includes(pin.id)),
-      }));
-      setSelectedPins([]);
-      setDeleteState({ inFlight: false, error: null });
-    })();
+    setConfirmOpen(true);
   };
 
   return (
@@ -497,6 +520,38 @@ useEffect(() => {
           </div>
         )}
       </div>
+      <Dialog open={confirmOpen} onClose={()=>{
+        if(!deleteState.inFlight) setConfirmOpen(false);
+      }} fullWidth maxWidth="sm">
+        <DialogTitle>Delete These Pins?</DialogTitle>
+        <DialogContent dividers>
+          <p className="mb-3 text sm text-slate-600">
+            These pins will be removed permanently, please provide a reason
+          </p>
+          <TextField label="Reason For Removal" placeholder= "Explain briefly why..."
+           value= {modReason} onChange={(e) => setModReason(e.target.value)} multiline minRows={2} fullWidth disabled={deleteState.inFlight}/>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setConfirmOpen(false)}
+            disabled={deleteState.inFlight}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleConfirmDel}
+            disabled={deleteState.inFlight}
+          >
+            {deleteState.inFlight
+              ? "Deleting…"
+              : `Delete ${selectedPins.length} pin${
+                  selectedPins.length > 1 ? "s" : ""
+                }`}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
