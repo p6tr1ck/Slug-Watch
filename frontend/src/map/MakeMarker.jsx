@@ -84,7 +84,7 @@ export default function MakeMarker({
       if (val === 1) upvotes += 1;
       else if (val === -1) downvotes += 1;
 
-      if (!myVote && session?.user?.id && row.user_id === session.user.id) {
+      if (session?.user?.id && row.user_id === session.user.id && myVote === 0) {
         myVote = val;
       }
     });
@@ -120,13 +120,14 @@ export default function MakeMarker({
     setVotesLoading(true);
 
     try {
-      const { error } = await supabase
-        .from("votes")
-        .insert({
+      const { error } = await supabase.from("votes").upsert(
+        {
           pin_id: m.id,
           user_id: session.user.id,
           value: direction,
-        });
+        },
+        { onConflict: "pin_id,user_id" }
+      );
       if (error) throw error;
     } catch (err) {
       console.error("Failed to persist vote", err);
