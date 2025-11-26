@@ -89,13 +89,17 @@ export default function Dashboard() {
                 </p>
 
                 {/* Location */}
-                <p
+                <a
+                  href={`https://www.google.com/maps?q=${item.lat},${item.long}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()} // prevent accordion selection
                   className={`text-xs font-medium mt-2 ${
                     isSelected ? "text-blue-200" : "text-blue-600"
-                  }`}
+                  } underline cursor-pointer`}
                 >
-                  📍 {item.lat}, {item.long}
-                </p>
+                  📍 Google Maps
+                </a>
               </div>
             </AccordionDetails>
           );

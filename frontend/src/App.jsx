@@ -7,6 +7,7 @@ import NavBar from "./pages/NavBar";
 import BottomBar from "./pages/BottomBar";
 import { supabase } from "../supabaseClient";
 import useWindowDimensions from "./WindowDimensions";
+import { darkModeSwitch } from "./dashboard/darkmode";
 
 export const AuthContext = createContext(null);
 
@@ -39,36 +40,38 @@ function App() {
   }, []);
 
   return (
-    <AuthContext.Provider
-      value={{
-        session,
-        setSession,
-        viewMyPins,
-        setViewMyPins,
-        createMode,
-        setCreateMode,
-        viewPolicePins,
-        setViewPolicePins,
-        selectDashboardItem,
-        setSelectDashboardItem,
-      }}
-    >
-      <BrowserRouter>
-        <div
-          className={`flex flex-col overflow-hidden h-screen ${
-            width <= 600 ? "pb-20" : ""
-          }`}
-        >
-          {width > 600 ? <NavBar /> : <></>}
-          <Routes>
-            <Route path="/" element={<Navigate to="/home" replace />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/home" element={<Home />} />
-          </Routes>
-          {width <= 600 ? <BottomBar /> : <></>}
-        </div>
-      </BrowserRouter>
-    </AuthContext.Provider>
+    <darkModeSwitch>
+      <AuthContext.Provider
+        value={{
+          session,
+          setSession,
+          viewMyPins,
+          setViewMyPins,
+          createMode,
+          setCreateMode,
+          viewPolicePins,
+          setViewPolicePins,
+          selectDashboardItem,
+          setSelectDashboardItem,
+        }}
+      >
+        <BrowserRouter>
+          <div
+            className={`flex flex-col overflow-hidden h-screen ${
+              width <= 600 ? "pb-20" : ""
+            }`}
+          >
+            {width > 600 ? <NavBar /> : <></>}
+            <Routes>
+              <Route path="/" element={<Navigate to="/home" replace />} />
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/home" element={<Home />} />
+            </Routes>
+            {width <= 600 ? <BottomBar /> : <></>}
+          </div>
+        </BrowserRouter>
+      </AuthContext.Provider>
+    </darkModeSwitch>
   );
 }
 
