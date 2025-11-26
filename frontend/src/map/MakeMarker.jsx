@@ -1,8 +1,16 @@
 import { Marker, Popup } from "react-leaflet";
-import { useState, useRef, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useContext,
+  useCallback,
+} from "react";
 import makeIcon from "./MakeIcon";
 import MarkerWithPopup from "./MarkerWithPopup";
 import { delInSupa } from "../supaPins.js";
+import { supabase } from "../../supabaseClient.js";
+import { AuthContext } from "../App";
 
 const categoryChip = (category = "") => {
   const c = category.toLowerCase();
@@ -22,13 +30,15 @@ export default function MakeMarker({
   selectedPinId,
   canModify = false,
 }) {
+  const { session } = useContext(AuthContext);
   const [expanded, setExpanded] = useState(false);
   const [editClicked, setEditClicked] = useState(false);
   const [voteState, setVoteState] = useState({
     upvotes: Number(m.upvotes ?? 0),
     downvotes: Number(m.downvotes ?? 0),
-    myVote: 0,
+    myVote: Number(m.myVote ?? 0),
   });
+  const [votesLoading, setVotesLoading] = useState(false);
   const markerRef = useRef(null);
   const isCertified = Boolean(m.certified);
 
@@ -47,9 +57,45 @@ export default function MakeMarker({
     setVoteState({
       upvotes: Number(m.upvotes ?? 0),
       downvotes: Number(m.downvotes ?? 0),
-      myVote: 0,
+      myVote: Number(m.myVote ?? 0),
     });
-  }, [m.id, m.upvotes, m.downvotes]);
+  }, [m.id, m.upvotes, m.downvotes, m.myVote]);
+
+  const fetchVotes = useCallback(async () => {
+    setVotesLoading(true);
+    const { data, error } = await supabase
+      .from("votes")
+      .select("pin_id, user_id, value, created_at")
+      .eq("pin_id", m.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Failed to load votes", error);
+      setVotesLoading(false);
+      return;
+    }
+
+    let upvotes = 0;
+    let downvotes = 0;
+    let myVote = 0;
+
+    data?.forEach((row) => {
+      const val = Number(row.value);
+      if (val === 1) upvotes += 1;
+      else if (val === -1) downvotes += 1;
+
+      if (!myVote && session?.user?.id && row.user_id === session.user.id) {
+        myVote = val;
+      }
+    });
+
+    setVoteState({ upvotes, downvotes, myVote });
+    setVotesLoading(false);
+  }, [m.id, session?.user?.id]);
+
+  useEffect(() => {
+    fetchVotes();
+  }, [fetchVotes]);
 
   const directionsUrl = () => {
     return m.lat && m.long
@@ -69,31 +115,24 @@ export default function MakeMarker({
     }
   }
 
-  const onVote = (direction) => {
-    // direction: 1 = upvote, -1 = downvote
-    setVoteState((prev) => {
-      let up = prev.upvotes;
-      let down = prev.downvotes;
-      let myVote = prev.myVote;
+  const onVote = async (direction) => {
+    if (!session?.user?.id) return;
+    setVotesLoading(true);
 
-      if (prev.myVote === direction) {
-        // Undo vote
-        if (direction === 1) up = Math.max(0, up - 1);
-        if (direction === -1) down = Math.max(0, down - 1);
-        myVote = 0;
-      } else {
-        if (direction === 1) {
-          up += 1;
-          if (prev.myVote === -1) down = Math.max(0, down - 1);
-        } else if (direction === -1) {
-          down += 1;
-          if (prev.myVote === 1) up = Math.max(0, up - 1);
-        }
-        myVote = direction;
-      }
-
-      return { upvotes: up, downvotes: down, myVote };
-    });
+    try {
+      const { error } = await supabase
+        .from("votes")
+        .insert({
+          pin_id: m.id,
+          user_id: session.user.id,
+          value: direction,
+        });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Failed to persist vote", err);
+    } finally {
+      await fetchVotes();
+    }
   };
 
   return (
@@ -177,6 +216,7 @@ export default function MakeMarker({
                     <button
                       type="button"
                       onClick={() => onVote(1)}
+                      disabled={votesLoading || !session?.user?.id}
                       className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition ${
                         voteState.myVote === 1
                           ? "border-green-200 bg-green-50 text-green-800 shadow-sm"
@@ -197,6 +237,7 @@ export default function MakeMarker({
                     <button
                       type="button"
                       onClick={() => onVote(-1)}
+                      disabled={votesLoading || !session?.user?.id}
                       className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition ${
                         voteState.myVote === -1
                           ? "border-red-200 bg-red-50 text-red-800 shadow-sm"
@@ -216,7 +257,7 @@ export default function MakeMarker({
                     </button>
                   </div>
                   <div className="mt-2 text-xs text-slate-500">
-                    Your vote stays on this device until backend storage is added.
+                    Votes refresh directly from Supabase after each action.
                   </div>
                 </div>
               )}
