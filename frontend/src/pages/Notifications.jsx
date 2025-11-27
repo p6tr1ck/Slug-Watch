@@ -134,6 +134,12 @@ export default function Notification() {
     getNotifications();
   }, [session]);
 
+  useEffect(() => {
+    if (pins.length !== 0) {
+      setUnreadNotifications(pins.length);
+    }
+  }, [pins]);
+
   // For each pinId, load the pin
   useEffect(() => {
     async function getPins() {
