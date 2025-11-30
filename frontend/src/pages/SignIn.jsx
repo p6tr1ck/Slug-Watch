@@ -3,7 +3,7 @@ import { useEffect, useContext, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import GoogleButton from "react-google-button";
 import { AuthContext } from "../App";
-import Locations from "./LocationsCategories";
+import LocationsCategories from "./LocationsCategories";
 import SavePreferences from "./SavePreferences";
 
 // Background + centering wrapper
@@ -16,7 +16,6 @@ const Wrapper = ({ children }) => (
 export default function SignIn() {
   const { session } = useContext(AuthContext);
   const [notifications, setNotifications] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -115,7 +114,7 @@ export default function SignIn() {
             <p className="text-slate-600">{email}</p>
           </div>
         </div>
-        <Locations
+        <LocationsCategories
           notifications={notifications}
           setNotifications={setNotifications}
         />
