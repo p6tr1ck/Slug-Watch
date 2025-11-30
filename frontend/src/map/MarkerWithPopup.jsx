@@ -62,18 +62,26 @@ export default function MarkerWithPopup({
     setSaving(true);
     try {
       let row;
-      if (m.supabaseId){
-        row = await editToSupa({id: m.supabaseId, form, m });
-      }else{
-        row = await insToSupa({form, m});
+      if (m.supabaseId) {
+        row = await editToSupa({ id: m.supabaseId, form, m });
+      } else {
+        row = await insToSupa({ form, m });
       }
-      const upd = {...m, supabaseId: row.id, title: row.title, category: row.category, description: row.description, position: [row.lat, row.long], isNew: false};
+      const upd = {
+        ...m,
+        supabaseId: row.id,
+        title: row.title,
+        category: row.category,
+        description: row.description,
+        position: [row.lat, row.long],
+        isNew: false,
+      };
       updateMarker(m.id, upd);
       markerRef.current?.closePopup();
       setEditing(false);
     } catch (e) {
       console.error("Error saving pin: ", e);
-    }finally{
+    } finally {
       setSaving(false);
     }
   }
@@ -81,7 +89,7 @@ export default function MarkerWithPopup({
   async function onDelete() {
     if (disabled) return;
     try {
-      if (m.supabaseId) await delInSupa({id: m.supabaseId});
+      if (m.supabaseId) await delInSupa({ id: m.supabaseId });
       removeMarker(m.id);
       markerRef.current?.closePopup();
     } catch (e) {
@@ -100,7 +108,11 @@ export default function MarkerWithPopup({
   return (
     <Marker ref={markerRef} position={m.position} icon={makeIcon(m.className)}>
       <Popup autoPan={true} maxWidth={320}>
-        <div className="w-72 max-h-[60vh] overflow-auto" onClick={stop} onMouseDown={stop}>
+        <div
+          className="w-72 max-h-[60vh] overflow-auto"
+          onClick={stop}
+          onMouseDown={stop}
+        >
           <label className="block text-sm font-medium">Title</label>
           <input
             className="w-full border p-1 rounded mb-2"
@@ -194,7 +206,7 @@ export default function MarkerWithPopup({
           <div className="mt-2 flex justify-end">
             <button
               title="Comments"
-              className="p-2 bg-blue-600 text-white rounded-full shadow"
+              className="p-2 bg-blue-600 text-white rounded-full shadow cursor-pointer"
               onClick={() => setShowComments((s) => !s)}
             >
               💬
@@ -203,7 +215,12 @@ export default function MarkerWithPopup({
 
           {showComments && (
             <div className="mt-2">
-              <CommentsPopup pinId={m.supabaseId || `local:${m.position[0]},${m.position[1]}`} onClose={() => setShowComments(false)} />
+              <CommentsPopup
+                pinId={
+                  m.supabaseId || `local:${m.position[0]},${m.position[1]}`
+                }
+                onClose={() => setShowComments(false)}
+              />
             </div>
           )}
         </div>

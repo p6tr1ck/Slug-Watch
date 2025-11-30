@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { getUserID } from "../supaPins.js";
-import { fetchComments, addComment as addCommentToSupa, toggleVote as toggleVoteInSupa } from "../supaComments.js";
+import {
+  fetchComments,
+  addComment as addCommentToSupa,
+  toggleVote as toggleVoteInSupa,
+} from "../supaComments.js";
 
 export default function CommentsPopup({ pinId, onClose }) {
   const [comments, setComments] = useState([]);
@@ -12,7 +16,7 @@ export default function CommentsPopup({ pinId, onClose }) {
   // Load comments from Supabase
   useEffect(() => {
     let mounted = true;
-    
+
     async function loadComments() {
       try {
         setLoading(true);
@@ -38,7 +42,7 @@ export default function CommentsPopup({ pinId, onClose }) {
   // Get current user
   useEffect(() => {
     let mounted = true;
-    
+
     (async () => {
       try {
         const uid = await getUserID();
@@ -49,7 +53,7 @@ export default function CommentsPopup({ pinId, onClose }) {
         console.warn("Could not get supabase user", e);
       }
     })();
-    
+
     return () => {
       mounted = false;
     };
@@ -68,7 +72,7 @@ export default function CommentsPopup({ pinId, onClose }) {
         parentId: replyTo,
         text: text.trim(),
       });
-      
+
       setComments((s) => [newComment, ...s]);
       setText("");
       setReplyTo(null);
@@ -86,7 +90,7 @@ export default function CommentsPopup({ pinId, onClose }) {
 
     try {
       await toggleVoteInSupa({ commentId: id, vote: value });
-      
+
       // Update local state optimistically
       setComments((s) =>
         s.map((c) => {
@@ -128,17 +132,24 @@ export default function CommentsPopup({ pinId, onClose }) {
     }
 
     function sortNode(node) {
-      node.children.sort((a, b) => scoreOf(b) - scoreOf(a) || new Date(b.createdAt) - new Date(a.createdAt));
+      node.children.sort(
+        (a, b) =>
+          scoreOf(b) - scoreOf(a) ||
+          new Date(b.createdAt) - new Date(a.createdAt)
+      );
       node.children.forEach(sortNode);
     }
 
-    roots.sort((a, b) => scoreOf(b) - scoreOf(a) || new Date(b.createdAt) - new Date(a.createdAt));
+    roots.sort(
+      (a, b) =>
+        scoreOf(b) - scoreOf(a) || new Date(b.createdAt) - new Date(a.createdAt)
+    );
     roots.forEach(sortNode);
     return roots;
   }, [comments]);
 
   return (
-    <div className="p-1.5 bg-white rounded shadow w-64 max-h-56 flex flex-col border text-xs">
+    <div className="p-1.5 bg-white rounded shadow max-h-90 flex flex-col border text-xs w-full">
       <div className="flex items-center justify-between mb-1 flex-shrink-0">
         <strong className="text-xs">Comments</strong>
         <div className="flex items-center gap-1.5">
@@ -152,15 +163,18 @@ export default function CommentsPopup({ pinId, onClose }) {
             </button>
           ) : null}
           <button
-            className="px-1.5 py-0.5 text-xs bg-gray-200 rounded"
-            onClick={onClose}
+            className="px-1.5 py-0.5 text-xs bg-gray-200 rounded hover:bg-gray-300 cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
           >
             Close
           </button>
         </div>
       </div>
 
-      {!replyTo && (
+      {!replyTo && currentUser && (
         <div className="mb-1 flex-shrink-0">
           <textarea
             id={`comment-input-${pinId}`}
@@ -170,10 +184,9 @@ export default function CommentsPopup({ pinId, onClose }) {
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
-          <div className="flex justify-between mt-0.5 items-center">
-            <div className="text-xs text-gray-500">Signed in as UCSC member</div>
+          <div className="mt-0.5">
             <button
-              className="px-1.5 py-0.5 bg-blue-600 text-white rounded text-xs"
+              className="px-1.5 py-0.5 bg-blue-600 text-white rounded text-xs float-right cursor-pointer hover:bg-blue-900"
               onClick={addComment}
             >
               Post
@@ -211,7 +224,18 @@ export default function CommentsPopup({ pinId, onClose }) {
   );
 }
 
-function CommentNode({ node, onLike, onReply, depth, currentUser, replyTo, text, setText, addComment, pinId }) {
+function CommentNode({
+  node,
+  onLike,
+  onReply,
+  depth,
+  currentUser,
+  replyTo,
+  text,
+  setText,
+  addComment,
+  pinId,
+}) {
   // timeago helper
   function timeAgo(iso) {
     const d = new Date(iso);
@@ -232,39 +256,68 @@ function CommentNode({ node, onLike, onReply, depth, currentUser, replyTo, text,
         <div className="flex justify-between items-start gap-1.5">
           <div className="flex-1 min-w-0">
             <div className="text-xs font-medium">{node.author}</div>
-            <div className="text-xs text-gray-500">{timeAgo(node.createdAt)}</div>
+            <div className="text-xs text-gray-500">
+              {timeAgo(node.createdAt)}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex flex-col items-center text-xs">
               <button
-                className={`px-1 py-0 ${((node.votes||{})[currentUser]===1)? 'text-orange-600 font-bold' : 'text-gray-500'}`}
+                className={`px-1 py-0 ${
+                  (node.votes || {})[currentUser] === 1
+                    ? "text-orange-600 font-bold"
+                    : "text-gray-500"
+                } cursor-pointer`}
                 onClick={() => onLike(node.id, 1)}
                 title="Upvote"
               >
                 ▲
               </button>
-              <div className="text-xs font-medium leading-tight">{Object.values(node.votes||{}).reduce((s,v)=>s+v,0)}</div>
+              <div className="text-xs font-medium leading-tight">
+                {Object.values(node.votes || {}).reduce((s, v) => s + v, 0)}
+              </div>
               <button
-                className={`px-1 py-0 ${((node.votes||{})[currentUser]===-1)? 'text-blue-600 font-bold' : 'text-gray-500'}`}
+                className={`px-1 py-0 ${
+                  (node.votes || {})[currentUser] === -1
+                    ? "text-blue-600 font-bold"
+                    : "text-gray-500"
+                } cursor-pointer`}
                 onClick={() => onLike(node.id, -1)}
                 title="Downvote"
               >
                 ▼
               </button>
             </div>
-            <div>
-              <button
-                className="px-1.5 py-0.5 text-xs text-blue-600"
-                onClick={() => onReply(node.id)}
-              >
-                Reply
-              </button>
-            </div>
           </div>
         </div>
 
-        <div className="mt-1 text-xs whitespace-pre-wrap break-words">{node.text}</div>
-        
+        <div className="mt-1 text-xs whitespace-pre-wrap break-words">
+          {node.text}
+        </div>
+
+        {currentUser && (
+          <div className="content-center">
+            <button
+              className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
+              onClick={() => onReply(node.id)}
+            >
+              Reply
+            </button>
+            <button
+              className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
+              // onClick={() => onReply(node.id)}
+            >
+              Edit
+            </button>
+            <button
+              className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
+              // onClick={() => onReply(node.id)}
+            >
+              Delete
+            </button>
+          </div>
+        )}
+
         {replyTo === node.id && (
           <div className="mt-1">
             <textarea
@@ -297,12 +350,12 @@ function CommentNode({ node, onLike, onReply, depth, currentUser, replyTo, text,
       {node.children && node.children.length > 0 && (
         <div className="mt-1 space-y-1">
           {node.children.map((ch) => (
-            <CommentNode 
-              key={ch.id} 
-              node={ch} 
-              onLike={onLike} 
-              onReply={onReply} 
-              depth={depth + 1} 
+            <CommentNode
+              key={ch.id}
+              node={ch}
+              onLike={onLike}
+              onReply={onReply}
+              depth={depth + 1}
               currentUser={currentUser}
               replyTo={replyTo}
               text={text}

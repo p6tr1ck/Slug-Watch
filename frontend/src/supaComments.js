@@ -19,9 +19,9 @@ export async function fetchComments(pinId) {
     if (commentsError) throw commentsError;
 
     // Fetch all votes for these comments
-    const commentIds = comments.map(c => c.id);
+    const commentIds = comments.map((c) => c.id);
     let votes = [];
-    
+
     if (commentIds.length > 0) {
       const { data: votesData, error: votesError } = await supabase
         .from("comment_votes")
@@ -33,10 +33,10 @@ export async function fetchComments(pinId) {
     }
 
     // Merge votes into comments
-    const commentsWithVotes = comments.map(comment => {
-      const commentVotes = votes.filter(v => v.comment_id === comment.id);
+    const commentsWithVotes = comments.map((comment) => {
+      const commentVotes = votes.filter((v) => v.comment_id === comment.id);
       const votesMap = {};
-      commentVotes.forEach(v => {
+      commentVotes.forEach((v) => {
         votesMap[v.user_id] = v.vote;
       });
 
@@ -72,7 +72,7 @@ export async function addComment({ pinId, parentId, text }) {
       pin_id: pinId,
       parent_id: parentId || null,
       user_id: userId,
-      author: "UCSC member",
+      author: "UCSC Member",
       text: text.trim(),
     };
 

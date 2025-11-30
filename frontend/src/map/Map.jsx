@@ -115,7 +115,7 @@ export default function Map() {
         center={[36.992255, -122.058763]}
         zoom={14.8}
         className="h-full"
-        maxBounds={bounds}
+        // maxBounds={bounds}
         maxBoundsViscosity={1.0}
         minZoom={14.5}
         maxZoom={17}

@@ -112,15 +112,15 @@ export default function MakeMarker({
               </svg>
               Directions
             </a>
-            
+
             {/* Show comments button for non-verified pins */}
             {category && !category.toLowerCase().includes("verified") && (
               <button
                 title="Comments"
-                className="p-2 bg-blue-600 text-white rounded-full shadow"
+                className="p-2 bg-blue-600 text-white rounded-full shadow cursor-pointer hover:bg-sky-700"
                 onClick={() => setShowComments((s) => !s)}
               >
-                💬
+                💬 Comments
               </button>
             )}
           </div>
@@ -128,7 +128,10 @@ export default function MakeMarker({
           {/* Comments section */}
           {showComments && pinId && (
             <div className="px-3 pb-3">
-              <CommentsPopup pinId={pinId} onClose={() => setShowComments(false)} />
+              <CommentsPopup
+                pinId={pinId}
+                onClose={() => setShowComments(false)}
+              />
             </div>
           )}
         </div>
