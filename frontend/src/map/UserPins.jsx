@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 import { AuthContext } from "../App";
 import MakeMarker from "./MakeMarker";
+import MarkerWithPopup from "./MarkerWithPopup";
 
 function mapPin(data) {
   return {
@@ -133,7 +134,7 @@ export default function UserPins() {
                 <MarkerWithPopup
                   key={pin.id}
                   id={pin.id}
-                  m={pin}
+                  m={m}
                   selectedPinId={selectedPinId}
                   setSelectedPinId={setSelectedPinId}
                   // The person who created the pin can modify their pin
