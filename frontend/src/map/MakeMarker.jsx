@@ -52,6 +52,7 @@ export default function MakeMarker({
     t && t.length > n ? t.slice(0, n) + "…" : t;
 
   async function onDelete() {
+    handleClose();
     try {
       await delInSupa({ id: m.id });
       markerRef.current?.closePopup();
@@ -67,6 +68,11 @@ export default function MakeMarker({
   };
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleEdit = () => {
+    handleClose();
+    setEditClicked(!editClicked);
   };
 
   return (
@@ -126,7 +132,7 @@ export default function MakeMarker({
                       >
                         <MenuItem
                           sx={{ padding: "4px 12px", fontSize: "0.8rem" }}
-                          onClick={() => setEditClicked(!editClicked)}
+                          onClick={handleEdit}
                         >
                           Edit
                         </MenuItem>
