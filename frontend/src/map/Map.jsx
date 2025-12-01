@@ -9,10 +9,6 @@ import UserPins from "./UserPins";
 import PolicePins from "./PolicePins";
 import FilterPins from "./FilterPins";
 
-// --- Example pin data ---
-const position1 = [36.98946, -122.06124];
-const position2 = [36.99456, -122.05432];
-
 const bounds = [
   [36.97818, -122.07764], // southwest corner
   [37.004057, -122.035647], // northeast corner
@@ -22,6 +18,7 @@ export default function Map() {
   const { session, createMode, setCreateMode } = useContext(AuthContext);
   const { width } = useWindowDimensions();
   const [markers, setMarkers] = useState([]);
+  const [tempId, setTempId] = useState(0);
 
   useEffect(() => {
     if (!session && createMode) {
@@ -46,7 +43,7 @@ export default function Map() {
       return;
     }
     const newMarker = {
-      id: Date.now(),
+      id: tempId, // create a temp ID for the new marker
       position: latlng,
       title: "",
       address: "",
@@ -55,8 +52,10 @@ export default function Map() {
       description: "",
       className: "marker-green",
       isNew: true,
-      ownerId: session?.user?.id || session,
+      ownerId: session?.user?.id,
     };
+    // increment the temp id for the next new marker
+    setTempId(tempId + 1);
     setMarkers((m) => [...m, newMarker]);
     setCreateMode(false);
   }
@@ -73,14 +72,7 @@ export default function Map() {
   }
 
   function removeMarker(id) {
-    const userId = session?.user?.id || session;
-    setMarkers((prev) =>
-      prev.filter((m) => {
-        if (m.id !== id) return true;
-        if (!userId || m.ownerId !== userId) return true;
-        return false;
-      })
-    );
+    setMarkers((prev) => prev.filter((m) => m.id !== id));
   }
 
   return (
@@ -139,15 +131,13 @@ export default function Map() {
         <PolicePins />
         <MapClickHandler createMode={createMode} onMapClick={handleMapClick} />
         {markers.map((m) => {
-          const userId = session?.user?.id || session;
-          const canModify = Boolean(userId) && m.ownerId === userId;
           return (
             <MarkerWithPopup
               key={m.id}
               m={m}
               updateMarker={updateMarker}
               removeMarker={removeMarker}
-              canModify={canModify}
+              setMarkers={setMarkers}
             />
           );
         })}

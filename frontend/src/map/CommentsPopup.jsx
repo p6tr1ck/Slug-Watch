@@ -10,6 +10,8 @@ export default function CommentsPopup({ pinId, onClose }) {
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState(null);
+  const [editComment, setEditComment] = useState(false);
+  const [deleteComment, setDeleteComment] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -291,6 +293,7 @@ function CommentNode({
           </div>
         </div>
 
+        {/* Load the comment from the user*/}
         <div className="mt-1 text-xs whitespace-pre-wrap break-words">
           {node.text}
         </div>
