@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { getUserID } from "../supaPins.js";
 import {
   fetchComments,
@@ -9,6 +9,7 @@ import {
 export default function CommentsPopup({ pinId, onClose }) {
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
+  const [editText, setEditText] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [editComment, setEditComment] = useState(false);
   const [deleteComment, setDeleteComment] = useState(false);
@@ -216,7 +217,11 @@ export default function CommentsPopup({ pinId, onClose }) {
                 text={text}
                 setText={setText}
                 addComment={addComment}
+                editComment={editComment}
+                setEditComment={setEditComment}
                 pinId={pinId}
+                editText={editText}
+                setEditText={setEditText}
               />
             ))}
           </div>
@@ -237,7 +242,13 @@ function CommentNode({
   setText,
   addComment,
   pinId,
+  editComment,
+  setEditComment,
+  editText,
+  setEditText,
 }) {
+  const editRef = useRef(null);
+
   // timeago helper
   function timeAgo(iso) {
     const d = new Date(iso);
@@ -251,6 +262,19 @@ function CommentNode({
     if (min > 0) return `${min} minute${min > 1 ? "s" : ""} ago`;
     return `just now`;
   }
+
+  const handleEditComment = (text) => {
+    setEditText(text);
+    setEditComment(!editComment);
+  };
+
+  useEffect(() => {
+    if (editComment && editRef.current) {
+      const el = editRef.current;
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+    }
+  }, [editComment]);
 
   return (
     <div className="pl-0.5" style={{ marginLeft: depth * 8 }}>
@@ -294,21 +318,26 @@ function CommentNode({
         </div>
 
         {/* Load the comment from the user*/}
-        <div className="mt-1 text-xs whitespace-pre-wrap break-words">
-          {node.text}
-        </div>
+        {editComment ? (
+          <textarea
+            ref={editRef}
+            rows={2}
+            className="w-full border p-0.5 rounded text-xs resize-none"
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            autoFocus
+          />
+        ) : (
+          <div className="mt-1 text-xs whitespace-pre-wrap break-words">
+            {node.text}
+          </div>
+        )}
 
         {currentUser && (
           <div className="content-center">
             <button
               className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
-              onClick={() => onReply(node.id)}
-            >
-              Reply
-            </button>
-            <button
-              className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
-              // onClick={() => onReply(node.id)}
+              onClick={() => handleEditComment(node.text)}
             >
               Edit
             </button>
@@ -317,6 +346,12 @@ function CommentNode({
               // onClick={() => onReply(node.id)}
             >
               Delete
+            </button>
+            <button
+              className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
+              onClick={() => onReply(node.id)}
+            >
+              Reply
             </button>
           </div>
         )}
@@ -340,7 +375,7 @@ function CommentNode({
                 Cancel
               </button>
               <button
-                className="px-1.5 py-0.5 bg-blue-600 text-white rounded text-xs"
+                className="px-1.5 py-0.5 bg-blue-600 text-white rounded text-xs  cursor-pointer hover:text-blue-900"
                 onClick={addComment}
               >
                 Reply
