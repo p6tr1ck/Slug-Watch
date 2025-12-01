@@ -4,6 +4,9 @@ import makeIcon from "./MakeIcon";
 import MarkerWithPopup from "./MarkerWithPopup";
 import { delInSupa } from "../supaPins.js";
 import CommentsPopup from "./CommentsPopup";
+import Button from "@mui/material/Button";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 
 const categoryChip = (category = "") => {
   const c = category.toLowerCase();
@@ -57,6 +60,15 @@ export default function MakeMarker({
     }
   }
 
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
   return (
     <>
       {editClicked ? (
@@ -75,12 +87,8 @@ export default function MakeMarker({
             {/* Card */}
             <div className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden">
               {/* Header */}
-              <div className="px-3 pt-3 pb-2">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-base font-semibold text-slate-900 leading-tight">
-                    {m.title || "Incident"}
-                  </h3>
-
+              <div className="px-3 pt-3">
+                <div className="flex items-center justify-between gap-2 ">
                   <span
                     className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${categoryChip(
                       m.category
@@ -89,9 +97,53 @@ export default function MakeMarker({
                   >
                     {m.category}
                   </span>
+                  {canModify && (
+                    <>
+                      <Button
+                        id="basic-button"
+                        aria-controls={open ? "basic-menu" : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={open ? "true" : undefined}
+                        onClick={handleClick}
+                        sx={{
+                          minWidth: "unset",
+                          padding: "2px 6px", // smaller padding
+                          fontSize: "0.75rem", // smaller text
+                        }}
+                      >
+                        ...
+                      </Button>
+                      <Menu
+                        id="basic-menu"
+                        anchorEl={anchorEl}
+                        open={open}
+                        onClose={handleClose}
+                        slotProps={{
+                          list: {
+                            "aria-labelledby": "basic-button",
+                          },
+                        }}
+                      >
+                        <MenuItem
+                          sx={{ padding: "4px 12px", fontSize: "0.8rem" }}
+                          onClick={() => setEditClicked(!editClicked)}
+                        >
+                          Edit
+                        </MenuItem>
+                        <MenuItem
+                          sx={{ padding: "4px 12px", fontSize: "0.8rem" }}
+                          onClick={onDelete}
+                        >
+                          Delete
+                        </MenuItem>
+                      </Menu>
+                    </>
+                  )}
                 </div>
               </div>
-
+              <h3 className="px-3 pt-3 pb-2 text-base font-semibold text-slate-900 leading-tight">
+                {m.title || "Incident"}
+              </h3>
               {/* Divider */}
               <div className="h-px bg-slate-200" />
 
@@ -145,7 +197,7 @@ export default function MakeMarker({
                   </svg>
                   Directions
                 </a>
-                {canModify && (
+                {/* {canModify && (
                   <div className="flex items-center gap-1.5">
                     <button
                       className="inline-flex items-center gap-1 rounded-full bg-green-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-green-800 active:bg-green-900 transition disabled:opacity-50"
@@ -162,7 +214,7 @@ export default function MakeMarker({
                       <span>Delete</span>
                     </button>
                   </div>
-                )}
+                )} */}
 
                 {/* Show comments button for non-verified pins */}
                 {m.category &&
