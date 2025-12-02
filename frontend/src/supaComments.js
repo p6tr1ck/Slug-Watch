@@ -61,18 +61,25 @@ export async function fetchComments(pinId) {
 // Add a new comment
 export async function addComment({ pinId, parentId, text }) {
   try {
-    const userId = await getUserID();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    
+    const userId = userData.user?.id;
     if (!userId) {
       const err = new Error("Sign in to comment");
       err.code = "AUTH_REQUIRED";
       throw err;
     }
 
+    // Get user's name from metadata
+    const userMetadata = userData.user?.user_metadata || {};
+    const authorName = userMetadata.full_name || userMetadata.name || userMetadata.preferred_username || "UCSC Member";
+
     const commentData = {
       pin_id: pinId,
       parent_id: parentId || null,
       user_id: userId,
-      author: "UCSC member",
+      author: authorName,
       text: text.trim(),
     };
 

@@ -1,13 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { getUserID } from "../supaPins.js";
 import { fetchComments, addComment as addCommentToSupa, toggleVote as toggleVoteInSupa } from "../supaComments.js";
+import { AuthContext } from "../App";
 
 export default function CommentsPopup({ pinId, onClose }) {
+  const { session } = useContext(AuthContext);
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Get display name from session
+  const displayName = session?.user?.user_metadata?.full_name 
+    || session?.user?.user_metadata?.name 
+    || session?.user?.user_metadata?.preferred_username 
+    || "UCSC Member";
 
   // Load comments from Supabase
   useEffect(() => {
@@ -171,7 +179,7 @@ export default function CommentsPopup({ pinId, onClose }) {
             onChange={(e) => setText(e.target.value)}
           />
           <div className="flex justify-between mt-0.5 items-center">
-            <div className="text-xs text-gray-500">Signed in as UCSC member</div>
+            <div className="text-xs text-gray-500">Signed in as {displayName}</div>
             <button
               className="px-1.5 py-0.5 bg-blue-600 text-white rounded text-xs"
               onClick={addComment}
