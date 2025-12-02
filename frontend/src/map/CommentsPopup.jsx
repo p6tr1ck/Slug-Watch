@@ -333,11 +333,14 @@ function CommentNode({
           </div>
         )}
 
-        {currentUser && (
+        {currentUser && !editComment && (
           <div className="content-center">
             <button
               className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
-              onClick={() => handleEditComment(node.text)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditComment(node.text);
+              }}
             >
               Edit
             </button>
@@ -352,6 +355,26 @@ function CommentNode({
               onClick={() => onReply(node.id)}
             >
               Reply
+            </button>
+          </div>
+        )}
+
+        {currentUser && editComment && (
+          <div className="content-center">
+            <button
+              className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditComment(node.text);
+              }}
+            >
+              Save
+            </button>
+            <button
+              className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
+              // onClick={() => onReply(node.id)}
+            >
+              Cancel
             </button>
           </div>
         )}
