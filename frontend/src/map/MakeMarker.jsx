@@ -2,6 +2,7 @@ import { Marker, Popup } from "react-leaflet";
 import { useState, useRef, useEffect } from "react";
 import makeIcon from "./MakeIcon";
 import CommentsPopup from "./CommentsPopup";
+import MarkerWithPopup from "./MarkerWithPopup";
 
 const categoryChip = (category = "") => {
   const c = category.toLowerCase();
@@ -25,6 +26,10 @@ export default function MakeMarker({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [editClicked, setEditClicked] = useState(false);
+  const markerRef = useRef();
+
+  const m = { title, category, description, created_at: time, lat: position[0], long: position[1], id: pinId };
 
   const directionsUrl = () => {
     return m.lat && m.long
@@ -44,72 +49,70 @@ export default function MakeMarker({
     }
   }
 
-  return (
-    <>
-      {editClicked ? (
-        <MarkerWithPopup
-          m={m}
-          editClicked={editClicked}
-          setEditClicked={setEditClicked}
-        />
-      ) : (
-        <Marker
-          ref={markerRef}
-          position={[m.lat, m.long]}
-          icon={makeIcon(m.category)}
-        >
-          <Popup>
-            {/* Card */}
-            <div className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden">
-              {/* Header */}
-              <div className="px-3 pt-3 pb-2">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-base font-semibold text-slate-900 leading-tight">
-                    {m.title || "Incident"}
-                  </h3>
+  return editClicked ? (
+    <MarkerWithPopup
+      m={m}
+      editClicked={editClicked}
+      setEditClicked={setEditClicked}
+    />
+  ) : (
+    <Marker
+      ref={markerRef}
+      position={[m.lat, m.long]}
+      icon={makeIcon(m.category)}
+    >
+      <Popup>
+        {/* Card */}
+        <div className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden">
+          {/* Header */}
+          <div className="px-3 pt-3 pb-2">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="text-base font-semibold text-slate-900 leading-tight">
+                {m.title || "Incident"}
+              </h3>
 
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${categoryChip(
-                      m.category
-                    )}`}
-                    title={m.category}
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${categoryChip(
+                  m.category
+                )}`}
+                title={m.category}
+              >
+                {m.category}
+              </span>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="h-px bg-slate-200" />
+
+          {/* Body */}
+          <div className="px-3 py-2 text-[15px] text-slate-700 leading-snug space-y-1.5">
+            {m.created_at && (
+              <div className="flex gap-2">
+                <span className="font-medium text-slate-900">Time:</span>
+                <span>{m.created_at}</span>
+              </div>
+            )}
+
+            {m.description && (
+              <div>
+                <span className="font-medium text-slate-900">
+                  Description:
+                </span>{" "}
+                <span className="text-slate-700">
+                  {expanded ? m.description : shortText(m.description)}
+                </span>
+                {m.description.length > 140 && (
+                  <button
+                    onClick={() => setExpanded((v) => !v)}
+                    className="ml-1 text-slate-600 underline underline-offset-2 hover:text-slate-900"
                   >
-                    {m.category}
-                  </span>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="h-px bg-slate-200" />
-
-              {/* Body */}
-              <div className="px-3 py-2 text-[15px] text-slate-700 leading-snug space-y-1.5">
-                {m.created_at && (
-                  <div className="flex gap-2">
-                    <span className="font-medium text-slate-900">Time:</span>
-                    <span>{m.created_at}</span>
-                  </div>
-                )}
-
-                {m.description && (
-                  <div>
-                    <span className="font-medium text-slate-900">
-                      Description:
-                    </span>{" "}
-                    <span className="text-slate-700">
-                      {expanded ? m.description : shortText(m.description)}
-                    </span>
-                    {m.description.length > 140 && (
-                      <button
-                        onClick={() => setExpanded((v) => !v)}
-                        className="ml-1 text-slate-600 underline underline-offset-2 hover:text-slate-900"
-                      >
-                        {expanded ? "Show less" : "Show more"}
-                      </button>
-                    )}
-                  </div>
+                    {expanded ? "Show less" : "Show more"}
+                  </button>
                 )}
               </div>
+            )}
+          </div>
 
           {/* Footer actions */}
           <div className="px-3 pb-3 pt-2 flex items-center justify-between gap-2">
@@ -126,33 +129,33 @@ export default function MakeMarker({
                 className="opacity-80"
               >
                 <path
-                  fill="currentColor"
-                  d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5a2.5 2.5 0 0 1 0 5Z"
-                />
-              </svg>
-              Directions
-            </a>
-            
-            {/* Show comments button for non-verified pins */}
-            {category && !category.toLowerCase().includes("verified") && (
-              <button
-                title="Comments"
-                className="p-2 bg-blue-600 text-white rounded-full shadow"
-                onClick={() => setShowComments((s) => !s)}
-              >
-                💬
-              </button>
-            )}
-          </div>
-
-          {/* Comments section */}
-          {showComments && pinId && (
-            <div className="px-3 pb-3">
-              <CommentsPopup pinId={pinId} onClose={() => setShowComments(false)} />
-            </div>
+                fill="currentColor"
+                d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5a2.5 2.5 0 0 1 0 5Z"
+              />
+            </svg>
+            Directions
+          </a>
+          
+          {/* Show comments button for non-verified pins */}
+          {category && !category.toLowerCase().includes("verified") && (
+            <button
+              title="Comments"
+              className="p-2 bg-blue-600 text-white rounded-full shadow"
+              onClick={() => setShowComments((s) => !s)}
+            >
+              💬
+            </button>
           )}
         </div>
-      </Popup>
-    </Marker>
+
+        {/* Comments section */}
+        {showComments && pinId && (
+          <div className="px-3 pb-3">
+            <CommentsPopup pinId={pinId} onClose={() => setShowComments(false)} />
+          </div>
+        )}
+      </div>
+    </Popup>
+  </Marker>
   );
 }
