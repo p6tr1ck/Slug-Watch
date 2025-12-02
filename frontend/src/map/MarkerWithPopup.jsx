@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Marker, Popup } from "react-leaflet";
 import makeIcon from "./MakeIcon";
 import { insToSupa, delInSupa, editToSupa } from "../supaPins.js";
+import CommentsPopup from "./CommentsPopup";
 
 function toDatetimeLocal(ts) {
   if (!ts) return "";
@@ -38,6 +39,7 @@ export default function MarkerWithPopup({
   });
 
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(m.isNew || false);
   const [showComments, setShowComments] = useState(false);
 
   useEffect(() => {
@@ -48,6 +50,8 @@ export default function MarkerWithPopup({
       category: m.category || categories[0],
       description: m.description || "",
     });
+    // if a new marker is passed in, start in editing mode
+    setEditing(m.isNew || false);
   }, [m.id]);
 
   useEffect(() => {
@@ -84,6 +88,7 @@ export default function MarkerWithPopup({
     form.datetime &&
     form.category &&
     form.description.trim();
+  const disabled = !editing;
 
   async function onSave() {
     if (!allFilled) return;
@@ -96,14 +101,7 @@ export default function MarkerWithPopup({
         row = await insToSupa({ form, m });
       }
       markerRef.current?.closePopup();
-      // Delete the local marker in the application
-      // because realtime pulling of pins will reflect on the map
-      if (!editClicked) {
-        setMarkers([]);
-      } else {
-        // Remove the input fields when edit is saved
-        setEditClicked(false);
-      }
+      setEditing(false);
     } catch (e) {
       console.error("Error saving pin: ", e);
     } finally {
@@ -118,6 +116,10 @@ export default function MarkerWithPopup({
       markerRef.current?.closePopup();
     } catch (e) {
       console.error("Error deleting pin: ", e);
+      // show a simple alert so users get immediate feedback in the UI
+      try {
+        window.alert(`Failed to delete pin: ${e?.message || e}`);
+      } catch (_) {}
     }
   }
 
@@ -126,11 +128,7 @@ export default function MarkerWithPopup({
   }
 
   return (
-    <Marker
-      ref={markerRef}
-      position={editClicked ? [m.lat, m.long] : m.position}
-      icon={makeIcon(m.category)}
-    >
+    <Marker ref={markerRef} position={m.position} icon={makeIcon(m.className)}>
       <Popup autoPan={true} maxWidth={320}>
         <div className="w-72 max-h-[60vh] overflow-auto" onClick={stop} onMouseDown={stop}>
           <label className="block text-sm font-medium">Title</label>
@@ -189,6 +187,39 @@ export default function MarkerWithPopup({
           >
             Delete
           </button>
+
+          {canModify ? (
+            <div className="flex justify-between items-center">
+              {editing ? (
+                <div className="flex gap-2">
+                  <button
+                    className="px-2 py-1 bg-green-600 text-white rounded disabled:opacity-50"
+                    onClick={onSave}
+                    disabled={!allFilled}
+                  >
+                    Save
+                  </button>
+                  <button
+                    className="px-2 py-1 bg-red-600 text-white rounded"
+                    onClick={onDelete}
+                  >
+                    Delete
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className="px-2 py-1 bg-blue-600 text-white rounded"
+                  onClick={() => setEditing(true)}
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="text-xs text-gray-500 text-center">
+              You can only edit your own pins.
+            </div>
+          )}
 
           {/* chat button and inline comments to avoid viewport overflow */}
           <div className="mt-2 flex justify-end">

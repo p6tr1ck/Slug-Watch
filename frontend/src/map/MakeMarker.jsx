@@ -1,8 +1,7 @@
 import { Marker, Popup } from "react-leaflet";
 import { useState, useRef, useEffect } from "react";
 import makeIcon from "./MakeIcon";
-import MarkerWithPopup from "./MarkerWithPopup";
-import { delInSupa } from "../supaPins.js";
+import CommentsPopup from "./CommentsPopup";
 
 const categoryChip = (category = "") => {
   const c = category.toLowerCase();
@@ -17,25 +16,15 @@ const categoryChip = (category = "") => {
 };
 
 export default function MakeMarker({
-  m,
-  setSelectedPinId,
-  selectedPinId,
-  canModify = false,
+  title,
+  category,
+  description,
+  time,
+  position, // [lat, lng]
+  pinId,
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [editClicked, setEditClicked] = useState(false);
-  const markerRef = useRef(null);
-
-  // User clicked on a notification, make the pin popup on the map
-  useEffect(() => {
-    // If the current pin ID is == the selected notification, then
-    // make the pin popup
-    if (selectedPinId && selectedPinId === m.id && markerRef.current) {
-      markerRef.current.openPopup();
-      // Reset the state of selectedPinId, so value does not persist
-      setSelectedPinId(null);
-    }
-  }, [selectedPinId, m.id]);
+  const [showComments, setShowComments] = useState(false);
 
   const directionsUrl = () => {
     return m.lat && m.long
@@ -122,51 +111,48 @@ export default function MakeMarker({
                 )}
               </div>
 
-              {/* Footer actions */}
-              <div className="px-3 pb-3 pt-2 flex items-center justify-between gap-2">
-                <a
-                  href={directionsUrl()}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm hover:bg-slate-50 transition"
-                >
-                  {/* Simple options */}
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    className="opacity-80"
-                  >
-                    <path
-                      fill="currentColor"
-                      d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5a2.5 2.5 0 0 1 0 5Z"
-                    />
-                  </svg>
-                  Directions
-                </a>
-                {canModify && (
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      className="inline-flex items-center gap-1 rounded-full bg-green-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-green-800 active:bg-green-900 transition disabled:opacity-50"
-                      onClick={() => setEditClicked(!editClicked)}
-                    >
-                      <span>✏️</span>
-                      <span>Edit</span>
-                    </button>
-                    <button
-                      className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 hover:border-red-300 active:bg-red-200 transition"
-                      onClick={onDelete}
-                    >
-                      <span>🗑</span>
-                      <span>Delete</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+          {/* Footer actions */}
+          <div className="px-3 pb-3 pt-2 flex items-center justify-between gap-2">
+            <a
+              href={directionsUrl()}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm hover:bg-slate-50 transition"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                className="opacity-80"
+              >
+                <path
+                  fill="currentColor"
+                  d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5a2.5 2.5 0 0 1 0 5Z"
+                />
+              </svg>
+              Directions
+            </a>
+            
+            {/* Show comments button for non-verified pins */}
+            {category && !category.toLowerCase().includes("verified") && (
+              <button
+                title="Comments"
+                className="p-2 bg-blue-600 text-white rounded-full shadow"
+                onClick={() => setShowComments((s) => !s)}
+              >
+                💬
+              </button>
+            )}
+          </div>
+
+          {/* Comments section */}
+          {showComments && pinId && (
+            <div className="px-3 pb-3">
+              <CommentsPopup pinId={pinId} onClose={() => setShowComments(false)} />
             </div>
-          </Popup>
-        </Marker>
-      )}
-    </>
+          )}
+        </div>
+      </Popup>
+    </Marker>
   );
 }
