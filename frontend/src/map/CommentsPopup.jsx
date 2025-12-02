@@ -4,14 +4,30 @@ import {
   fetchComments,
   addComment as addCommentToSupa,
   toggleVote as toggleVoteInSupa,
+  subscribeToComments,
 } from "../supaComments.js";
 
-export default function CommentsPopup({ pinId, onClose }) {
+// Format the row to structure as a comment
+// with multiple properties
+function format(row) {
+  return {
+    id: row.id,
+    pinId: row.pin_id,
+    parentId: row.parent_id,
+    author: row.author,
+    text: row.text,
+    createdAt: row.created_at,
+    votes: {},
+  };
+}
+
+export default function CommentsPopup({ pinId, onClose, canModify }) {
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
   const [editText, setEditText] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [editComment, setEditComment] = useState(false);
+  const [editCommentPinId, setEditCommentPinId] = useState(null);
   const [deleteComment, setDeleteComment] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -61,6 +77,38 @@ export default function CommentsPopup({ pinId, onClose }) {
       mounted = false;
     };
   }, []);
+
+  // Subscribe to realtime comments
+  useEffect(() => {
+    // Load initial comments from db
+    fetchComments(pinId).then(setComments);
+
+    const unsubscribe = subscribeToComments(pinId, (payload) => {
+      console.log("Realtime:", payload);
+
+      // If someone created a comment, then add the comment
+      // to the comments state.
+      if (payload.eventType === "INSERT") {
+        setComments((prev) => [format(payload.new), ...prev]);
+      }
+
+      // If the someone edited their comment, then update that comment.
+      if (payload.eventType === "UPDATE") {
+        setComments((prev) =>
+          // If the comment id matches the updated comment id, then
+          // update that comment.
+          prev.map((c) => (c.id === payload.new.id ? format(payload.new) : c))
+        );
+      }
+
+      // If someone deleted their comment, then remove the comment form the state.
+      if (payload.eventType === "DELETE") {
+        setComments((prev) => prev.filter((c) => c.id !== payload.old.id));
+      }
+    });
+
+    return () => unsubscribe();
+  }, [pinId]);
 
   async function addComment() {
     if (!text.trim()) return;
@@ -222,6 +270,9 @@ export default function CommentsPopup({ pinId, onClose }) {
                 pinId={pinId}
                 editText={editText}
                 setEditText={setEditText}
+                canModify={canModify}
+                editCommentPinId={editCommentPinId}
+                setEditCommentPinId={setEditCommentPinId}
               />
             ))}
           </div>
@@ -246,6 +297,9 @@ function CommentNode({
   setEditComment,
   editText,
   setEditText,
+  canModify,
+  editCommentPinId,
+  setEditCommentPinId,
 }) {
   const editRef = useRef(null);
 
@@ -318,13 +372,17 @@ function CommentNode({
         </div>
 
         {/* Load the comment from the user*/}
+        {/* If edit comment is true, then show a textarea element */}
         {editComment ? (
           <textarea
             ref={editRef}
             rows={2}
             className="w-full border p-0.5 rounded text-xs resize-none"
             value={editText}
-            onChange={(e) => setEditText(e.target.value)}
+            onChange={(e) => {
+              setEditCommentPinId(pinId);
+              setEditText(e.target.value);
+            }}
             autoFocus
           />
         ) : (
@@ -333,31 +391,40 @@ function CommentNode({
           </div>
         )}
 
-        {currentUser && !editComment && (
-          <div className="content-center">
-            <button
-              className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEditComment(node.text);
-              }}
-            >
-              Edit
-            </button>
-            <button
-              className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
-              // onClick={() => onReply(node.id)}
-            >
-              Delete
-            </button>
+        {/* User signed in, edit comment is false, and can modify their pin,
+        the show a edit or delete button for their comment
+        */}
+        <div className="content-center flex">
+          {currentUser && !editComment && canModify && (
+            <div>
+              <button
+                className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditComment(node.text);
+                }}
+              >
+                Edit
+              </button>
+              <button
+                className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
+                // onClick={() => onReply(node.id)}
+              >
+                Delete
+              </button>
+            </div>
+          )}
+
+          {/* Hide the reply button once the edit button is clicked */}
+          {currentUser && !editComment && (
             <button
               className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
               onClick={() => onReply(node.id)}
             >
               Reply
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
         {currentUser && editComment && (
           <div className="content-center">
@@ -379,6 +446,7 @@ function CommentNode({
           </div>
         )}
 
+        {/* Initating a reply to a comment */}
         {replyTo === node.id && (
           <div className="mt-1">
             <textarea
@@ -392,8 +460,11 @@ function CommentNode({
             />
             <div className="flex justify-end gap-1 mt-0.5">
               <button
-                className="px-1.5 py-0.5 bg-gray-200 text-gray-700 rounded text-xs"
-                onClick={() => onReply(null)}
+                className="px-1.5 py-0.5 bg-gray-200 text-gray-700 rounded text-xs cursor-pointer hover:bg-gray-400"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReply(null);
+                }}
               >
                 Cancel
               </button>
@@ -408,6 +479,7 @@ function CommentNode({
         )}
       </div>
 
+      {/* Load the replies of the comments */}
       {node.children && node.children.length > 0 && (
         <div className="mt-1 space-y-1">
           {node.children.map((ch) => (
@@ -423,6 +495,7 @@ function CommentNode({
               setText={setText}
               addComment={addComment}
               pinId={pinId}
+              canModify={canModify}
             />
           ))}
         </div>

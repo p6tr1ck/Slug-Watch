@@ -203,25 +203,6 @@ export default function MakeMarker({
                   </svg>
                   Directions
                 </a>
-                {/* {canModify && (
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      className="inline-flex items-center gap-1 rounded-full bg-green-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-green-800 active:bg-green-900 transition disabled:opacity-50"
-                      onClick={() => setEditClicked(!editClicked)}
-                    >
-                      <span>✏️</span>
-                      <span>Edit</span>
-                    </button>
-                    <button
-                      className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 hover:border-red-300 active:bg-red-200 transition"
-                      onClick={onDelete}
-                    >
-                      <span>🗑</span>
-                      <span>Delete</span>
-                    </button>
-                  </div>
-                )} */}
-
                 {/* Show comments button for non-verified pins */}
                 {m.category &&
                   !m.category.toLowerCase().includes("verified") && (
@@ -241,6 +222,7 @@ export default function MakeMarker({
                   <CommentsPopup
                     pinId={m.id}
                     onClose={() => setShowComments(false)}
+                    canModify={canModify}
                   />
                 </div>
               )}

@@ -6,6 +6,28 @@ export async function getUserID() {
   return data.user?.id || null;
 }
 
+// Realtime listener
+export function subscribeToComments(pinId, onChange) {
+  const channel = supabase
+    .channel(`comments-pin-${pinId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*", // INSERT, UPDATE, DELETE
+        schema: "public",
+        table: "comments",
+      },
+      (payload) => {
+        onChange(payload);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel); // cleanup
+  };
+}
+
 // Fetch all comments for a pin with their votes
 export async function fetchComments(pinId) {
   try {
