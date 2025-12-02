@@ -105,9 +105,6 @@ export default function Map() {
         .leaflet-marker-icon.marker-green { filter: hue-rotate(250deg); }
         .leaflet-marker-icon.marker-red  { filter: hue-rotate(130deg); }
       `}</style>
-        {/* If user is not on a mobile device, then put the filter pins button 
-        at the top right of screen. */}
-        {width >= 600 && <FilterPins />}
         <UserPins />
         <PolicePins />
         <MapClickHandler createMode={createMode} onMapClick={handleMapClick} />
