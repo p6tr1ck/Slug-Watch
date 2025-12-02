@@ -3,6 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import makeIcon from "./MakeIcon";
 import CommentsPopup from "./CommentsPopup";
 import MarkerWithPopup from "./MarkerWithPopup";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 
 const categoryChip = (category = "") => {
   const c = category.toLowerCase();
@@ -23,6 +25,8 @@ export default function MakeMarker({
   time,
   position, // [lat, lng]
   pinId,
+  isBookmarked,
+  onBookmarkToggle,
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -146,6 +150,15 @@ export default function MakeMarker({
               💬
             </button>
           )}
+
+          {/* Bookmark button */}
+          <button
+            title={isBookmarked ? "Remove bookmark" : "Bookmark"}
+            className="p-2 bg-yellow-600 text-white rounded-full shadow"
+            onClick={onBookmarkToggle}
+          >
+            {isBookmarked ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+          </button>
         </div>
 
         {/* Comments section */}

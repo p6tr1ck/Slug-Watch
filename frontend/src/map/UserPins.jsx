@@ -26,6 +26,9 @@ export default function UserPins() {
     viewPolicePins,
     selectedPinId,
     setSelectedPinId,
+    viewBookmarkedPins,
+    bookmarks,
+    toggleBookmark,
   } = useContext(AuthContext);
   const [pins, setPins] = useState([]);
 
@@ -126,6 +129,7 @@ export default function UserPins() {
   }, []);
 
   if (viewPolicePins && !viewMyPins) return null;
+
   // Handlers to update/remove pins locally after Supabase operations
   function updatePin(id, patch) {
     setPins((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
@@ -135,11 +139,14 @@ export default function UserPins() {
     setPins((prev) => prev.filter((p) => p.id !== id));
   }
 
+  const displayedPins = viewBookmarkedPins ? pins.filter(pin => bookmarks.includes(pin.id)) : pins;
+
   return (
     <>
-      {session && viewMyPins // User only wants to see their pins on the map
-        ? pins.map((pin) => {
-            if (pin.user_id === session.user.id) {
+      {session && viewMyPins && !viewBookmarkedPins
+        ? displayedPins
+            .filter((pin) => pin.user_id === session.user.id)
+            .map((pin) => {
               const m = {
                 id: pin.id,
                 supabaseId: pin.id,
@@ -163,10 +170,8 @@ export default function UserPins() {
                   canModify={Boolean(session?.user?.id) && pin.user_id === session.user.id}
                 />
               );
-            }
-            return null;
-          })
-        : pins.map((pin) => {
+            })
+        : displayedPins.map((pin) => {
             return (
               <MakeMarker
                 key={pin.id}
@@ -176,6 +181,8 @@ export default function UserPins() {
                 time={pin.created_at}
                 position={[pin.lat, pin.long]}
                 pinId={pin.id}
+                isBookmarked={bookmarks.includes(pin.id)}
+                onBookmarkToggle={() => toggleBookmark(pin.id)}
               />
             );
           })}

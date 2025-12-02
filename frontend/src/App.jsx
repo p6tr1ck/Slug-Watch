@@ -19,6 +19,65 @@ function App() {
   const [createMode, setCreateMode] = useState(false);
   // When user clicks on notification, pin should popup on map
   const [selectedPinId, setSelectedPinId] = useState(null);
+  const [viewBookmarkedPins, setViewBookmarkedPins] = useState(false);
+  const [bookmarks, setBookmarks] = useState([]);
+
+  // Load bookmarks from Supabase when user signs in
+  useEffect(() => {
+    async function loadBookmarks() {
+      if (session?.user?.id) {
+        const { data, error } = await supabase
+          .from("bookmarks")
+          .select("pin_id")
+          .eq("user_id", session.user.id);
+        
+        if (error) {
+          console.error("Error loading bookmarks:", error);
+        } else {
+          setBookmarks(data.map((d) => d.pin_id));
+        }
+      } else {
+        setBookmarks([]);
+      }
+    }
+    loadBookmarks();
+  }, [session]);
+
+  // Toggle bookmark in Supabase
+  const toggleBookmark = async (pinId) => {
+    if (!session?.user?.id) {
+      window.location.href = "/signin";
+      return;
+    }
+
+    const isBookmarked = bookmarks.includes(pinId);
+
+    if (isBookmarked) {
+      // Remove bookmark
+      const { error } = await supabase
+        .from("bookmarks")
+        .delete()
+        .eq("user_id", session.user.id)
+        .eq("pin_id", pinId);
+
+      if (error) {
+        console.error("Error removing bookmark:", error);
+      } else {
+        setBookmarks((prev) => prev.filter((id) => id !== pinId));
+      }
+    } else {
+      // Add bookmark
+      const { error } = await supabase
+        .from("bookmarks")
+        .insert({ user_id: session.user.id, pin_id: pinId });
+
+      if (error) {
+        console.error("Error adding bookmark:", error);
+      } else {
+        setBookmarks((prev) => [...prev, pinId]);
+      }
+    }
+  };
   const { width } = useWindowDimensions();
 
   useEffect(() => {
@@ -53,6 +112,11 @@ function App() {
         setViewPolicePins,
         selectedPinId,
         setSelectedPinId,
+        viewBookmarkedPins,
+        setViewBookmarkedPins,
+        bookmarks,
+        setBookmarks,
+        toggleBookmark,
       }}
     >
       <BrowserRouter>
@@ -64,7 +128,7 @@ function App() {
             <Route path="/home" element={<Home />} />
             <Route path="/moderation" element={<Moderation />} />
           </Routes>
-          {width <= 600 ? <BottomBar /> : <></>}
+          <BottomBar />
         </div>
       </BrowserRouter>
     </AuthContext.Provider>

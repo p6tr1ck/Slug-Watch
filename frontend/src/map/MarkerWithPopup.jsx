@@ -19,7 +19,6 @@ function toDatetimeLocal(ts) {
 
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
-import CommentsPopup from "./CommentsPopup";
 
 export default function MarkerWithPopup({
   m,
@@ -27,6 +26,7 @@ export default function MarkerWithPopup({
   setMarkers,
   editClicked = false,
   setEditClicked,
+  canModify = true,
 }) {
   const markerRef = useRef(null);
   const categories = ["TAPS", "ICE", "Suspicious Activity", "Theft", "Other"];

@@ -84,32 +84,6 @@ export default function Map() {
 
   return (
     <div className="relative h-full w-full">
-      {/* Show the create pin button on the bottom right of the screen for logged in users */}
-      {session && width >= 600 ? (
-        <div
-          style={{ position: "absolute", right: 16, bottom: 16, zIndex: 1000 }}
-        >
-          <button
-            onClick={() => setCreateMode((v) => !v)}
-            aria-pressed={createMode}
-            aria-label={createMode ? "Cancel create pin" : "Create pin"}
-            style={{
-              backgroundColor: createMode ? "#dc2626" : "#2563eb",
-              color: "#fff",
-              padding: "10px 14px",
-              borderRadius: 8,
-              boxShadow: "0 8px 22px rgba(0,0,0,0.18)",
-              border: "none",
-              fontWeight: 700,
-              fontSize: 14,
-            }}
-          >
-            {createMode ? "Cancel" : "Create pin"}
-          </button>
-        </div>
-      ) : (
-        <></>
-      )}
       <MapContainer
         center={[36.992255, -122.058763]}
         zoom={14.8}
