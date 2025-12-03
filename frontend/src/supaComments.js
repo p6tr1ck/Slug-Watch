@@ -125,9 +125,15 @@ export async function addComment({ pinId, parentId, text }) {
 }
 
 // Toggle vote on a comment (upvote or downvote)
-export async function toggleVote({ commentId, vote }) {
+export async function toggleVote({ commentId, vote }, commentUserId) {
   try {
     const userId = await getUserID();
+    // User cannot upvote / downvote their own comment
+    console.log(userId, commentUserId);
+    if (userId === commentUserId) {
+      console.log("same");
+      return;
+    }
     if (!userId) {
       const err = new Error("Sign in to vote");
       err.code = "AUTH_REQUIRED";

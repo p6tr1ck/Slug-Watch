@@ -132,14 +132,14 @@ export default function CommentsPopup({ pinId, onClose, pinAuthor }) {
     }
   }
 
-  async function toggleVote(id, value) {
+  async function toggleVote(id, value, commentUserId) {
     if (!currentUser) {
       alert("Please sign in to vote");
       return;
     }
 
     try {
-      await toggleVoteInSupa({ commentId: id, vote: value });
+      await toggleVoteInSupa({ commentId: id, vote: value }, commentUserId);
 
       // Update local state optimistically
       setComments((s) =>
@@ -295,7 +295,6 @@ function CommentNode({
   pinAuthor,
 }) {
   const editRef = useRef(null);
-  let isMounted = false;
 
   // timeago helper
   function timeAgo(iso) {
@@ -378,10 +377,11 @@ function CommentNode({
               <button
                 className={`px-1 py-0 ${
                   (node.votes || {})[currentUser] === 1
-                    ? "text-orange-600 font-bold"
+                    ? "text-blue-600 font-bold"
                     : "text-gray-500"
-                } cursor-pointer`}
-                onClick={() => onLike(node.id, 1)}
+                } hover:text-blue-500
+                cursor-pointer`}
+                onClick={() => onLike(node.id, 1, node.userId)}
                 title="Upvote"
               >
                 ▲
@@ -392,9 +392,9 @@ function CommentNode({
               <button
                 className={`px-1 py-0 ${
                   (node.votes || {})[currentUser] === -1
-                    ? "text-blue-600 font-bold"
+                    ? "text-orange-600 font-bold"
                     : "text-gray-500"
-                } cursor-pointer`}
+                } hover:text-orange-500 cursor-pointer`}
                 onClick={() => onLike(node.id, -1)}
                 title="Downvote"
               >
