@@ -66,6 +66,7 @@ export async function fetchComments(pinId) {
         id: comment.id,
         pinId: comment.pin_id,
         parentId: comment.parent_id,
+        userId: comment.user_id,
         author: comment.author,
         text: comment.text,
         createdAt: comment.created_at,

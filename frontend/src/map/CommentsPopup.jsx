@@ -21,7 +21,7 @@ function format(row) {
   };
 }
 
-export default function CommentsPopup({ pinId, onClose, canModify }) {
+export default function CommentsPopup({ pinId, onClose }) {
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
   const [editText, setEditText] = useState("");
@@ -81,7 +81,7 @@ export default function CommentsPopup({ pinId, onClose, canModify }) {
   // Subscribe to realtime comments
   useEffect(() => {
     // Load initial comments from db
-    fetchComments(pinId).then(setComments);
+    // fetchComments(pinId).then(setComments);
 
     const unsubscribe = subscribeToComments(pinId, (payload) => {
       // console.log("Realtime:", payload);
@@ -270,9 +270,9 @@ export default function CommentsPopup({ pinId, onClose, canModify }) {
                 pinId={pinId}
                 editText={editText}
                 setEditText={setEditText}
-                canModify={canModify}
                 editCommentPinId={editCommentPinId}
                 setEditCommentPinId={setEditCommentPinId}
+                canEditAndDelete={node.userId === currentUser}
               />
             ))}
           </div>
@@ -297,9 +297,9 @@ function CommentNode({
   setEditComment,
   editText,
   setEditText,
-  canModify,
   editCommentPinId,
   setEditCommentPinId,
+  canEditAndDelete,
 }) {
   const editRef = useRef(null);
 
@@ -391,11 +391,11 @@ function CommentNode({
           </div>
         )}
 
-        {/* User signed in, edit comment is false, and can modify their pin,
-        the show a edit or delete button for their comment
+        {/* Comment user id is current user and edit comment is false, 
+        then show an edit and delete button for their comment
         */}
         <div className="content-center flex">
-          {currentUser && !editComment && canModify && (
+          {canEditAndDelete && !editComment && (
             <div>
               <button
                 className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
@@ -495,7 +495,7 @@ function CommentNode({
               setText={setText}
               addComment={addComment}
               pinId={pinId}
-              canModify={canModify}
+              canEditAndDelete={canEditAndDelete}
             />
           ))}
         </div>

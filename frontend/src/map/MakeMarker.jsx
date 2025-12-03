@@ -222,7 +222,6 @@ export default function MakeMarker({
                   <CommentsPopup
                     pinId={m.id}
                     onClose={() => setShowComments(false)}
-                    canModify={canModify}
                   />
                 </div>
               )}
