@@ -27,7 +27,8 @@ export default function PolicePins() {
           e.date
         ).toLocaleTimeString()}`, // Format as MM/DD/YY Time
         description: e.description,
-        category: e.category,
+        category: "Verified",
+        certified: true,
       }));
 
       // Now set the pins, so the pins array has the pin data.
@@ -51,11 +52,8 @@ export default function PolicePins() {
           return (
             <MakeMarker
               key={pin.id}
-              title={pin.title}
-              time={pin.created_at}
-              position={[pin.lat, pin.long]}
-              category={"Verified"}
-              pinId={policePinId}
+              m={{...pin, id: policePinId}}
+              canReport={false}
               isBookmarked={bookmarks.includes(policePinId)}
               onBookmarkToggle={() => toggleBookmark(policePinId)}
             />

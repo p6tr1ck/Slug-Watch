@@ -3,6 +3,7 @@ import { supabase } from "../../supabaseClient";
 import { AuthContext } from "../App";
 import MakeMarker from "./MakeMarker";
 import MarkerWithPopup from "./MarkerWithPopup";
+import { send_report_db } from "../sbReportHandle";
 
 function mapPin(data) {
   return {
@@ -16,6 +17,10 @@ function mapPin(data) {
       data.created_at
     ).toLocaleTimeString()}`, // Format as MM/DD/YY Time
     description: data.description,
+    upvotes: Number(data.upvotes ?? 0),
+    downvotes: Number(data.downvotes ?? 0),
+    myVote: 0,
+    certified: Boolean(data.certified),
   };
 }
 
@@ -31,6 +36,7 @@ export default function UserPins() {
     toggleBookmark,
   } = useContext(AuthContext);
   const [pins, setPins] = useState([]);
+  const currUser = session?.user?.id ?? null;
 
   // subscribe to real time changes
   useEffect(() => {
@@ -46,7 +52,10 @@ export default function UserPins() {
           table: "example_pins",
         },
         (payload) => {
-          setPins((prev) => [...prev, mapPin(payload.new)]);
+          setPins((prev) => [
+            ...prev,
+            mapPin(payload.new),
+          ]);
         }
       )
       // UPDATE
@@ -59,7 +68,9 @@ export default function UserPins() {
         },
         (payload) => {
           setPins((prev) =>
-            prev.map((p) => (p.id === payload.new.id ? mapPin(payload.new) : p))
+            prev.map((p) =>
+              p.id === payload.new.id ? mapPin(payload.new) : p
+            )
           );
         }
       )
@@ -128,6 +139,12 @@ export default function UserPins() {
     getPins();
   }, []);
 
+  async function handleReport(ticket){
+    //use supabase functions to send data (look at my old supaPins implem)
+    console.log("ticket to submit: ", ticket);
+    await send_report_db(ticket);
+  }
+
   if (viewPolicePins && !viewMyPins) return null;
 
   // Handlers to update/remove pins locally after Supabase operations
@@ -172,15 +189,18 @@ export default function UserPins() {
               );
             })
         : displayedPins.map((pin) => {
+            const reportable = !!session && currUser && pin.user_id !== currUser;
             return (
               <MakeMarker
                 key={pin.id}
-                title={pin.title}
-                category={pin.category}
-                description={pin.description}
-                time={pin.created_at}
-                position={[pin.lat, pin.long]}
-                pinId={pin.id}
+                m={pin}
+                selectedPinId={selectedPinId}
+                setSelectedPinId={setSelectedPinId}
+                currUserID={currUser}
+                onReport={handleReport}
+                // If the person logged in is the creator of the pin, they can modify it
+                canModify={pin.user_id === session?.user?.id ? true : false}
+                canReport={reportable}
                 isBookmarked={bookmarks.includes(pin.id)}
                 onBookmarkToggle={() => toggleBookmark(pin.id)}
               />
