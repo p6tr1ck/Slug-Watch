@@ -7,7 +7,7 @@ import NavBar from "./pages/NavBar";
 import BottomBar from "./pages/BottomBar";
 import { supabase } from "../supabaseClient";
 import useWindowDimensions from "./WindowDimensions";
-import { ThemeProvider } from "./dashboard/darkmode";
+import { ThemeProvider } from "./dashboard/Darkmode";
 
 export const AuthContext = createContext(null);
 export const DarkModeSwitch = createContext();
