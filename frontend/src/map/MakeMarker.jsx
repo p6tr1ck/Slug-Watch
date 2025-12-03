@@ -6,6 +6,8 @@ import {
   useContext,
   useCallback,
 } from "react";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import makeIcon from "./MakeIcon";
 import MarkerWithPopup from "./MarkerWithPopup";
 import { delInSupa } from "../supaPins.js";
@@ -120,15 +122,25 @@ export default function MakeMarker({
     setVotesLoading(true);
 
     try {
-      const { error } = await supabase.from("votes").upsert(
-        {
-          pin_id: m.id,
-          user_id: session.user.id,
-          value: direction,
-        },
-        { onConflict: "pin_id,user_id" }
-      );
-      if (error) throw error;
+      // If the user clicks the same vote again, remove their vote instead of reapplying it.
+      if (voteState.myVote === direction) {
+        const { error } = await supabase
+          .from("votes")
+          .delete()
+          .eq("pin_id", m.id)
+          .eq("user_id", session.user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("votes").upsert(
+          {
+            pin_id: m.id,
+            user_id: session.user.id,
+            value: direction,
+          },
+          { onConflict: "pin_id,user_id" }
+        );
+        if (error) throw error;
+      }
     } catch (err) {
       console.error("Failed to persist vote", err);
     } finally {
@@ -224,13 +236,7 @@ export default function MakeMarker({
                           : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
                       }`}
                     >
-                      <svg width="16" height="16" viewBox="0 0 24 24">
-                        <path
-                          fill="currentColor"
-                          d="M14.5 3.75c0-.966-.784-1.75-1.75-1.75c-.638 0-1.183.34-1.49.852L8.35 6.5H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h10.379a2.75 2.75 0 0 0 2.707-2.301l1.12-6.718a1.75 1.75 0 0 0-1.727-2.03H14.5Zm-8 3.75h2.45a1 1 0 0 0 .861-.489L12.06 3.9c.143-.24.413-.4.689-.4c.413 0 .75.336.75.75V9.5a1 1 0 0 0 1 1h2.979a.25.25 0 0 1 .246.29l-1.12 6.718a1.25 1.25 0 0 1-1.23 1.042H4.5v-11Z"
-                        />
-                      </svg>
-                      <span>Thumbs up</span>
+                      <ThumbUpIcon fontSize="small" />
                       <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-slate-800 ring-1 ring-slate-200">
                         {voteState.upvotes}
                       </span>
@@ -245,20 +251,11 @@ export default function MakeMarker({
                           : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
                       }`}
                     >
-                      <svg width="16" height="16" viewBox="0 0 24 24">
-                        <path
-                          fill="currentColor"
-                          d="M9.5 20.25c0 .966.784 1.75 1.75 1.75c.638 0 1.183-.34 1.49-.852l2.91-4.648H20a1 1 0 0 0 1-1V4.5a1 1 0 0 0-1-1H9.621a2.75 2.75 0 0 0-2.707 2.3l-1.12 6.719a1.75 1.75 0 0 0 1.727 2.03H9.5Zm8-3.75H15.05a1 1 0 0 0-.861.489L11.94 20.1a.8.8 0 0 1-.689.4a.75.75 0 0 1-.75-.75V14.5a1 1 0 0 0-1-1H6.522a.25.25 0 0 1-.246-.29l1.12-6.718A1.25 1.25 0 0 1 8.626 5.45H20v11.05Z"
-                        />
-                      </svg>
-                      <span>Thumbs down</span>
+                      <ThumbDownIcon fontSize="small" />
                       <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-slate-800 ring-1 ring-slate-200">
                         {voteState.downvotes}
                       </span>
                     </button>
-                  </div>
-                  <div className="mt-2 text-xs text-slate-500">
-                    Votes refresh directly from Supabase after each action.
                   </div>
                 </div>
               )}
