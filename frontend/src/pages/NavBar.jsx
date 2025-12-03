@@ -3,7 +3,7 @@ import Logo from "../assets/slug_watch_logo.PNG";
 import PersonIcon from "@mui/icons-material/Person";
 import { useContext, useEffect } from "react";
 import { AuthContext, DarkModeSwitch } from "../App";
-import ThemeToggle from "../dashboard/darkmodeToggle";
+import ThemeToggle from "../dashboard/DarkmodeToggle";
 
 export default function NavBar() {
   const { session } = useContext(AuthContext);
