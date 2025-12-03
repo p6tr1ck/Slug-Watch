@@ -19,6 +19,7 @@ export default function Map() {
   const { width } = useWindowDimensions();
   const [markers, setMarkers] = useState([]);
   const [tempId, setTempId] = useState(0);
+  const currUserID = session?.user?.id ?? null;
 
   useEffect(() => {
     if (!session && createMode) {
@@ -52,7 +53,7 @@ export default function Map() {
       description: "",
       className: "marker-green",
       isNew: true,
-      ownerId: session?.user?.id,
+      ownerId: currUserID,
     };
     // increment the temp id for the next new marker
     setTempId(tempId + 1);
@@ -64,14 +65,20 @@ export default function Map() {
     setMarkers((prev) =>
       prev.map((m) => {
         if (m.id !== id) return m;
-        if (!session || m.ownerId !== session) return m;
+        if (!currUserID || m.ownerId !== currUserID) return m;
         return { ...m, ...patch };
       })
     );
   }
 
   function removeMarker(id) {
-    setMarkers((prev) => prev.filter((m) => m.id !== id));
+    setMarkers((prev) =>
+      prev.filter((m) => {
+        if (m.id !== id) return true;
+        if (!currUserID || m.ownerId !== currUserID) return true;
+        return false;
+      })
+    );
   }
 
   return (
@@ -130,6 +137,7 @@ export default function Map() {
         <PolicePins />
         <MapClickHandler createMode={createMode} onMapClick={handleMapClick} />
         {markers.map((m) => {
+          const canModify = Boolean(currUserID) && m.ownerId === currUserID;
           return (
             <MarkerWithPopup
               key={m.id}
@@ -137,6 +145,7 @@ export default function Map() {
               updateMarker={updateMarker}
               removeMarker={removeMarker}
               setMarkers={setMarkers}
+              canModify={canModify}
             />
           );
         })}

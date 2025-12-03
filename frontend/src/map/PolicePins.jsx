@@ -43,7 +43,7 @@ export default function PolicePins() {
         <></>
       ) : (
         pins.map((pin) => {
-          return <MakeMarker key={pin.id} m={pin} />;
+          return <MakeMarker key={pin.id} m={pin} canReport={false} />;
         })
       )}
     </>

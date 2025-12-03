@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 import { AuthContext } from "../App";
 import MakeMarker from "./MakeMarker";
+import { send_report_db } from "../sbReportHandle";
 
 function mapPin(data) {
   return {
@@ -31,6 +32,7 @@ export default function UserPins() {
     setSelectedPinId,
   } = useContext(AuthContext);
   const [pins, setPins] = useState([]);
+  const currUser = session?.user?.id ?? null;
 
   // subscribe to real time changes
   useEffect(() => {
@@ -109,6 +111,12 @@ export default function UserPins() {
     getPins();
   }, []);
 
+  async function handleReport(ticket){
+    //use supabase functions to send data (look at my old supaPins implem)
+    console.log("ticket to submit: ", ticket);
+    await send_report_db(ticket);
+  }
+
   if (viewPolicePins && !viewMyPins) return null;
   return (
     <>
@@ -127,8 +135,10 @@ export default function UserPins() {
                 />
               );
             }
+            return null;
           })
         : pins.map((pin) => {
+          const reportable = !!session && currUser && pin.user_id !== currUser;
             return (
               <MakeMarker
                 key={pin.id}
@@ -137,6 +147,7 @@ export default function UserPins() {
                 setSelectedPinId={setSelectedPinId}
                 // If the person logged in is the creator of the pin, they can modify it
                 canModify={pin.user_id === session?.user?.id ? true : false}
+                canReport={reportable}
               />
             );
           })}

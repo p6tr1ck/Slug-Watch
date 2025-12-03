@@ -9,10 +9,12 @@ import {
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import makeIcon from "./MakeIcon";
+import { ReportPost } from "./reportPopup";
 import MarkerWithPopup from "./MarkerWithPopup";
 import { delInSupa } from "../supaPins.js";
 import { supabase } from "../../supabaseClient.js";
 import { AuthContext } from "../App";
+import { send_report_db } from "../sbReportHandle";
 
 const categoryChip = (category = "") => {
   const c = category.toLowerCase();
@@ -30,10 +32,14 @@ export default function MakeMarker({
   m,
   setSelectedPinId,
   selectedPinId,
+  currUserID,
+  onReport,
+  canReport = false,
   canModify = false,
 }) {
   const { session } = useContext(AuthContext);
   const [expanded, setExpanded] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [editClicked, setEditClicked] = useState(false);
   const [voteState, setVoteState] = useState({
     upvotes: Number(m.upvotes ?? 0),
@@ -41,19 +47,16 @@ export default function MakeMarker({
     myVote: Number(m.myVote ?? 0),
   });
   const [votesLoading, setVotesLoading] = useState(false);
+
   const markerRef = useRef(null);
   const isCertified = Boolean(m.certified);
 
-  // User clicked on a notification, make the pin popup on the map
   useEffect(() => {
-    // If the current pin ID is == the selected notification, then
-    // make the pin popup
     if (selectedPinId && selectedPinId === m.id && markerRef.current) {
       markerRef.current.openPopup();
-      // Reset the state of selectedPinId, so value does not persist
       setSelectedPinId(null);
     }
-  }, [selectedPinId, m.id]);
+  }, [selectedPinId, m.id, setSelectedPinId]);
 
   useEffect(() => {
     setVoteState({
@@ -122,7 +125,6 @@ export default function MakeMarker({
     setVotesLoading(true);
 
     try {
-      // If the user clicks the same vote again, remove their vote instead of reapplying it.
       if (voteState.myVote === direction) {
         const { error } = await supabase
           .from("votes")
@@ -148,6 +150,29 @@ export default function MakeMarker({
     }
   };
 
+  async function handleReportSub(ticket) {
+    try {
+      const reporterId = session?.user?.id ?? currUserID;
+      if (!reporterId) {
+        console.error("missing reporter_id for report", ticket);
+        return;
+      }
+      const fixedTicket = { ...ticket, reporter_id: reporterId };
+      if (onReport) {
+        await onReport(fixedTicket);
+      } else {
+        await send_report_db(fixedTicket);
+      }
+    } catch (err) {
+      console.error("heres an insert report err: ", err);
+    } finally {
+      setShowReport(false);
+    }
+  }
+
+  const showReportCtrl =
+    (!!currUserID && m.user_id && m.user_id !== currUserID) || canReport;
+
   return (
     <>
       {editClicked ? (
@@ -163,9 +188,7 @@ export default function MakeMarker({
           icon={makeIcon(m.category)}
         >
           <Popup>
-            {/* Card */}
             <div className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden">
-              {/* Header */}
               <div className="px-3 pt-3 pb-2">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="text-base font-semibold text-slate-900 leading-tight">
@@ -183,10 +206,8 @@ export default function MakeMarker({
                 </div>
               </div>
 
-              {/* Divider */}
               <div className="h-px bg-slate-200" />
 
-              {/* Body */}
               <div className="px-3 py-2 text-[15px] text-slate-700 leading-snug space-y-1.5">
                 {m.created_at && (
                   <div className="flex gap-2">
@@ -260,7 +281,6 @@ export default function MakeMarker({
                 </div>
               )}
 
-              {/* Footer actions */}
               <div className="px-3 pb-3 pt-2 flex items-center justify-between gap-2">
                 <a
                   href={directionsUrl()}
@@ -268,7 +288,6 @@ export default function MakeMarker({
                   rel="noreferrer"
                   className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm hover:bg-slate-50 transition"
                 >
-                  {/* Simple options */}
                   <svg
                     width="16"
                     height="16"
@@ -277,28 +296,52 @@ export default function MakeMarker({
                   >
                     <path
                       fill="currentColor"
-                      d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5a2.5 2.5 0 0 1 0 5Z"
+                      d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7-7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5a2.5 2.5 0 0 1 0 5Z"
                     />
                   </svg>
                   Directions
                 </a>
-                {canModify && (
-                  <div className="flex items-center gap-1.5">
+
+                <div className="flex items-center gap-1.5">
+                  {showReportCtrl && (
                     <button
-                      className="inline-flex items-center gap-1 rounded-full bg-green-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-green-800 active:bg-green-900 transition disabled:opacity-50"
-                      onClick={() => setEditClicked(!editClicked)}
+                      type="button"
+                      className="inline-flex-items-center gap-1 rounded-lg border border-rose-300 px-2.5 py-1.5 text-sm test-rose-700 hover:bg-rose-50 transition"
+                      onClick={() => setShowReport((v) => !v)}
                     >
-                      <span>Edit</span>
+                      {showReport ? "Close" : "Report"}
                     </button>
-                    <button
-                      className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 hover:border-red-300 active:bg-red-200 transition"
-                      onClick={onDelete}
-                    >
-                      <span>Delete</span>
-                    </button>
-                  </div>
-                )}
+                  )}
+
+                  {canModify && (
+                    <>
+                      <button
+                        className="inline-flex items-center gap-1 rounded-full bg-green-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-green-800 active:bg-green-900 transition disabled:opacity-50"
+                        onClick={() => setEditClicked(!editClicked)}
+                      >
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 hover:border-red-300 active:bg-red-200 transition"
+                        onClick={onDelete}
+                      >
+                        <span>Delete</span>
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
+
+              {showReportCtrl && showReport && (
+                <div className="px-3 pb-3">
+                  <ReportPost
+                    pID={m.id}
+                    uID={currUserID}
+                    onSub={handleReportSub}
+                    onCancel={() => setShowReport(false)}
+                  />
+                </div>
+              )}
             </div>
           </Popup>
         </Marker>
