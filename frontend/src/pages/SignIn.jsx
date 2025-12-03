@@ -3,8 +3,8 @@ import { useEffect, useContext, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import GoogleButton from "react-google-button";
 import { AuthContext } from "../App";
-import Locations from "./Locations";
-import SaveLocations from "./SaveLocations";
+import LocationsCategories from "./LocationsCategories";
+import SavePreferences from "./SavePreferences";
 
 // Background + centering wrapper
 const Wrapper = ({ children }) => (
@@ -15,7 +15,7 @@ const Wrapper = ({ children }) => (
 
 export default function SignIn() {
   const { session } = useContext(AuthContext);
-  const [locations, setLocations] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -114,7 +114,10 @@ export default function SignIn() {
             <p className="text-slate-600">{email}</p>
           </div>
         </div>
-        <Locations locations={locations} setLocations={setLocations} />
+        <LocationsCategories
+          notifications={notifications}
+          setNotifications={setNotifications}
+        />
         <div className="mt-8 flex justify-between">
           <Button
             variant="outlined"
@@ -124,7 +127,7 @@ export default function SignIn() {
           >
             {busy ? "Signing out…" : "Sign out"}
           </Button>
-          <SaveLocations locations={locations} />
+          <SavePreferences notifications={notifications} />
         </div>
 
         {busy && (
