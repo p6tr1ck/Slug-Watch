@@ -14,6 +14,7 @@ function format(row) {
     id: row.id,
     pinId: row.pin_id,
     parentId: row.parent_id,
+    userId: row.user_id,
     author: row.author,
     text: row.text,
     createdAt: row.created_at,
@@ -21,13 +22,13 @@ function format(row) {
   };
 }
 
-export default function CommentsPopup({ pinId, onClose }) {
+export default function CommentsPopup({ pinId, onClose, pinAuthor }) {
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
   const [editText, setEditText] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [editComment, setEditComment] = useState(false);
-  const [editCommentPinId, setEditCommentPinId] = useState(null);
+  const [editCommentId, setEditCommentId] = useState(null);
   const [deleteComment, setDeleteComment] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -80,9 +81,6 @@ export default function CommentsPopup({ pinId, onClose }) {
 
   // Subscribe to realtime comments
   useEffect(() => {
-    // Load initial comments from db
-    // fetchComments(pinId).then(setComments);
-
     const unsubscribe = subscribeToComments(pinId, (payload) => {
       // console.log("Realtime:", payload);
 
@@ -210,7 +208,7 @@ export default function CommentsPopup({ pinId, onClose }) {
               onClick={() => setReplyTo(null)}
               title="Cancel reply"
             >
-              cancel
+              Cancel
             </button>
           ) : null}
           <button
@@ -225,6 +223,7 @@ export default function CommentsPopup({ pinId, onClose }) {
         </div>
       </div>
 
+      {/* Creating a comment */}
       {!replyTo && currentUser && (
         <div className="mb-1 flex-shrink-0">
           <textarea
@@ -270,9 +269,10 @@ export default function CommentsPopup({ pinId, onClose }) {
                 pinId={pinId}
                 editText={editText}
                 setEditText={setEditText}
-                editCommentPinId={editCommentPinId}
-                setEditCommentPinId={setEditCommentPinId}
+                editCommentId={editCommentId}
+                setEditCommentId={setEditCommentId}
                 canEditAndDelete={node.userId === currentUser}
+                pinAuthor={pinAuthor}
               />
             ))}
           </div>
@@ -297,11 +297,13 @@ function CommentNode({
   setEditComment,
   editText,
   setEditText,
-  editCommentPinId,
-  setEditCommentPinId,
+  editCommentId,
+  setEditCommentId,
   canEditAndDelete,
+  pinAuthor,
 }) {
   const editRef = useRef(null);
+  let isMounted = false;
 
   // timeago helper
   function timeAgo(iso) {
@@ -317,9 +319,18 @@ function CommentNode({
     return `just now`;
   }
 
-  const handleEditComment = (text) => {
+  // need to call db
+  const handleEditComment = (text, id) => {
+    setEditCommentId(id); // set the edit comment id to the comment where the edit button was clicked
     setEditText(text);
-    setEditComment(!editComment);
+    setEditComment(true);
+  };
+
+  const handleCancel = () => {
+    // Reset state
+    setEditCommentId(null);
+    setEditText("");
+    setEditComment(false);
   };
 
   useEffect(() => {
@@ -335,7 +346,12 @@ function CommentNode({
       <div className="border rounded p-1.5 bg-gray-50">
         <div className="flex justify-between items-start gap-1.5">
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-medium">{node.author}</div>
+            <div className="flex">
+              <div className="text-xs font-medium mr-2">{node.author}</div>
+              {pinAuthor === node.userId && (
+                <div className="text-xs text-sky-600">Creator</div>
+              )}
+            </div>
             <div className="text-xs text-gray-500">
               {timeAgo(node.createdAt)}
             </div>
@@ -371,17 +387,16 @@ function CommentNode({
           </div>
         </div>
 
+        {/* If edit comment is true, then show a textarea element for that comment */}
         {/* Load the comment from the user*/}
-        {/* If edit comment is true, then show a textarea element */}
-        {editComment ? (
+        {editComment && editCommentId === node.id ? (
           <textarea
             ref={editRef}
             rows={2}
             className="w-full border p-0.5 rounded text-xs resize-none"
             value={editText}
             onChange={(e) => {
-              setEditCommentPinId(pinId);
-              setEditText(e.target.value);
+              setEditText(e.target.value); // change the edit text state to whatever is typed in textarea
             }}
             autoFocus
           />
@@ -391,17 +406,17 @@ function CommentNode({
           </div>
         )}
 
-        {/* Comment user id is current user and edit comment is false, 
+        <div className="content-center flex">
+          {/* Comment user id is current user and edit comment is false, 
         then show an edit and delete button for their comment
         */}
-        <div className="content-center flex">
-          {canEditAndDelete && !editComment && (
+          {canEditAndDelete && editCommentId !== node.id && (
             <div>
               <button
                 className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleEditComment(node.text);
+                  handleEditComment(node.text, node.id);
                 }}
               >
                 Edit
@@ -416,7 +431,7 @@ function CommentNode({
           )}
 
           {/* Hide the reply button once the edit button is clicked */}
-          {currentUser && !editComment && (
+          {currentUser && editCommentId !== node.id && (
             <button
               className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
               onClick={() => onReply(node.id)}
@@ -426,20 +441,23 @@ function CommentNode({
           )}
         </div>
 
-        {currentUser && editComment && (
+        {/* User logged in, edit button was clicked then show save or cancel button */}
+        {currentUser && editComment && editCommentId === node.id && (
           <div className="content-center">
             <button
               className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
               onClick={(e) => {
                 e.stopPropagation();
-                handleEditComment(node.text);
               }}
             >
               Save
             </button>
             <button
               className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
-              // onClick={() => onReply(node.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCancel();
+              }}
             >
               Cancel
             </button>
@@ -495,7 +513,14 @@ function CommentNode({
               setText={setText}
               addComment={addComment}
               pinId={pinId}
+              editComment={editComment}
+              setEditComment={setEditComment}
+              editText={editText}
+              setEditText={setEditText}
               canEditAndDelete={canEditAndDelete}
+              editCommentId={editCommentId}
+              setEditCommentId={setEditCommentId}
+              pinAuthor={pinAuthor}
             />
           ))}
         </div>

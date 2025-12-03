@@ -112,6 +112,7 @@ export async function addComment({ pinId, parentId, text }) {
       id: data.id,
       pinId: data.pin_id,
       parentId: data.parent_id,
+      userId: userId,
       author: data.author,
       text: data.text,
       createdAt: data.created_at,

@@ -221,6 +221,7 @@ export default function MakeMarker({
                 <div className="px-3 pb-3">
                   <CommentsPopup
                     pinId={m.id}
+                    pinAuthor={m.user_id}
                     onClose={() => setShowComments(false)}
                   />
                 </div>
