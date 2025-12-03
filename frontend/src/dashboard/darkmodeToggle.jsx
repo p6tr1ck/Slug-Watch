@@ -1,13 +1,24 @@
 import { useContext } from "react";
-import { darkModeSwitch } from "../dashboard/darkmode";
+import { DarkModeSwitch } from "../App";
 import { MdDarkMode, MdLightMode } from "react-icons/md";
 
 export default function ThemeToggle() {
-  const { theme, toggleTheme } = useContext(darkModeSwitch);
+  const { theme, setTheme } = useContext(DarkModeSwitch);
+
+  const changeTheme = () => {
+    // If toggle button is clicked and theme is light,
+    // change the theme to dark
+    if (theme === "light") {
+      setTheme("dark");
+    } else {
+      // Change theme to light if toggle button is clicked and theme is dark
+      setTheme("light");
+    }
+  };
 
   return (
     <button
-      onClick={toggleTheme}
+      onClick={changeTheme}
       className="
         flex items-center gap-2 px-3 py-2 rounded-lg
         bg-gray-200 dark:bg-gray-700

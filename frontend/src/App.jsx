@@ -7,9 +7,10 @@ import NavBar from "./pages/NavBar";
 import BottomBar from "./pages/BottomBar";
 import { supabase } from "../supabaseClient";
 import useWindowDimensions from "./WindowDimensions";
-import { darkModeSwitch, ThemeProvider } from "./dashboard/darkmode";
+import { ThemeProvider } from "./dashboard/darkmode";
 
 export const AuthContext = createContext(null);
+export const DarkModeSwitch = createContext();
 
 function App() {
   const currentSession = supabase.auth.session?.() ?? null;
@@ -18,6 +19,7 @@ function App() {
   const [viewPolicePins, setViewPolicePins] = useState(false);
   const [createMode, setCreateMode] = useState(false);
   const [selectDashboardItem, setSelectDashboardItem] = useState(false);
+  const [theme, setTheme] = useState("light");
   const { width } = useWindowDimensions();
 
   useEffect(() => {
@@ -41,8 +43,6 @@ function App() {
 
   return (
     <ThemeProvider>
-      {" "}
-      {/* <-- FIXED HERE */}
       <AuthContext.Provider
         value={{
           session,
@@ -57,23 +57,25 @@ function App() {
           setSelectDashboardItem,
         }}
       >
-        <BrowserRouter>
-          <div
-            className={`flex flex-col overflow-hidden h-screen ${
-              width <= 600 ? "pb-20" : ""
-            }`}
-          >
-            {width > 600 ? <NavBar /> : <></>}
+        <DarkModeSwitch.Provider value={{ theme, setTheme }}>
+          <BrowserRouter>
+            <div
+              className={`flex flex-col overflow-hidden h-screen ${
+                width <= 600 ? "pb-20" : ""
+              }`}
+            >
+              {width > 600 ? <NavBar /> : <></>}
 
-            <Routes>
-              <Route path="/" element={<Navigate to="/home" replace />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/home" element={<Home />} />
-            </Routes>
+              <Routes>
+                <Route path="/" element={<Navigate to="/home" replace />} />
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/home" element={<Home />} />
+              </Routes>
 
-            {width <= 600 ? <BottomBar /> : <></>}
-          </div>
-        </BrowserRouter>
+              {width <= 600 ? <BottomBar /> : <></>}
+            </div>
+          </BrowserRouter>
+        </DarkModeSwitch.Provider>
       </AuthContext.Provider>
     </ThemeProvider>
   );
