@@ -7,7 +7,7 @@ import NavBar from "./pages/NavBar";
 import BottomBar from "./pages/BottomBar";
 import { supabase } from "../supabaseClient";
 import useWindowDimensions from "./WindowDimensions";
-import { darkModeSwitch } from "./dashboard/darkmode";
+import { darkModeSwitch, ThemeProvider } from "./dashboard/darkmode";
 
 export const AuthContext = createContext(null);
 
@@ -40,7 +40,9 @@ function App() {
   }, []);
 
   return (
-    <darkModeSwitch>
+    <ThemeProvider>
+      {" "}
+      {/* <-- FIXED HERE */}
       <AuthContext.Provider
         value={{
           session,
@@ -62,16 +64,18 @@ function App() {
             }`}
           >
             {width > 600 ? <NavBar /> : <></>}
+
             <Routes>
               <Route path="/" element={<Navigate to="/home" replace />} />
               <Route path="/signin" element={<SignIn />} />
               <Route path="/home" element={<Home />} />
             </Routes>
+
             {width <= 600 ? <BottomBar /> : <></>}
           </div>
         </BrowserRouter>
       </AuthContext.Provider>
-    </darkModeSwitch>
+    </ThemeProvider>
   );
 }
 

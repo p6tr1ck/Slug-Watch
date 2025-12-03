@@ -3,12 +3,10 @@ import Logo from "../assets/slug_watch_logo.PNG";
 import PersonIcon from "@mui/icons-material/Person";
 import { useContext } from "react";
 import { AuthContext } from "../App";
-import { darkModeSwitch } from "../dashboard/darkmode";
-import { MdDarkMode, MdLightMode } from "react-icons/md";
+import ThemeToggle from "../dashboard/darkmodeToggle";
 
 export default function NavBar() {
   const { session } = useContext(AuthContext);
-  const { theme, toggleTheme } = useContext(darkModeSwitch);
 
   return (
     <nav className="p-4 bg-gray-100 dark:bg-gray-900 flex justify-between items-center">
@@ -22,23 +20,9 @@ export default function NavBar() {
 
       {/* Right side */}
       <div className="flex items-center gap-4">
-        {/* Dark Mode Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="flex items-center gap-2 px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200"
-        >
-          {theme === "light" ? (
-            <>
-              <MdDarkMode size={20} /> Dark Mode
-            </>
-          ) : (
-            <>
-              <MdLightMode size={20} /> Light Mode
-            </>
-          )}
-        </button>
-
         {/* Links and Avatar */}
+        {/* Dark/Light Mode Toggle */}
+        <ThemeToggle />
         <div className="flex items-center space-x-3">
           <Link to="/home" className="text-gray-800 dark:text-gray-200">
             Home

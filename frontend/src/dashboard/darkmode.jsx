@@ -8,8 +8,8 @@ export function ThemeProvider({ children }) {
   });
 
   useEffect(() => {
-    document.documentElement.classList.remove("light", "dark");
-    document.documentElement.classList.add(theme);
+    const root = document.documentElement;
+    root.className = theme;
     localStorage.setItem("theme", theme);
   }, [theme]);
 
