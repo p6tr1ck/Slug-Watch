@@ -74,6 +74,8 @@ export default function Moderation() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [modReason, setModReason] = useState("");
 
+  const [voteCounts, setVoteCounts] = useState({});
+
   useEffect(() => {
     let isMounted = true;
 
@@ -197,6 +199,50 @@ export default function Moderation() {
     };
   }, [permissionState.allowed]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!permissionState.allowed) {
+      setVoteCounts({});
+      return undefined;
+    }
+
+    const pinIds = pinsState.items.map((p) => p.id);
+    if (pinIds.length === 0) {
+      setVoteCounts({});
+      return undefined;
+    }
+
+    const fetchVotes = async () => {
+      const { data, error } = await supabase
+        .from("votes")
+        .select("pin_id, value")
+        .in("pin_id", pinIds);
+
+      if (!isMounted) return;
+
+      if (error) {
+        console.error("Failed to load vote counts", error);
+        setVoteCounts({});
+        return;
+      }
+
+      const counts = {};
+      for (const row of data || []) {
+        if (!counts[row.pin_id]) counts[row.pin_id] = { up: 0, down: 0 };
+        if (row.value === 1) counts[row.pin_id].up += 1;
+        else if (row.value === -1) counts[row.pin_id].down += 1;
+      }
+      setVoteCounts(counts);
+    };
+
+    fetchVotes();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [permissionState.allowed, pinsState.items]);
+
   const handleConfirmDel = async () => {
     if (!pendingDel || deleteState.inFlight) return;
 
@@ -315,19 +361,6 @@ export default function Moderation() {
   const reportLoading = reportState.loading;
   const reportErr = reportState.error;
 
-  async function handleDelReport(report_uid){
-    try{
-      await del_report({ ruid: report_uid });
-      setReportState((prev) => ({ ...prev,items: prev.items.filter((r) => r.report_uid !== report_uid),}));
-    }catch (err){
-      console.log("error deleting report: " ,err);
-    }
-  }
-
-  const reports = reportState.items;
-  const reportLoading = reportState.loading;
-  const reportErr = reportState.error;
-
   async function handleDelReport(report_uid) {
     try {
       await del_report({ ruid: report_uid });
@@ -383,6 +416,8 @@ export default function Moderation() {
                 <thead className="bg-slate-100">
                   <tr>
                     <th className="px-3 py-2 text-left">Report weight</th>
+                    <th className="px-3 py-2 text-left">Likes</th>
+                    <th className="px-3 py-2 text-left">Dislikes</th>
                     <th className="px-3 py-2 text-left">Pin name</th>
                     <th className="px-3 py-2 text-left">Pin description</th>
                     <th className="px-3 py-2 text-left">Pin ID</th>
@@ -393,7 +428,7 @@ export default function Moderation() {
                   {pinsLoading && (
                     <tr>
                       <td
-                        colSpan="5"
+                        colSpan="7"
                         className="px-3 py-6 text-center text-slate-500"
                       >
                         Loading reported pins...
@@ -403,7 +438,7 @@ export default function Moderation() {
                   {!pinsLoading && pinsError && (
                     <tr>
                       <td
-                        colSpan="5"
+                        colSpan="7"
                         className="px-3 py-6 text-center text-red-500"
                       >
                         Unable to load pins. Please refresh and try again.
@@ -413,7 +448,7 @@ export default function Moderation() {
                   {!pinsLoading && !pinsError && pins.length === 0 && (
                     <tr>
                       <td
-                        colSpan="5"
+                        colSpan="7"
                         className="px-3 py-6 text-center text-slate-500"
                       >
                         No pins have crossed the report threshold yet.
@@ -422,31 +457,40 @@ export default function Moderation() {
                   )}
                   {!pinsLoading &&
                     !pinsError &&
-                    pins.map((pin) => (
-                      <tr key={pin.id} className="border-t border-slate-100">
-                        <td className="px-3 py-3 font-semibold text-slate-900">
-                          {pin.report_weight ?? pin.reportWeight ?? 0}
-                        </td>
-                        <td className="px-3 py-3">
-                          {pin.title ?? pin.name ?? "Untitled pin"}
-                        </td>
-                        <td className="px-3 py-3 text-slate-600">
-                          {pin.description || "No description"}
-                        </td>
-                        <td className="px-3 py-3 font-mono text-xs text-slate-500">
-                          {pin.id}
-                        </td>
-                        <td className="px-3 py-3 text-right">
-                          <button
-                            type="button"
-                            onClick={() => openDelDia(pin)}
-                            className="px-3 py-1 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition font-semibold text-sm"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    pins.map((pin) => {
+                      const vc = voteCounts[pin.id] || { up: 0, down: 0 };
+                      return (
+                        <tr key={pin.id} className="border-t border-slate-100">
+                          <td className="px-3 py-3 font-semibold text-slate-900">
+                            {pin.report_weight ?? pin.reportWeight ?? 0}
+                          </td>
+                          <td className="px-3 py-3">
+                            {vc.up}
+                          </td>
+                          <td className="px-3 py-3">
+                            {vc.down}
+                          </td>
+                          <td className="px-3 py-3">
+                            {pin.title ?? pin.name ?? "Untitled pin"}
+                          </td>
+                          <td className="px-3 py-3 text-slate-600">
+                            {pin.description || "No description"}
+                          </td>
+                          <td className="px-3 py-3 font-mono text-xs text-slate-500">
+                            {pin.id}
+                          </td>
+                          <td className="px-3 py-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() => openDelDia(pin)}
+                              className="px-3 py-1 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition font-semibold text-sm"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>
