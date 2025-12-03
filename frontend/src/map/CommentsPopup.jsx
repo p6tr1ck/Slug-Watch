@@ -202,15 +202,6 @@ export default function CommentsPopup({ pinId, onClose, pinAuthor }) {
       <div className="flex items-center justify-between mb-1 flex-shrink-0">
         <strong className="text-xs">Comments</strong>
         <div className="flex items-center gap-1.5">
-          {replyTo ? (
-            <button
-              className="text-xs text-gray-500"
-              onClick={() => setReplyTo(null)}
-              title="Cancel reply"
-            >
-              Cancel
-            </button>
-          ) : null}
           <button
             className="px-1.5 py-0.5 text-xs bg-gray-200 rounded hover:bg-gray-300 cursor-pointer"
             onClick={(e) => {
@@ -344,10 +335,12 @@ function CommentNode({
   return (
     <div className="pl-0.5" style={{ marginLeft: depth * 8 }}>
       <div className="border rounded p-1.5 bg-gray-50">
-        <div className="flex justify-between items-start gap-1.5">
+        <div className="flex justify-between items-start gap-1.5 relative">
           <div className="flex-1 min-w-0">
             <div className="flex">
               <div className="text-xs font-medium mr-2">{node.author}</div>
+              {/* If the author of the pin is the same user who commented,
+              the give the comment a "Creator" tag */}
               {pinAuthor === node.userId && (
                 <div className="text-xs text-sky-600">Creator</div>
               )}
@@ -356,7 +349,7 @@ function CommentNode({
               {timeAgo(node.createdAt)}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 absolute top-0 right-0">
             <div className="flex flex-col items-center text-xs">
               <button
                 className={`px-1 py-0 ${
@@ -393,7 +386,7 @@ function CommentNode({
           <textarea
             ref={editRef}
             rows={2}
-            className="w-full border p-0.5 rounded text-xs resize-none"
+            className="w-full border p-0.5 rounded text-xs resize-none mt-3.5"
             value={editText}
             onChange={(e) => {
               setEditText(e.target.value); // change the edit text state to whatever is typed in textarea
@@ -401,7 +394,7 @@ function CommentNode({
             autoFocus
           />
         ) : (
-          <div className="mt-1 text-xs whitespace-pre-wrap break-words">
+          <div className="mt-3 mb-1 text-xs whitespace-pre-wrap break-words">
             {node.text}
           </div>
         )}
@@ -517,7 +510,7 @@ function CommentNode({
               setEditComment={setEditComment}
               editText={editText}
               setEditText={setEditText}
-              canEditAndDelete={canEditAndDelete}
+              canEditAndDelete={currentUser === ch.userId}
               editCommentId={editCommentId}
               setEditCommentId={setEditCommentId}
               pinAuthor={pinAuthor}
