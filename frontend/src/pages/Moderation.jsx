@@ -315,6 +315,19 @@ export default function Moderation() {
   const reportLoading = reportState.loading;
   const reportErr = reportState.error;
 
+  async function handleDelReport(report_uid){
+    try{
+      await del_report({ ruid: report_uid });
+      setReportState((prev) => ({ ...prev,items: prev.items.filter((r) => r.report_uid !== report_uid),}));
+    }catch (err){
+      console.log("error deleting report: " ,err);
+    }
+  }
+
+  const reports = reportState.items;
+  const reportLoading = reportState.loading;
+  const reportErr = reportState.error;
+
   async function handleDelReport(report_uid) {
     try {
       await del_report({ ruid: report_uid });
