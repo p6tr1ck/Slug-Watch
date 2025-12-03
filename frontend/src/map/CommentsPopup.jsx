@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { getUserID } from "../supaPins.js";
 import {
   fetchComments,
+  deleteComment,
   editUserComment,
   addComment as addCommentToSupa,
   toggleVote as toggleVoteInSupa,
@@ -30,7 +31,6 @@ export default function CommentsPopup({ pinId, onClose, pinAuthor }) {
   const [replyTo, setReplyTo] = useState(null);
   const [editComment, setEditComment] = useState(false);
   const [editCommentId, setEditCommentId] = useState(null);
-  const [deleteComment, setDeleteComment] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -337,6 +337,17 @@ function CommentNode({
     updateComment(id, editText);
   };
 
+  const handleDelete = (id) => {
+    async function deleteUserComment(id) {
+      const data = await deleteComment(id);
+      if (!data) {
+        console.error("Error deleting comment");
+        return;
+      }
+    }
+    deleteUserComment(id);
+  };
+
   useEffect(() => {
     if (editComment && editRef.current) {
       const el = editRef.current;
@@ -429,7 +440,7 @@ function CommentNode({
               </button>
               <button
                 className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
-                // onClick={() => onReply(node.id)}
+                onClick={() => handleDelete(node.id)}
               >
                 Delete
               </button>

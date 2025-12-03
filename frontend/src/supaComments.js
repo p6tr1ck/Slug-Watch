@@ -214,6 +214,7 @@ export async function deleteComment(commentId) {
       .eq("id", commentId);
 
     if (deleteError) throw deleteError;
+    return comment;
   } catch (error) {
     console.error("Error deleting comment:", error);
     throw error;
