@@ -15,6 +15,10 @@ function mapPin(data) {
       data.created_at
     ).toLocaleTimeString()}`, // Format as MM/DD/YY Time
     description: data.description,
+    upvotes: Number(data.upvotes ?? 0),
+    downvotes: Number(data.downvotes ?? 0),
+    myVote: 0,
+    certified: Boolean(data.certified),
   };
 }
 
@@ -42,7 +46,10 @@ export default function UserPins() {
           table: "example_pins",
         },
         (payload) => {
-          setPins((prev) => [...prev, mapPin(payload.new)]);
+          setPins((prev) => [
+            ...prev,
+            mapPin(payload.new),
+          ]);
         }
       )
       // UPDATE
@@ -55,7 +62,9 @@ export default function UserPins() {
         },
         (payload) => {
           setPins((prev) =>
-            prev.map((p) => (p.id === payload.new.id ? mapPin(payload.new) : p))
+            prev.map((p) =>
+              p.id === payload.new.id ? mapPin(payload.new) : p
+            )
           );
         }
       )

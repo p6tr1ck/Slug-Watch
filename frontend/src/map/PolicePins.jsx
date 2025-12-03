@@ -28,6 +28,7 @@ export default function PolicePins() {
         ).toLocaleTimeString()}`, // Format as MM/DD/YY Time
         description: e.description,
         category: e.category,
+        certified: true,
       }));
 
       // Now set the pins, so the pins array has the pin data.

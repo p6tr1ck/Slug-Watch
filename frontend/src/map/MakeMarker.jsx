@@ -1,8 +1,18 @@
 import { Marker, Popup } from "react-leaflet";
-import { useState, useRef, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useContext,
+  useCallback,
+} from "react";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import makeIcon from "./MakeIcon";
 import MarkerWithPopup from "./MarkerWithPopup";
 import { delInSupa } from "../supaPins.js";
+import { supabase } from "../../supabaseClient.js";
+import { AuthContext } from "../App";
 
 const categoryChip = (category = "") => {
   const c = category.toLowerCase();
@@ -22,9 +32,17 @@ export default function MakeMarker({
   selectedPinId,
   canModify = false,
 }) {
+  const { session } = useContext(AuthContext);
   const [expanded, setExpanded] = useState(false);
   const [editClicked, setEditClicked] = useState(false);
+  const [voteState, setVoteState] = useState({
+    upvotes: Number(m.upvotes ?? 0),
+    downvotes: Number(m.downvotes ?? 0),
+    myVote: Number(m.myVote ?? 0),
+  });
+  const [votesLoading, setVotesLoading] = useState(false);
   const markerRef = useRef(null);
+  const isCertified = Boolean(m.certified);
 
   // User clicked on a notification, make the pin popup on the map
   useEffect(() => {
@@ -37,6 +55,50 @@ export default function MakeMarker({
     }
   }, [selectedPinId, m.id]);
 
+  useEffect(() => {
+    setVoteState({
+      upvotes: Number(m.upvotes ?? 0),
+      downvotes: Number(m.downvotes ?? 0),
+      myVote: Number(m.myVote ?? 0),
+    });
+  }, [m.id, m.upvotes, m.downvotes, m.myVote]);
+
+  const fetchVotes = useCallback(async () => {
+    setVotesLoading(true);
+    const { data, error } = await supabase
+      .from("votes")
+      .select("pin_id, user_id, value, created_at")
+      .eq("pin_id", m.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Failed to load votes", error);
+      setVotesLoading(false);
+      return;
+    }
+
+    let upvotes = 0;
+    let downvotes = 0;
+    let myVote = 0;
+
+    data?.forEach((row) => {
+      const val = Number(row.value);
+      if (val === 1) upvotes += 1;
+      else if (val === -1) downvotes += 1;
+
+      if (session?.user?.id && row.user_id === session.user.id && myVote === 0) {
+        myVote = val;
+      }
+    });
+
+    setVoteState({ upvotes, downvotes, myVote });
+    setVotesLoading(false);
+  }, [m.id, session?.user?.id]);
+
+  useEffect(() => {
+    fetchVotes();
+  }, [fetchVotes]);
+
   const directionsUrl = () => {
     return m.lat && m.long
       ? `https://www.google.com/maps?q=${m.lat},${m.long}`
@@ -44,7 +106,7 @@ export default function MakeMarker({
   };
 
   const shortText = (t, n = 140) =>
-    t && t.length > n ? t.slice(0, n) + "…" : t;
+    t && t.length > n ? t.slice(0, n) + "..." : t;
 
   async function onDelete() {
     try {
@@ -54,6 +116,37 @@ export default function MakeMarker({
       console.error("Error deleting pin: ", e);
     }
   }
+
+  const onVote = async (direction) => {
+    if (!session?.user?.id) return;
+    setVotesLoading(true);
+
+    try {
+      // If the user clicks the same vote again, remove their vote instead of reapplying it.
+      if (voteState.myVote === direction) {
+        const { error } = await supabase
+          .from("votes")
+          .delete()
+          .eq("pin_id", m.id)
+          .eq("user_id", session.user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("votes").upsert(
+          {
+            pin_id: m.id,
+            user_id: session.user.id,
+            value: direction,
+          },
+          { onConflict: "pin_id,user_id" }
+        );
+        if (error) throw error;
+      }
+    } catch (err) {
+      console.error("Failed to persist vote", err);
+    } finally {
+      await fetchVotes();
+    }
+  };
 
   return (
     <>
@@ -122,6 +215,51 @@ export default function MakeMarker({
                 )}
               </div>
 
+              {!isCertified && (
+                <div className="px-3 pb-2 pt-2 border-t border-slate-200 bg-slate-50/70">
+                  <div className="flex items-center justify-between text-sm text-slate-800 mb-2">
+                    <span className="font-medium text-slate-900">
+                      Community votes
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      Share if this feels accurate
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onVote(1)}
+                      disabled={votesLoading || !session?.user?.id}
+                      className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+                        voteState.myVote === 1
+                          ? "border-green-200 bg-green-50 text-green-800 shadow-sm"
+                          : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
+                      }`}
+                    >
+                      <ThumbUpIcon fontSize="small" />
+                      <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-slate-800 ring-1 ring-slate-200">
+                        {voteState.upvotes}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onVote(-1)}
+                      disabled={votesLoading || !session?.user?.id}
+                      className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+                        voteState.myVote === -1
+                          ? "border-red-200 bg-red-50 text-red-800 shadow-sm"
+                          : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
+                      }`}
+                    >
+                      <ThumbDownIcon fontSize="small" />
+                      <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-slate-800 ring-1 ring-slate-200">
+                        {voteState.downvotes}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Footer actions */}
               <div className="px-3 pb-3 pt-2 flex items-center justify-between gap-2">
                 <a
@@ -150,14 +288,12 @@ export default function MakeMarker({
                       className="inline-flex items-center gap-1 rounded-full bg-green-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-green-800 active:bg-green-900 transition disabled:opacity-50"
                       onClick={() => setEditClicked(!editClicked)}
                     >
-                      <span>✏️</span>
                       <span>Edit</span>
                     </button>
                     <button
                       className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 hover:border-red-300 active:bg-red-200 transition"
                       onClick={onDelete}
                     >
-                      <span>🗑</span>
                       <span>Delete</span>
                     </button>
                   </div>
