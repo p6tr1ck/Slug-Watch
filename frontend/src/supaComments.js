@@ -219,3 +219,28 @@ export async function deleteComment(commentId) {
     throw error;
   }
 }
+
+export async function editUserComment(commentId, updatedText) {
+  try {
+    const userId = await getUserID();
+    if (!userId) {
+      const err = new Error("Not authenticated");
+      err.code = "AUTH_REQUIRED";
+      throw err;
+    }
+
+    const { data: comment, error: fetchError } = await supabase
+      .from("comments")
+      .update({ text: updatedText })
+      .eq("id", commentId)
+      .eq("user_id", userId)
+      .select()
+      .single();
+
+    if (fetchError) throw fetchError;
+    return comment;
+  } catch (error) {
+    console.error("Error editing comment:", error);
+    throw error;
+  }
+}

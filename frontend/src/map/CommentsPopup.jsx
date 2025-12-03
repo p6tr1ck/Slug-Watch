@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { getUserID } from "../supaPins.js";
 import {
   fetchComments,
+  editUserComment,
   addComment as addCommentToSupa,
   toggleVote as toggleVoteInSupa,
   subscribeToComments,
@@ -310,7 +311,6 @@ function CommentNode({
     return `just now`;
   }
 
-  // need to call db
   const handleEditComment = (text, id) => {
     setEditCommentId(id); // set the edit comment id to the comment where the edit button was clicked
     setEditText(text);
@@ -322,6 +322,19 @@ function CommentNode({
     setEditCommentId(null);
     setEditText("");
     setEditComment(false);
+  };
+
+  // When comment is edited, update the table
+  const handleSave = (id) => {
+    async function updateComment(id, editText) {
+      const newComment = await editUserComment(id, editText);
+      if (!newComment) {
+        console.error("Error updating comment");
+        return;
+      }
+      handleCancel();
+    }
+    updateComment(id, editText);
   };
 
   useEffect(() => {
@@ -441,6 +454,7 @@ function CommentNode({
               className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
               onClick={(e) => {
                 e.stopPropagation();
+                handleSave(node.id);
               }}
             >
               Save
