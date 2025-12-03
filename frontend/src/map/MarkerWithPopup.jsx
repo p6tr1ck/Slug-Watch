@@ -3,18 +3,34 @@ import { Marker, Popup } from "react-leaflet";
 import makeIcon from "./MakeIcon";
 import { insToSupa, delInSupa, editToSupa } from "../supaPins.js";
 
+function toDatetimeLocal(ts) {
+  if (!ts) return "";
+
+  const date = new Date(ts);
+
+  const pad = (n) => String(n).padStart(2, "0");
+
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 export default function MarkerWithPopup({
   m,
-  updateMarker,
   removeMarker,
-  canModify,
+  setMarkers,
+  editClicked = false,
+  setEditClicked,
 }) {
   const markerRef = useRef(null);
   const categories = ["TAPS", "ICE", "Suspicious Activity", "Theft", "Other"];
 
   const [form, setForm] = useState({
     title: m.title || "",
-    address: m.address || "",
     datetime: m.datetime || "",
     category: m.category || categories[0],
     description: m.description || "",
@@ -26,7 +42,6 @@ export default function MarkerWithPopup({
     // keep local form in sync when parent marker changes
     setForm({
       title: m.title || "",
-      address: m.address || "",
       datetime: m.datetime || "",
       category: m.category || categories[0],
       description: m.description || "",
@@ -44,38 +59,59 @@ export default function MarkerWithPopup({
     }
   }, [m.isNew]);
 
+  // Open the popup when edit is clicked
+  useEffect(() => {
+    if (!editClicked) return;
+
+    const t = setTimeout(() => {
+      if (markerRef.current) {
+        markerRef.current.openPopup();
+      }
+    }, 0);
+
+    return () => clearTimeout(t);
+  }, [editClicked]);
+
+  // Change the datetime field as the pin's created at time
+  useEffect(() => {
+    setForm((prev) => ({ ...prev, datetime: toDatetimeLocal(m.created_at) }));
+  }, [editClicked]);
+
   const allFilled =
     form.title.trim() &&
-    form.address.trim() &&
     form.datetime &&
     form.category &&
     form.description.trim();
-  const disabled = !canModify;
 
   async function onSave() {
-    if (disabled || !allFilled) return;
+    if (!allFilled) return;
     setSaving(true);
     try {
       let row;
-      if (m.supabaseId){
-        row = await editToSupa({id: m.supabaseId, form, m });
-      }else{
-        row = await insToSupa({form, m});
+      if (editClicked && m.id) {
+        row = await editToSupa({ id: m.id, form, m });
+      } else {
+        row = await insToSupa({ form, m });
       }
-      const upd = {...m, supabaseId: row.id, title: row.title, category: row.category, description: row.description, position: [row.lat, row.long], isNew: false};
-      updateMarker(m.id, upd);
       markerRef.current?.closePopup();
+      // Delete the local marker in the application
+      // because realtime pulling of pins will reflect on the map
+      if (!editClicked) {
+        setMarkers([]);
+      } else {
+        // Remove the input fields when edit is saved
+        setEditClicked(false);
+      }
     } catch (e) {
       console.error("Error saving pin: ", e);
-    }finally{
+    } finally {
       setSaving(false);
     }
   }
 
   async function onDelete() {
-    if (disabled) return;
     try {
-      if (m.supabaseId) await delInSupa({id: m.supabaseId});
+      if (m.supabaseId) await delInSupa({ id: m.supabaseId });
       removeMarker(m.id);
       markerRef.current?.closePopup();
     } catch (e) {
@@ -88,25 +124,18 @@ export default function MarkerWithPopup({
   }
 
   return (
-    <Marker ref={markerRef} position={m.position} icon={makeIcon(m.className)}>
+    <Marker
+      ref={markerRef}
+      position={editClicked ? [m.lat, m.long] : m.position}
+      icon={makeIcon(m.category)}
+    >
       <Popup>
         <div className="w-72" onClick={stop} onMouseDown={stop}>
           <label className="block text-sm font-medium">Title</label>
           <input
             className="w-full border p-1 rounded mb-2"
             value={form.title}
-            disabled={disabled}
             onChange={(e) => setForm((s) => ({ ...s, title: e.target.value }))}
-          />
-
-          <label className="block text-sm font-medium">Address</label>
-          <input
-            className="w-full border p-1 rounded mb-2"
-            value={form.address}
-            disabled={disabled}
-            onChange={(e) =>
-              setForm((s) => ({ ...s, address: e.target.value }))
-            }
           />
 
           <label className="block text-sm font-medium">Date & Time</label>
@@ -114,7 +143,6 @@ export default function MarkerWithPopup({
             type="datetime-local"
             className="w-full border p-1 rounded mb-2"
             value={form.datetime}
-            disabled={disabled}
             onChange={(e) =>
               setForm((s) => ({ ...s, datetime: e.target.value }))
             }
@@ -124,7 +152,6 @@ export default function MarkerWithPopup({
           <select
             className="w-full border p-1 rounded mb-2"
             value={form.category}
-            disabled={disabled}
             onChange={(e) =>
               setForm((s) => ({ ...s, category: e.target.value }))
             }
@@ -141,33 +168,25 @@ export default function MarkerWithPopup({
             className="w-full border p-1 rounded mb-2"
             rows={3}
             value={form.description}
-            disabled={disabled}
             onChange={(e) =>
               setForm((s) => ({ ...s, description: e.target.value }))
             }
           />
-
-          {canModify ? (
-            <div className="flex justify-between">
-              <button
-                className="px-2 py-1 bg-green-600 text-white rounded disabled:opacity-50"
-                onClick={onSave}
-                disabled={!allFilled}
-              >
-                Save
-              </button>
-              <button
-                className="px-2 py-1 bg-red-600 text-white rounded"
-                onClick={onDelete}
-              >
-                Delete
-              </button>
-            </div>
-          ) : (
-            <div className="text-xs text-gray-500 text-center">
-              You can only edit your own pins.
-            </div>
-          )}
+        </div>
+        <div className="flex justify-between">
+          <button
+            className="px-2 py-1 bg-green-600 text-white rounded disabled:opacity-50"
+            onClick={onSave}
+            disabled={!allFilled}
+          >
+            Save
+          </button>
+          <button
+            className="px-2 py-1 bg-red-600 text-white rounded"
+            onClick={onDelete}
+          >
+            Delete
+          </button>
         </div>
       </Popup>
     </Marker>
