@@ -84,7 +84,7 @@ export default function CommentsPopup({ pinId, onClose, canModify }) {
     fetchComments(pinId).then(setComments);
 
     const unsubscribe = subscribeToComments(pinId, (payload) => {
-      console.log("Realtime:", payload);
+      // console.log("Realtime:", payload);
 
       // If someone created a comment, then add the comment
       // to the comments state.
