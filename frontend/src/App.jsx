@@ -4,6 +4,7 @@ import { useState, createContext, useEffect } from "react";
 import SignIn from "./pages/SignIn";
 import Home from "./pages/Home";
 import NavBar from "./pages/NavBar";
+import Moderation from "./pages/Moderation";
 import BottomBar from "./pages/BottomBar";
 import { supabase } from "../supabaseClient";
 import useWindowDimensions from "./WindowDimensions";
@@ -20,6 +21,8 @@ function App() {
   const [createMode, setCreateMode] = useState(false);
   const [selectDashboardItem, setSelectDashboardItem] = useState(false);
   const [theme, setTheme] = useState("light");
+  // When user clicks on notification, pin should popup on map
+  const [selectedPinId, setSelectedPinId] = useState(null);
   const { width } = useWindowDimensions();
 
   useEffect(() => {

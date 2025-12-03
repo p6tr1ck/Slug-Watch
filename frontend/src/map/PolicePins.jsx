@@ -7,10 +7,10 @@ export default function PolicePins() {
   const { viewPolicePins, viewMyPins } = useContext(AuthContext);
   const [pins, setPins] = useState([]);
 
-  // Pull user made pins from the database.
+  // Pull police made pins from the database.
   useEffect(() => {
     async function getPins() {
-      // Select all the rows from the example pins database table.
+      // Select all the rows from the police logs database table.
       const { data, error } = await supabase.from("police_logs").select("*");
       if (error) {
         console.error("Error getting pins from database: ", error);
@@ -27,6 +27,8 @@ export default function PolicePins() {
           e.date
         ).toLocaleTimeString()}`, // Format as MM/DD/YY Time
         description: e.description,
+        category: e.category,
+        certified: true,
       }));
 
       // Now set the pins, so the pins array has the pin data.
@@ -41,16 +43,7 @@ export default function PolicePins() {
         <></>
       ) : (
         pins.map((pin) => {
-          return (
-            <MakeMarker
-              key={pin.id}
-              id={pin.id}
-              title={pin.title}
-              time={pin.created_at}
-              position={[pin.lat, pin.long]}
-              category={"Verified"}
-            />
-          );
+          return <MakeMarker key={pin.id} m={pin} canReport={false} />;
         })
       )}
     </>

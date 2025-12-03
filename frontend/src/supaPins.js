@@ -1,4 +1,5 @@
-import {supabase} from "../supabaseClient.js"
+import { supabase } from "../supabaseClient.js";
+import isInBounds from "./map/boundsCheck.js";
 
 function normDateTime(raw) {
   if (!raw) return null;
@@ -29,9 +30,11 @@ function normDateTime(raw) {
       hour = Number(m[4]);
       minute = Number(m[5]);
       const ampm = m[6];
-      if (/AM/i.test(ampm)) { //first 12 hrs
+      if (/AM/i.test(ampm)) {
+        //first 12 hrs
         if (hour === 12) hour = 0;
-      } else { //pm hrs
+      } else {
+        //pm hrs
         if (hour !== 12) hour += 12;
       }
     }
@@ -43,36 +46,61 @@ function normDateTime(raw) {
   return null;
 }
 
-export async function getUserID(){
-    const { data, error } = await supabase.auth.getUser();
-    if (error) throw error;
-    return data.user?.id || null;
+export async function getUserID() {
+  const { data, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  return data.user?.id || null;
 }
 
-export async function insToSupa({form, m}){
-    const uid = await getUserID();
-    if (!uid){
-        const err = new Error("Sign in or register order to create a pin!");
-        err.code = "AUTH_REQUIRED";
-        throw err;
-    }
-    const [lat, lng] = m.position;
-    const supaRow = {title: form.title, category: form.category, lat: lat, long: lng,
-                     user_id: uid, description: form.description, created_at: normDateTime(form.datetime)};
-    const {data, error} = await supabase.from("example_pins").insert(supaRow).select("id, title, category, description, lat, long, created_at, user_id").single();
-    if (error) throw error;
-    return data
+export async function insToSupa({ form, m }) {
+  const uid = await getUserID();
+  if (!uid) {
+    const err = new Error("Sign in or register order to create a pin!");
+    err.code = "AUTH_REQUIRED";
+    throw err;
+  }
+  const [lat, lng] = m.position;
+  const location = isInBounds(lat, lng);
+  const supaRow = {
+    title: form.title,
+    category: form.category,
+    lat: lat,
+    long: lng,
+    user_id: uid,
+    description: form.description,
+    created_at: normDateTime(form.datetime),
+    location: location,
+  };
+  const { data, error } = await supabase
+    .from("example_pins")
+    .insert(supaRow)
+    .select("id, title, category, description, lat, long, created_at, user_id")
+    .single();
+  if (error) throw error;
+  return data;
 }
 
-export async function delInSupa({id}){
-    const {error} = await supabase.from("example_pins").delete().eq("id", id);
-    if (error) throw error;
+export async function delInSupa({ id }) {
+  const { error } = await supabase.from("example_pins").delete().eq("id", id);
+  if (error) throw error;
 }
 
-export async function editToSupa({id, form, m}){
-    const [lat, lng] = m.position;
-    const edit = {title: form.title, category: form.category, description: form.description, lat: lat, long: lng,};
-    const {data, error} = await supabase.from("example_pins").update(edit).eq("id",id).select("id, title, category, description, lat, long, created_at, user_id").single();
-    if (error) throw error;
-    return data;
+export async function editToSupa({ id, form, m }) {
+  const lat = m.lat;
+  const long = m.long;
+  const edit = {
+    title: form.title,
+    category: form.category,
+    description: form.description,
+    lat: lat,
+    long: long,
+  };
+  const { data, error } = await supabase
+    .from("example_pins")
+    .update(edit)
+    .eq("id", id)
+    .select("id, title, category, description, lat, long, created_at, user_id")
+    .single();
+  if (error) throw error;
+  return data;
 }
