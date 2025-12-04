@@ -135,8 +135,15 @@ export default function MarkerWithPopup({
         row = await insToSupa({ form, m });
       }
       markerRef.current?.closePopup();
-      setEditing(false);
-      if (setEditClicked) setEditClicked(false);
+      
+      // Delete the local marker in the application
+      // because realtime pulling of pins will reflect on the map
+      if (!editClicked) {
+        setMarkers([]);
+      } else {
+        // Remove the input fields when edit is saved
+        setEditClicked(false);
+      }
     } catch (e) {
       console.error("Error saving pin: ", e);
     } finally {
