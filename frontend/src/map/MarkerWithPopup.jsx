@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Marker, Popup } from "react-leaflet";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Marker, Popup, useMap } from "react-leaflet";
 import makeIcon from "./MakeIcon";
 import { insToSupa, delInSupa, editToSupa } from "../supaPins.js";
 import CommentsPopup from "./CommentsPopup";
@@ -29,7 +29,29 @@ export default function MarkerWithPopup({
   canModify = true,
 }) {
   const markerRef = useRef(null);
+  const map = useMap();
   const categories = ["TAPS", "ICE", "Suspicious Activity", "Theft", "Other"];
+
+  // Check if marker is in top portion of screen and flip popup accordingly
+  const handlePopupOpen = useCallback((e) => {
+    if (!map || !m.position) return;
+    const point = map.latLngToContainerPoint(m.position);
+    const mapHeight = map.getSize().y;
+    const shouldFlip = point.y < mapHeight * 0.4;
+    
+    const popupEl = e.popup.getElement();
+    if (popupEl) {
+      // Always remove first to reset state
+      popupEl.classList.remove('popup-flipped');
+      
+      if (shouldFlip) {
+        popupEl.classList.add('popup-flipped');
+        e.popup.options.autoPan = false;
+      } else {
+        e.popup.options.autoPan = true;
+      }
+    }
+  }, [map, m.position]);
 
   const [form, setForm] = useState({
     title: m.title || "",
@@ -156,8 +178,19 @@ export default function MarkerWithPopup({
     }`;
 
   return (
-    <Marker ref={markerRef} position={m.position} icon={makeIcon(m.className)}>
-      <Popup autoPan={true} minWidth={320} maxWidth={360}>
+    <Marker 
+      ref={markerRef} 
+      position={m.position} 
+      icon={makeIcon(m.className)}
+      eventHandlers={{
+        popupopen: handlePopupOpen,
+      }}
+    >
+      <Popup 
+        autoPan={true} 
+        minWidth={320} 
+        maxWidth={360}
+      >
         <div className="min-w-[300px] bg-white" onClick={stop} onMouseDown={stop}>
           {/* Header */}
           <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 rounded-t-xl">

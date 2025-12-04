@@ -16,3 +16,24 @@
 .leaflet-popup-tip-container {
   margin-top: -1px;
 }
+
+/* Flipped popup (opens downward below the marker) */
+.leaflet-popup.popup-flipped {
+  bottom: auto !important;
+  margin-bottom: 0 !important;
+  margin-top: 40px !important;
+}
+
+.leaflet-popup.popup-flipped .leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+}
+
+.leaflet-popup.popup-flipped .leaflet-popup-tip-container {
+  position: absolute !important;
+  top: 0 !important;
+  bottom: auto !important;
+  left: 50% !important;
+  transform: translateX(-50%) translateY(-100%) rotate(180deg) !important;
+  margin: 0 !important;
+  margin-top: 1px !important;
+}

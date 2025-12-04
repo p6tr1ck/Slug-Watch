@@ -1,4 +1,4 @@
-import { Marker, Popup } from "react-leaflet";
+import { Marker, Popup, useMap } from "react-leaflet";
 import {
   useState,
   useRef,
@@ -55,7 +55,29 @@ export default function MakeMarker({
   const [votesLoading, setVotesLoading] = useState(false);
 
   const markerRef = useRef(null);
+  const map = useMap();
   const isCertified = Boolean(m.certified);
+
+  // Check if marker is in top portion of screen and flip popup accordingly
+  const handlePopupOpen = useCallback((e) => {
+    if (!map) return;
+    const point = map.latLngToContainerPoint([m.lat, m.long]);
+    const mapHeight = map.getSize().y;
+    const shouldFlip = point.y < mapHeight * 0.4;
+    
+    const popupEl = e.popup.getElement();
+    if (popupEl) {
+      // Always remove first to reset state
+      popupEl.classList.remove('popup-flipped');
+      
+      if (shouldFlip) {
+        popupEl.classList.add('popup-flipped');
+        e.popup.options.autoPan = false;
+      } else {
+        e.popup.options.autoPan = true;
+      }
+    }
+  }, [map, m.lat, m.long]);
 
   useEffect(() => {
     if (selectedPinId && selectedPinId === m.id && markerRef.current) {
@@ -198,8 +220,15 @@ export default function MakeMarker({
           ref={markerRef}
           position={[m.lat, m.long]}
           icon={makeIcon(m.category)}
+          eventHandlers={{
+            popupopen: handlePopupOpen,
+          }}
         >
-          <Popup minWidth={320} maxWidth={400} autoPan={true}>
+          <Popup 
+            minWidth={320} 
+            maxWidth={400} 
+            autoPan={true}
+          >
             <div className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden">
               <div className="px-3 pt-3 pb-2">
                 <div className="flex items-start justify-between gap-2">
