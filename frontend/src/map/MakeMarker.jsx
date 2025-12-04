@@ -1,4 +1,4 @@
-import { Marker, Popup } from "react-leaflet";
+import { Marker, Popup, useMap } from "react-leaflet";
 import {
   useState,
   useRef,
@@ -9,8 +9,11 @@ import {
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import makeIcon from "./MakeIcon";
+import CommentsPopup from "./CommentsPopup";
 import { ReportPost } from "./reportPopup";
 import MarkerWithPopup from "./MarkerWithPopup";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import { delInSupa } from "../supaPins.js";
 import { supabase } from "../../supabaseClient.js";
 import { AuthContext } from "../App";
@@ -36,9 +39,12 @@ export default function MakeMarker({
   onReport,
   canReport = false,
   canModify = false,
+  isBookmarked = false,
+  onBookmarkToggle,
 }) {
   const { session } = useContext(AuthContext);
   const [expanded, setExpanded] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [editClicked, setEditClicked] = useState(false);
   const [voteState, setVoteState] = useState({
@@ -49,7 +55,29 @@ export default function MakeMarker({
   const [votesLoading, setVotesLoading] = useState(false);
 
   const markerRef = useRef(null);
+  const map = useMap();
   const isCertified = Boolean(m.certified);
+
+  // Check if marker is in top portion of screen and flip popup accordingly
+  const handlePopupOpen = useCallback((e) => {
+    if (!map) return;
+    const point = map.latLngToContainerPoint([m.lat, m.long]);
+    const mapHeight = map.getSize().y;
+    const shouldFlip = point.y < mapHeight * 0.4;
+    
+    const popupEl = e.popup.getElement();
+    if (popupEl) {
+      // Always remove first to reset state
+      popupEl.classList.remove('popup-flipped');
+      
+      if (shouldFlip) {
+        popupEl.classList.add('popup-flipped');
+        e.popup.options.autoPan = false;
+      } else {
+        e.popup.options.autoPan = true;
+      }
+    }
+  }, [map, m.lat, m.long]);
 
   useEffect(() => {
     if (selectedPinId && selectedPinId === m.id && markerRef.current) {
@@ -67,6 +95,12 @@ export default function MakeMarker({
   }, [m.id, m.upvotes, m.downvotes, m.myVote]);
 
   const fetchVotes = useCallback(async () => {
+    // Skip fetching votes for certified/police pins (they have prefixed IDs that aren't valid UUIDs)
+    if (isCertified || String(m.id).startsWith("police-")) {
+      setVotesLoading(false);
+      return;
+    }
+    
     setVotesLoading(true);
     const { data, error } = await supabase
       .from("votes")
@@ -96,7 +130,7 @@ export default function MakeMarker({
 
     setVoteState({ upvotes, downvotes, myVote });
     setVotesLoading(false);
-  }, [m.id, session?.user?.id]);
+  }, [m.id, session?.user?.id, isCertified]);
 
   useEffect(() => {
     fetchVotes();
@@ -186,8 +220,15 @@ export default function MakeMarker({
           ref={markerRef}
           position={[m.lat, m.long]}
           icon={makeIcon(m.category)}
+          eventHandlers={{
+            popupopen: handlePopupOpen,
+          }}
         >
-          <Popup>
+          <Popup 
+            minWidth={320} 
+            maxWidth={400} 
+            autoPan={true}
+          >
             <div className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden">
               <div className="px-3 pt-3 pb-2">
                 <div className="flex items-start justify-between gap-2">
@@ -296,17 +337,39 @@ export default function MakeMarker({
                   >
                     <path
                       fill="currentColor"
-                      d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7-7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5a2.5 2.5 0 0 1 0 5Z"
+                      d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5a2.5 2.5 0 0 1 0 5Z"
                     />
                   </svg>
                   Directions
                 </a>
 
                 <div className="flex items-center gap-1.5">
+                  {/* Comments button for non-verified pins */}
+                  {m.category && !m.category.toLowerCase().includes("verified") && (
+                    <button
+                      title="Comments"
+                      className="p-2 bg-blue-600 text-white rounded-full shadow"
+                      onClick={() => setShowComments((s) => !s)}
+                    >
+                      💬
+                    </button>
+                  )}
+
+                  {/* Bookmark button */}
+                  {onBookmarkToggle && (
+                    <button
+                      title={isBookmarked ? "Remove bookmark" : "Bookmark"}
+                      className="p-2 bg-yellow-600 text-white rounded-full shadow"
+                      onClick={onBookmarkToggle}
+                    >
+                      {isBookmarked ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+                    </button>
+                  )}
+
                   {showReportCtrl && (
                     <button
                       type="button"
-                      className="inline-flex-items-center gap-1 rounded-lg border border-rose-300 px-2.5 py-1.5 text-sm test-rose-700 hover:bg-rose-50 transition"
+                      className="inline-flex items-center gap-1 rounded-lg border border-rose-300 px-2.5 py-1.5 text-sm text-rose-700 hover:bg-rose-50 transition"
                       onClick={() => setShowReport((v) => !v)}
                     >
                       {showReport ? "Close" : "Report"}
@@ -340,6 +403,13 @@ export default function MakeMarker({
                     onSub={handleReportSub}
                     onCancel={() => setShowReport(false)}
                   />
+                </div>
+              )}
+
+              {/* Comments section */}
+              {showComments && m.id && (
+                <div className="px-3 pb-3">
+                  <CommentsPopup pinId={m.id} onClose={() => setShowComments(false)} />
                 </div>
               )}
             </div>
