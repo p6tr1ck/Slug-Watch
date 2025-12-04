@@ -11,9 +11,14 @@ import Box from "@mui/material/Box";
 
 export default function Notification() {
   const { session, setSelectedPinId } = useContext(AuthContext);
+
   const [pinId, setPinId] = useState([]);
   const [pins, setPins] = useState([]);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [adminMsgs, setAdminMsgs] = useState([]);
+
+  const [pinUnread, setPinUnread] = useState(0);
+  const [adminUnread, setAdminUnread] = useState(0);
+  const unreadNotifications = pinUnread + adminUnread;
 
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -21,8 +26,9 @@ export default function Notification() {
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
 
-    // Set is_read column to true for all the pins
     async function readNotifications() {
+      if (!session) return;
+
       for (const id of pinId) {
         const { error } = await supabase
           .from("notifications")
@@ -35,17 +41,19 @@ export default function Notification() {
           console.error("Error setting is_read column: ", error);
         }
       }
-      setUnreadNotifications(0);
+
+      setPinUnread(0);
     }
+
     readNotifications();
   };
+
   const handleClose = () => {
     setAnchorEl(null);
   };
 
-  // Clear a single notification
   const handleClearOne = (event, id) => {
-    event.stopPropagation(); // don't trigger MenuItem onClick
+    event.stopPropagation();
 
     async function deleteNotifications() {
       const { error } = await supabase
@@ -58,28 +66,71 @@ export default function Notification() {
         console.error("Error deleting notification: ", error);
       }
     }
+
     deleteNotifications();
     setPins((prev) => prev.filter((p) => p.id !== id));
   };
 
-  // Clear all notifications
+  const handleAdminRead = async () => {
+    if (!session || adminMsgs.length === 0) return;
+
+    const unread = adminMsgs.filter((m) => m.is_read === false).length;
+    if (unread === 0) return;
+
+    const { error } = await supabase
+      .from("AdminMsg")
+      .update({ is_read: true })
+      .eq("user_id", session.user.id)
+      .eq("is_read", false);
+
+    if (error) {
+      console.log("error on marking admin read: ", error);
+      return;
+    }
+
+    setAdminMsgs((prev) =>
+      prev.map((m) => ({
+        ...m,
+        is_read: true,
+      }))
+    );
+    setAdminUnread(0);
+  };
+
   const handleClearAll = () => {
     async function deleteAllNotifications() {
+      if (!session) return;
+
       const { error } = await supabase
         .from("notifications")
         .delete()
         .eq("user_id", session.user.id);
 
       if (error) {
-        console.error("Error deleting all notification: ", error);
+        console.error("Error deleting all notifications: ", error);
+      }
+
+      const { error: msgErr } = await supabase
+        .from("AdminMsg")
+        .delete()
+        .eq("user_id", session.user.id);
+
+      if (msgErr) {
+        console.log("error deleting admin msgs: ", msgErr);
       }
     }
+
     deleteAllNotifications();
     setPins([]);
+    setPinId([]);
+    setAdminMsgs([]);
+    setPinUnread(0);
+    setAdminUnread(0);
   };
 
-  // subscribe to real time changes
   useEffect(() => {
+    if (!session) return;
+
     const channel = supabase
       .channel("realtime:notifications")
       .on(
@@ -94,11 +145,12 @@ export default function Notification() {
             const userId = payload.new.user_id;
             const newPinId = payload.new.pin_id;
 
-            if (session && userId === session.user.id) {
+            if (userId === session.user.id) {
               setPinId((prev) => [...prev, newPinId]);
-              setUnreadNotifications(unreadNotifications + 1);
+              setPinUnread((prev) => prev + 1);
             }
           }
+
           handleInsert();
         }
       )
@@ -107,34 +159,32 @@ export default function Notification() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [session]);
+  }, [session?.user?.id]);
 
-  // Read notifications from initial load
   useEffect(() => {
     async function getNotifications() {
-      if (session) {
-        const { data, error } = await supabase
-          .from("notifications")
-          .select("*")
-          .eq("user_id", session.user.id);
+      if (!session) return;
 
-        if (error) {
-          console.error("Error retrieving notifications: ", error);
-          return;
-        }
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", session.user.id);
 
-        if (data) {
-          setPinId(data.map((d) => d.pin_id));
-          if (data.is_read === false) {
-            setUnreadNotifications(unreadNotifications + 1);
-          }
-        }
+      if (error) {
+        console.error("Error retrieving notifications: ", error);
+        return;
+      }
+
+      if (data) {
+        setPinId(data.map((d) => d.pin_id));
+        const unread = data.filter((d) => d.is_read === false).length;
+        setPinUnread(unread);
       }
     }
-    getNotifications();
-  }, [session]);
 
-  // For each pinId, load the pin
+    getNotifications();
+  }, [session?.user?.id]);
+
   useEffect(() => {
     async function getPins() {
       if (pinId && pinId.length > 0) {
@@ -154,7 +204,6 @@ export default function Notification() {
               }
               const updated = [...prev, data];
 
-              // Sort newest to oldest
               updated.sort(
                 (a, b) => new Date(b.created_at) - new Date(a.created_at)
               );
@@ -165,8 +214,60 @@ export default function Notification() {
         }
       }
     }
+
     getPins();
   }, [pinId]);
+
+  useEffect(() => {
+    if (!session) return;
+
+    const channel = supabase
+      .channel("realtime:AdminMsg")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "AdminMsg",
+          filter: `user_id=eq.${session.user.id}`,
+        },
+        (payload) => {
+          const msg = payload.new;
+          setAdminMsgs((prev) => [msg, ...prev]);
+          setAdminUnread((prev) => prev + 1);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    if (!session) return;
+
+    async function getMsg() {
+      const { data, error } = await supabase
+        .from("AdminMsg")
+        .select("*")
+        .eq("user_id", session.user.id);
+
+      if (error) {
+        console.log("error receiving msgs: ", error);
+        return;
+      }
+
+      setAdminMsgs(data ?? []);
+
+      const unread = (data ?? []).filter((m) => m.is_read === false).length;
+      setAdminUnread(unread);
+    }
+
+    getMsg();
+  }, [session?.user?.id]);
+
+  const anyNotifs = pins.length > 0 || adminMsgs.length > 0;
 
   return (
     <div>
@@ -207,14 +308,13 @@ export default function Notification() {
           sx: {
             minWidth: 260,
             maxWidth: 400,
-            maxHeight: 400, // overall max height for the menu
-            overflow: "hidden", // hide anything beyond this
+            maxHeight: 400,
+            overflow: "hidden",
           },
         }}
       >
-        {/* Header row */}
         <MenuItem
-          disabled={pins.length === 0}
+          disabled={!anyNotifs}
           sx={{
             display: "flex",
             justifyContent: "space-between",
@@ -224,30 +324,64 @@ export default function Notification() {
           }}
         >
           <span>Notifications</span>
-          {pins.length > 0 && (
-            <Button
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleClearAll();
-              }}
-            >
-              Clear all
-            </Button>
-          )}
+          <div style={{ display: "flex", gap: 4 }}>
+            {adminMsgs.length > 0 && (
+              <Button
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAdminRead();
+                }}
+              >
+                Mark admin read
+              </Button>
+            )}
+            {anyNotifs && (
+              <Button
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClearAll();
+                }}
+              >
+                Clear all
+              </Button>
+            )}
+          </div>
         </MenuItem>
-        {/* Scrollable list area */}
+
         <Box
           sx={{
             maxHeight: 340,
-            overflowY: "auto", // make this scrollable
+            overflowY: "auto",
           }}
         >
-          {pins.length === 0 && (
+          {!anyNotifs && (
             <MenuItem disabled sx={{ fontSize: 14, opacity: 0.7 }}>
               No notifications
             </MenuItem>
           )}
+
+          {adminMsgs.map((msg) => (
+            <MenuItem
+              key={msg.id}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                gap: 0.5,
+                fontSize: 14,
+              }}
+            >
+              <span style={{ fontWeight: 600 }}>Moderator message</span>
+              <span style={{ fontSize: 13 }}>{msg.description}</span>
+              {msg.created_at && (
+                <span style={{ fontSize: 11, opacity: 0.6 }}>
+                  {new Date(msg.created_at).toLocaleString()}
+                </span>
+              )}
+            </MenuItem>
+          ))}
 
           {pins.map((pin) => (
             <MenuItem

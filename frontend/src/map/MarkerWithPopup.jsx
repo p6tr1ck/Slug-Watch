@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Marker, Popup } from "react-leaflet";
 import makeIcon from "./MakeIcon";
 import { insToSupa, delInSupa, editToSupa } from "../supaPins.js";
-import CommentsPopup from "./CommentsPopup";
 
 function toDatetimeLocal(ts) {
   if (!ts) return "";
