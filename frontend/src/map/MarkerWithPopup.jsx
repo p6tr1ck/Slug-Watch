@@ -187,7 +187,7 @@ export default function MarkerWithPopup({
   return (
     <Marker 
       ref={markerRef} 
-      position={m.position} 
+      position={editClicked ? [m.lat, m.long] : m.position}
       icon={makeIcon(m.className)}
       eventHandlers={{
         popupopen: handlePopupOpen,
