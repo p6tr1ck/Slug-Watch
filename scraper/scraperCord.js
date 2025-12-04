@@ -194,4 +194,6 @@ async function scrapeUCSC() {
 
 }
 
-scrapeUCSC();
+while (true){
+  await scrapeUCSC();
+}
