@@ -299,7 +299,6 @@ function CommentNode({
   pinAuthor,
 }) {
   const editRef = useRef(null);
-  let isMounted = false;
 
   // timeago helper
   function timeAgo(iso) {
@@ -384,7 +383,7 @@ function CommentNode({
                   (node.votes || {})[currentUser] === 1
                     ? "text-blue-600 font-bold"
                     : "text-gray-500"
-                } cursor-pointer hover:text-blue-400`}
+                } cursor-pointer hover:text-blue-500`}
                 onClick={() => onLike(node.id, 1, node.userId)}
                 title="Upvote"
               >
@@ -398,7 +397,7 @@ function CommentNode({
                   (node.votes || {})[currentUser] === -1
                     ? "text-orange-600 font-bold"
                     : "text-gray-500"
-                } cursor-pointer hover:text-orange-400`}
+                } cursor-pointer hover:text-orange-500`}
                 onClick={() => onLike(node.id, -1, node.userId)}
                 title="Downvote"
               >
