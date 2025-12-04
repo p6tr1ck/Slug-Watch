@@ -427,18 +427,16 @@ export default function MakeMarker({
                       Comments
                     </button>
                   )}
-              </div>
 
-              {/* Bookmark button */}
-              {onBookmarkToggle && (
+                {/* Bookmark button */}
                 <button
                   title={isBookmarked ? "Remove bookmark" : "Bookmark"}
-                  className="p-2 bg-yellow-600 text-white rounded-full shadow"
+                  className="px-2.5 py-1.5 bg-yellow-600 border border-gray-300 text-white rounded-lg shadow text-sm cursor-pointer hover:bg-yellow-500"
                   onClick={onBookmarkToggle}
                 >
                   {isBookmarked ? <BookmarkIcon /> : <BookmarkBorderIcon />}
                 </button>
-              )}
+              </div>
 
               {/* Comments section */}
               {showComments && (
@@ -458,16 +456,6 @@ export default function MakeMarker({
                     uID={currUserID}
                     onSub={handleReportSub}
                     onCancel={() => setShowReport(false)}
-                  />
-                </div>
-              )}
-
-              {/* Comments section */}
-              {showComments && m.id && (
-                <div className="px-3 pb-3">
-                  <CommentsPopup
-                    pinId={m.id}
-                    onClose={() => setShowComments(false)}
                   />
                 </div>
               )}
