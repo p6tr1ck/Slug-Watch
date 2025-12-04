@@ -52,10 +52,7 @@ export default function UserPins() {
           table: "example_pins",
         },
         (payload) => {
-          setPins((prev) => [
-            ...prev,
-            mapPin(payload.new),
-          ]);
+          setPins((prev) => [...prev, mapPin(payload.new)]);
         }
       )
       // UPDATE
@@ -68,9 +65,7 @@ export default function UserPins() {
         },
         (payload) => {
           setPins((prev) =>
-            prev.map((p) =>
-              p.id === payload.new.id ? mapPin(payload.new) : p
-            )
+            prev.map((p) => (p.id === payload.new.id ? mapPin(payload.new) : p))
           );
         }
       )
@@ -126,7 +121,9 @@ export default function UserPins() {
           long: e.long,
           address: e.location || "",
           datetime: datetimeLocal,
-          created_at: `${new Date(e.created_at).toLocaleDateString()} ${new Date(
+          created_at: `${new Date(
+            e.created_at
+          ).toLocaleDateString()} ${new Date(
             e.created_at
           ).toLocaleTimeString()}`, // Format as MM/DD/YY Time
           description: e.description,
@@ -139,7 +136,7 @@ export default function UserPins() {
     getPins();
   }, []);
 
-  async function handleReport(ticket){
+  async function handleReport(ticket) {
     //use supabase functions to send data (look at my old supaPins implem)
     console.log("ticket to submit: ", ticket);
     await send_report_db(ticket);
@@ -156,7 +153,9 @@ export default function UserPins() {
     setPins((prev) => prev.filter((p) => p.id !== id));
   }
 
-  const displayedPins = viewBookmarkedPins ? pins.filter(pin => bookmarks.includes(pin.id)) : pins;
+  const displayedPins = viewBookmarkedPins
+    ? pins.filter((pin) => bookmarks.includes(pin.id))
+    : pins;
 
   return (
     <>
@@ -184,12 +183,16 @@ export default function UserPins() {
                   m={m}
                   updateMarker={updatePin}
                   removeMarker={removePin}
-                  canModify={Boolean(session?.user?.id) && pin.user_id === session.user.id}
+                  canModify={
+                    Boolean(session?.user?.id) &&
+                    pin.user_id === session.user.id
+                  }
                 />
               );
             })
         : displayedPins.map((pin) => {
-            const reportable = !!session && currUser && pin.user_id !== currUser;
+            const reportable =
+              !!session && currUser && pin.user_id !== currUser;
             return (
               <MakeMarker
                 key={pin.id}

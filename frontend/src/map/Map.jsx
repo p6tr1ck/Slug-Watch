@@ -62,6 +62,7 @@ export default function Map() {
   }
 
   function updateMarker(id, patch) {
+    const userId = session?.user?.id || session;
     setMarkers((prev) =>
       prev.map((m) => {
         if (m.id !== id) return m;
@@ -112,7 +113,7 @@ export default function Map() {
         center={[36.992255, -122.058763]}
         zoom={14.8}
         className="h-full"
-        maxBounds={bounds}
+        // maxBounds={bounds}
         maxBoundsViscosity={1.0}
         minZoom={14.5}
         maxZoom={17}

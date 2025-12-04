@@ -1,11 +1,5 @@
 import { Marker, Popup, useMap } from "react-leaflet";
-import {
-  useState,
-  useRef,
-  useEffect,
-  useContext,
-  useCallback,
-} from "react";
+import { useState, useRef, useEffect, useContext, useCallback } from "react";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import makeIcon from "./MakeIcon";
@@ -18,6 +12,10 @@ import { delInSupa } from "../supaPins.js";
 import { supabase } from "../../supabaseClient.js";
 import { AuthContext } from "../App";
 import { send_report_db } from "../sbReportHandle";
+import Button from "@mui/material/Button";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import FlagIcon from "@mui/icons-material/Flag";
 
 const categoryChip = (category = "") => {
   const c = category.toLowerCase();
@@ -59,25 +57,28 @@ export default function MakeMarker({
   const isCertified = Boolean(m.certified);
 
   // Check if marker is in top portion of screen and flip popup accordingly
-  const handlePopupOpen = useCallback((e) => {
-    if (!map) return;
-    const point = map.latLngToContainerPoint([m.lat, m.long]);
-    const mapHeight = map.getSize().y;
-    const shouldFlip = point.y < mapHeight * 0.4;
-    
-    const popupEl = e.popup.getElement();
-    if (popupEl) {
-      // Always remove first to reset state
-      popupEl.classList.remove('popup-flipped');
-      
-      if (shouldFlip) {
-        popupEl.classList.add('popup-flipped');
-        e.popup.options.autoPan = false;
-      } else {
-        e.popup.options.autoPan = true;
+  const handlePopupOpen = useCallback(
+    (e) => {
+      if (!map) return;
+      const point = map.latLngToContainerPoint([m.lat, m.long]);
+      const mapHeight = map.getSize().y;
+      const shouldFlip = point.y < mapHeight * 0.4;
+
+      const popupEl = e.popup.getElement();
+      if (popupEl) {
+        // Always remove first to reset state
+        popupEl.classList.remove("popup-flipped");
+
+        if (shouldFlip) {
+          popupEl.classList.add("popup-flipped");
+          e.popup.options.autoPan = false;
+        } else {
+          e.popup.options.autoPan = true;
+        }
       }
-    }
-  }, [map, m.lat, m.long]);
+    },
+    [map, m.lat, m.long]
+  );
 
   useEffect(() => {
     if (selectedPinId && selectedPinId === m.id && markerRef.current) {
@@ -100,7 +101,7 @@ export default function MakeMarker({
       setVotesLoading(false);
       return;
     }
-    
+
     setVotesLoading(true);
     const { data, error } = await supabase
       .from("votes")
@@ -123,7 +124,11 @@ export default function MakeMarker({
       if (val === 1) upvotes += 1;
       else if (val === -1) downvotes += 1;
 
-      if (session?.user?.id && row.user_id === session.user.id && myVote === 0) {
+      if (
+        session?.user?.id &&
+        row.user_id === session.user.id &&
+        myVote === 0
+      ) {
         myVote = val;
       }
     });
@@ -146,6 +151,7 @@ export default function MakeMarker({
     t && t.length > n ? t.slice(0, n) + "..." : t;
 
   async function onDelete() {
+    handleClose();
     try {
       await delInSupa({ id: m.id });
       markerRef.current?.closePopup();
@@ -153,6 +159,20 @@ export default function MakeMarker({
       console.error("Error deleting pin: ", e);
     }
   }
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleEdit = () => {
+    handleClose();
+    setEditClicked(!editClicked);
+  };
 
   const onVote = async (direction) => {
     if (!session?.user?.id) return;
@@ -224,18 +244,10 @@ export default function MakeMarker({
             popupopen: handlePopupOpen,
           }}
         >
-          <Popup 
-            minWidth={320} 
-            maxWidth={400} 
-            autoPan={true}
-          >
+          <Popup minWidth={320} maxWidth={400} autoPan={true}>
             <div className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden">
-              <div className="px-3 pt-3 pb-2">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-base font-semibold text-slate-900 leading-tight">
-                    {m.title || "Incident"}
-                  </h3>
-
+              <div className="px-3 pt-3">
+                <div className="flex items-center justify-between gap-2">
                   <span
                     className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${categoryChip(
                       m.category
@@ -244,9 +256,69 @@ export default function MakeMarker({
                   >
                     {m.category}
                   </span>
+
+                  <div className="flex items-center gap-1.5">
+                    {showReportCtrl && (
+                      <button
+                        type="button"
+                        className="inline-flex-items-center gap-1 rounded-lg border border-rose-300 px-2.5 py-1.5 text-sm test-rose-700 hover:bg-rose-50 transition cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowReport((v) => !v);
+                        }}
+                      >
+                        <FlagIcon /> Report
+                      </button>
+                    )}
+                  </div>
+                  {canModify && (
+                    <>
+                      <Button
+                        id="basic-button"
+                        aria-controls={open ? "basic-menu" : undefined}
+                        aria-haspopup="true"
+                        aria-expanded={open ? "true" : undefined}
+                        onClick={handleClick}
+                        sx={{
+                          minWidth: "unset",
+                          padding: "2px 6px", // smaller padding
+                          fontSize: "0.75rem", // smaller text
+                        }}
+                      >
+                        ...
+                      </Button>
+                      <Menu
+                        id="basic-menu"
+                        anchorEl={anchorEl}
+                        open={open}
+                        onClose={handleClose}
+                        slotProps={{
+                          list: {
+                            "aria-labelledby": "basic-button",
+                          },
+                        }}
+                      >
+                        <MenuItem
+                          sx={{ padding: "4px 12px", fontSize: "0.8rem" }}
+                          onClick={handleEdit}
+                        >
+                          Edit
+                        </MenuItem>
+                        <MenuItem
+                          sx={{ padding: "4px 12px", fontSize: "0.8rem" }}
+                          onClick={onDelete}
+                        >
+                          Delete
+                        </MenuItem>
+                      </Menu>
+                    </>
+                  )}
                 </div>
               </div>
-
+              <h3 className="px-3 pt-3 pb-2 text-base font-semibold text-slate-900 leading-tight">
+                {m.title || "Incident"}
+              </h3>
+              {/* Divider */}
               <div className="h-px bg-slate-200" />
 
               <div className="px-3 py-2 text-[15px] text-slate-700 leading-snug space-y-1.5">
@@ -343,57 +415,39 @@ export default function MakeMarker({
                   Directions
                 </a>
 
-                <div className="flex items-center gap-1.5">
-                  {/* Comments button for non-verified pins */}
-                  {m.category && !m.category.toLowerCase().includes("verified") && (
+                {/* Show comments button for non-verified pins */}
+                {m.category &&
+                  !m.category.toLowerCase().includes("verified") && (
                     <button
                       title="Comments"
-                      className="p-2 bg-blue-600 text-white rounded-full shadow"
+                      className="px-2.5 py-1.5 border rounded-lg border-gray-300 text-black shadow cursor-pointer hover:bg-gray-100 text-sm flex"
                       onClick={() => setShowComments((s) => !s)}
                     >
-                      💬
+                      <div className="mr-2">💬</div>
+                      Comments
                     </button>
                   )}
 
-                  {/* Bookmark button */}
-                  {onBookmarkToggle && (
-                    <button
-                      title={isBookmarked ? "Remove bookmark" : "Bookmark"}
-                      className="p-2 bg-yellow-600 text-white rounded-full shadow"
-                      onClick={onBookmarkToggle}
-                    >
-                      {isBookmarked ? <BookmarkIcon /> : <BookmarkBorderIcon />}
-                    </button>
-                  )}
-
-                  {showReportCtrl && (
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1 rounded-lg border border-rose-300 px-2.5 py-1.5 text-sm text-rose-700 hover:bg-rose-50 transition"
-                      onClick={() => setShowReport((v) => !v)}
-                    >
-                      {showReport ? "Close" : "Report"}
-                    </button>
-                  )}
-
-                  {canModify && (
-                    <>
-                      <button
-                        className="inline-flex items-center gap-1 rounded-full bg-green-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-green-800 active:bg-green-900 transition disabled:opacity-50"
-                        onClick={() => setEditClicked(!editClicked)}
-                      >
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100 hover:border-red-300 active:bg-red-200 transition"
-                        onClick={onDelete}
-                      >
-                        <span>Delete</span>
-                      </button>
-                    </>
-                  )}
-                </div>
+                {/* Bookmark button */}
+                <button
+                  title={isBookmarked ? "Remove bookmark" : "Bookmark"}
+                  className="px-2.5 py-1.5 bg-yellow-600 border border-gray-300 text-white rounded-lg shadow text-sm cursor-pointer hover:bg-yellow-500"
+                  onClick={onBookmarkToggle}
+                >
+                  {isBookmarked ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+                </button>
               </div>
+
+              {/* Comments section */}
+              {showComments && (
+                <div className="px-3 pb-3">
+                  <CommentsPopup
+                    pinId={m.id}
+                    pinAuthor={m.user_id}
+                    onClose={() => setShowComments(false)}
+                  />
+                </div>
+              )}
 
               {showReportCtrl && showReport && (
                 <div className="px-3 pb-3">
@@ -403,13 +457,6 @@ export default function MakeMarker({
                     onSub={handleReportSub}
                     onCancel={() => setShowReport(false)}
                   />
-                </div>
-              )}
-
-              {/* Comments section */}
-              {showComments && m.id && (
-                <div className="px-3 pb-3">
-                  <CommentsPopup pinId={m.id} onClose={() => setShowComments(false)} />
                 </div>
               )}
             </div>

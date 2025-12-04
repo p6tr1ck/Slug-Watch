@@ -33,25 +33,28 @@ export default function MarkerWithPopup({
   const categories = ["TAPS", "ICE", "Suspicious Activity", "Theft", "Other"];
 
   // Check if marker is in top portion of screen and flip popup accordingly
-  const handlePopupOpen = useCallback((e) => {
-    if (!map || !m.position) return;
-    const point = map.latLngToContainerPoint(m.position);
-    const mapHeight = map.getSize().y;
-    const shouldFlip = point.y < mapHeight * 0.4;
-    
-    const popupEl = e.popup.getElement();
-    if (popupEl) {
-      // Always remove first to reset state
-      popupEl.classList.remove('popup-flipped');
-      
-      if (shouldFlip) {
-        popupEl.classList.add('popup-flipped');
-        e.popup.options.autoPan = false;
-      } else {
-        e.popup.options.autoPan = true;
+  const handlePopupOpen = useCallback(
+    (e) => {
+      if (!map || !m.position) return;
+      const point = map.latLngToContainerPoint(m.position);
+      const mapHeight = map.getSize().y;
+      const shouldFlip = point.y < mapHeight * 0.4;
+
+      const popupEl = e.popup.getElement();
+      if (popupEl) {
+        // Always remove first to reset state
+        popupEl.classList.remove("popup-flipped");
+
+        if (shouldFlip) {
+          popupEl.classList.add("popup-flipped");
+          e.popup.options.autoPan = false;
+        } else {
+          e.popup.options.autoPan = true;
+        }
       }
-    }
-  }, [map, m.position]);
+    },
+    [map, m.position]
+  );
 
   const [form, setForm] = useState({
     title: m.title || "",
@@ -116,15 +119,17 @@ export default function MarkerWithPopup({
   const getFieldError = (field) => {
     if (!touched[field]) return null;
     if (field === "title" && !form.title.trim()) return "Title is required";
-    if (field === "datetime" && !form.datetime) return "Date & time is required";
-    if (field === "description" && !form.description.trim()) return "Description is required";
+    if (field === "datetime" && !form.datetime)
+      return "Date & time is required";
+    if (field === "description" && !form.description.trim())
+      return "Description is required";
     return null;
   };
 
   async function onSave() {
     // Mark all fields as touched to show validation
     setTouched({ title: true, datetime: true, description: true });
-    
+
     if (!allFilled) return;
     setSaving(true);
     try {
@@ -135,7 +140,7 @@ export default function MarkerWithPopup({
         row = await insToSupa({ form, m });
       }
       markerRef.current?.closePopup();
-      
+
       // Delete the local marker in the application
       // because realtime pulling of pins will reflect on the map
       if (!editClicked) {
@@ -159,9 +164,6 @@ export default function MarkerWithPopup({
       if (setEditClicked) setEditClicked(false);
     } catch (e) {
       console.error("Error deleting pin: ", e);
-      try {
-        window.alert(`Failed to delete pin: ${e?.message || e}`);
-      } catch (_) {}
     }
   }
 
@@ -185,20 +187,20 @@ export default function MarkerWithPopup({
     }`;
 
   return (
-    <Marker 
-      ref={markerRef} 
+    <Marker
+      ref={markerRef}
       position={editClicked ? [m.lat, m.long] : m.position}
-      icon={makeIcon(m.className)}
+      icon={makeIcon(m.category)}
       eventHandlers={{
         popupopen: handlePopupOpen,
       }}
     >
-      <Popup 
-        autoPan={true} 
-        minWidth={320} 
-        maxWidth={360}
-      >
-        <div className="min-w-[300px] bg-white" onClick={stop} onMouseDown={stop}>
+      <Popup autoPan={true} minWidth={320} maxWidth={360}>
+        <div
+          className="min-w-[300px] bg-white"
+          onClick={stop}
+          onMouseDown={stop}
+        >
           {/* Header */}
           <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 rounded-t-xl">
             <h3 className="text-lg font-semibold text-slate-900">
@@ -220,11 +222,15 @@ export default function MarkerWithPopup({
                 className={inputClass("title")}
                 placeholder="Enter a title..."
                 value={form.title}
-                onChange={(e) => setForm((s) => ({ ...s, title: e.target.value }))}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, title: e.target.value }))
+                }
                 onBlur={() => setTouched((t) => ({ ...t, title: true }))}
               />
               {getFieldError("title") && (
-                <p className="text-xs text-red-500 mt-1">{getFieldError("title")}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {getFieldError("title")}
+                </p>
               )}
             </div>
 
@@ -237,11 +243,15 @@ export default function MarkerWithPopup({
                 type="datetime-local"
                 className={inputClass("datetime")}
                 value={form.datetime}
-                onChange={(e) => setForm((s) => ({ ...s, datetime: e.target.value }))}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, datetime: e.target.value }))
+                }
                 onBlur={() => setTouched((t) => ({ ...t, datetime: true }))}
               />
               {getFieldError("datetime") && (
-                <p className="text-xs text-red-500 mt-1">{getFieldError("datetime")}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {getFieldError("datetime")}
+                </p>
               )}
             </div>
 
@@ -253,7 +263,9 @@ export default function MarkerWithPopup({
               <select
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={form.category}
-                onChange={(e) => setForm((s) => ({ ...s, category: e.target.value }))}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, category: e.target.value }))
+                }
               >
                 {categories.map((c) => (
                   <option key={c} value={c}>
@@ -273,11 +285,15 @@ export default function MarkerWithPopup({
                 rows={3}
                 placeholder="Describe what happened..."
                 value={form.description}
-                onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, description: e.target.value }))
+                }
                 onBlur={() => setTouched((t) => ({ ...t, description: true }))}
               />
               {getFieldError("description") && (
-                <p className="text-xs text-red-500 mt-1">{getFieldError("description")}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {getFieldError("description")}
+                </p>
               )}
             </div>
           </div>
@@ -333,9 +349,11 @@ export default function MarkerWithPopup({
 
           {showComments && (
             <div className="px-4 pb-4">
-              <CommentsPopup 
-                pinId={m.supabaseId || `local:${m.position[0]},${m.position[1]}`} 
-                onClose={() => setShowComments(false)} 
+              <CommentsPopup
+                pinId={
+                  m.supabaseId || `local:${m.position[0]},${m.position[1]}`
+                }
+                onClose={() => setShowComments(false)}
               />
             </div>
           )}

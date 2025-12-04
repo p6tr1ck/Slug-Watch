@@ -1,26 +1,43 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { getUserID } from "../supaPins.js";
-import { fetchComments, addComment as addCommentToSupa, toggleVote as toggleVoteInSupa } from "../supaComments.js";
-import { AuthContext } from "../App";
+import {
+  fetchComments,
+  deleteComment,
+  editUserComment,
+  addComment as addCommentToSupa,
+  toggleVote as toggleVoteInSupa,
+  subscribeToComments,
+} from "../supaComments.js";
 
-export default function CommentsPopup({ pinId, onClose }) {
-  const { session } = useContext(AuthContext);
+// Format the row to structure as a comment
+// with multiple properties
+function format(row) {
+  return {
+    id: row.id,
+    pinId: row.pin_id,
+    parentId: row.parent_id,
+    userId: row.user_id,
+    author: row.author,
+    text: row.text,
+    createdAt: row.created_at,
+    votes: {},
+  };
+}
+
+export default function CommentsPopup({ pinId, onClose, pinAuthor }) {
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
+  const [editText, setEditText] = useState("");
   const [replyTo, setReplyTo] = useState(null);
+  const [editComment, setEditComment] = useState(false);
+  const [editCommentId, setEditCommentId] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // Get display name from session
-  const displayName = session?.user?.user_metadata?.full_name 
-    || session?.user?.user_metadata?.name 
-    || session?.user?.user_metadata?.preferred_username 
-    || "UCSC Member";
 
   // Load comments from Supabase
   useEffect(() => {
     let mounted = true;
-    
+
     async function loadComments() {
       try {
         setLoading(true);
@@ -46,7 +63,7 @@ export default function CommentsPopup({ pinId, onClose }) {
   // Get current user
   useEffect(() => {
     let mounted = true;
-    
+
     (async () => {
       try {
         const uid = await getUserID();
@@ -57,11 +74,40 @@ export default function CommentsPopup({ pinId, onClose }) {
         console.warn("Could not get supabase user", e);
       }
     })();
-    
+
     return () => {
       mounted = false;
     };
   }, []);
+
+  // Subscribe to realtime comments
+  useEffect(() => {
+    const unsubscribe = subscribeToComments(pinId, (payload) => {
+      // console.log("Realtime:", payload);
+
+      // If someone created a comment, then add the comment
+      // to the comments state.
+      if (payload.eventType === "INSERT") {
+        setComments((prev) => [format(payload.new), ...prev]);
+      }
+
+      // If the someone edited their comment, then update that comment.
+      if (payload.eventType === "UPDATE") {
+        setComments((prev) =>
+          // If the comment id matches the updated comment id, then
+          // update that comment.
+          prev.map((c) => (c.id === payload.new.id ? format(payload.new) : c))
+        );
+      }
+
+      // If someone deleted their comment, then remove the comment form the state.
+      if (payload.eventType === "DELETE") {
+        setComments((prev) => prev.filter((c) => c.id !== payload.old.id));
+      }
+    });
+
+    return () => unsubscribe();
+  }, [pinId]);
 
   async function addComment() {
     if (!text.trim()) return;
@@ -76,7 +122,7 @@ export default function CommentsPopup({ pinId, onClose }) {
         parentId: replyTo,
         text: text.trim(),
       });
-      
+
       setComments((s) => [newComment, ...s]);
       setText("");
       setReplyTo(null);
@@ -86,15 +132,19 @@ export default function CommentsPopup({ pinId, onClose }) {
     }
   }
 
-  async function toggleVote(id, value) {
+  async function toggleVote(id, value, commentUserId) {
+    // User cannot upvote/downvote their own comment
+    if (commentUserId === currentUser) {
+      return;
+    }
     if (!currentUser) {
       alert("Please sign in to vote");
       return;
     }
 
     try {
-      await toggleVoteInSupa({ commentId: id, vote: value });
-      
+      await toggleVoteInSupa({ commentId: id, vote: value }, commentUserId);
+
       // Update local state optimistically
       setComments((s) =>
         s.map((c) => {
@@ -136,39 +186,41 @@ export default function CommentsPopup({ pinId, onClose }) {
     }
 
     function sortNode(node) {
-      node.children.sort((a, b) => scoreOf(b) - scoreOf(a) || new Date(b.createdAt) - new Date(a.createdAt));
+      node.children.sort(
+        (a, b) =>
+          scoreOf(b) - scoreOf(a) ||
+          new Date(b.createdAt) - new Date(a.createdAt)
+      );
       node.children.forEach(sortNode);
     }
 
-    roots.sort((a, b) => scoreOf(b) - scoreOf(a) || new Date(b.createdAt) - new Date(a.createdAt));
+    roots.sort(
+      (a, b) =>
+        scoreOf(b) - scoreOf(a) || new Date(b.createdAt) - new Date(a.createdAt)
+    );
     roots.forEach(sortNode);
     return roots;
   }, [comments]);
 
   return (
-    <div className="p-1.5 bg-white rounded shadow w-64 max-h-56 flex flex-col border text-xs">
+    <div className="p-1.5 bg-white rounded shadow max-h-90 flex flex-col border text-xs w-full">
       <div className="flex items-center justify-between mb-1 flex-shrink-0">
         <strong className="text-xs">Comments</strong>
         <div className="flex items-center gap-1.5">
-          {replyTo ? (
-            <button
-              className="text-xs text-gray-500"
-              onClick={() => setReplyTo(null)}
-              title="Cancel reply"
-            >
-              cancel
-            </button>
-          ) : null}
           <button
-            className="px-1.5 py-0.5 text-xs bg-gray-200 rounded"
-            onClick={onClose}
+            className="px-1.5 py-0.5 text-xs bg-gray-200 rounded hover:bg-gray-300 cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
           >
             Close
           </button>
         </div>
       </div>
 
-      {!replyTo && (
+      {/* Creating a comment */}
+      {!replyTo && currentUser && (
         <div className="mb-1 flex-shrink-0">
           <textarea
             id={`comment-input-${pinId}`}
@@ -178,10 +230,9 @@ export default function CommentsPopup({ pinId, onClose }) {
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
-          <div className="flex justify-between mt-0.5 items-center">
-            <div className="text-xs text-gray-500">Signed in as {displayName}</div>
+          <div className="mt-0.5">
             <button
-              className="px-1.5 py-0.5 bg-blue-600 text-white rounded text-xs"
+              className="px-1.5 py-0.5 bg-blue-600 text-white rounded text-xs float-right cursor-pointer hover:bg-blue-900"
               onClick={addComment}
             >
               Post
@@ -209,7 +260,15 @@ export default function CommentsPopup({ pinId, onClose }) {
                 text={text}
                 setText={setText}
                 addComment={addComment}
+                editComment={editComment}
+                setEditComment={setEditComment}
                 pinId={pinId}
+                editText={editText}
+                setEditText={setEditText}
+                editCommentId={editCommentId}
+                setEditCommentId={setEditCommentId}
+                canEditAndDelete={node.userId === currentUser}
+                pinAuthor={pinAuthor}
               />
             ))}
           </div>
@@ -219,7 +278,28 @@ export default function CommentsPopup({ pinId, onClose }) {
   );
 }
 
-function CommentNode({ node, onLike, onReply, depth, currentUser, replyTo, text, setText, addComment, pinId }) {
+function CommentNode({
+  node,
+  onLike,
+  onReply,
+  depth,
+  currentUser,
+  replyTo,
+  text,
+  setText,
+  addComment,
+  pinId,
+  editComment,
+  setEditComment,
+  editText,
+  setEditText,
+  editCommentId,
+  setEditCommentId,
+  canEditAndDelete,
+  pinAuthor,
+}) {
+  const editRef = useRef(null);
+
   // timeago helper
   function timeAgo(iso) {
     const d = new Date(iso);
@@ -234,45 +314,178 @@ function CommentNode({ node, onLike, onReply, depth, currentUser, replyTo, text,
     return `just now`;
   }
 
+  const handleEditComment = (text, id) => {
+    setEditCommentId(id); // set the edit comment id to the comment where the edit button was clicked
+    setEditText(text);
+    setEditComment(true);
+  };
+
+  const handleCancel = () => {
+    // Reset state
+    setEditCommentId(null);
+    setEditText("");
+    setEditComment(false);
+  };
+
+  // When comment is edited, update the table
+  const handleSave = (id) => {
+    async function updateComment(id, editText) {
+      const newComment = await editUserComment(id, editText);
+      if (!newComment) {
+        console.error("Error updating comment");
+        return;
+      }
+      handleCancel();
+    }
+    updateComment(id, editText);
+  };
+
+  const handleDelete = (id) => {
+    async function deleteUserComment(id) {
+      const data = await deleteComment(id);
+      if (!data) {
+        console.error("Error deleting comment");
+        return;
+      }
+    }
+    deleteUserComment(id);
+  };
+
+  useEffect(() => {
+    if (editComment && editRef.current) {
+      const el = editRef.current;
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+    }
+  }, [editComment]);
+
   return (
     <div className="pl-0.5" style={{ marginLeft: depth * 8 }}>
       <div className="border rounded p-1.5 bg-gray-50">
-        <div className="flex justify-between items-start gap-1.5">
+        <div className="flex justify-between items-start gap-1.5 relative">
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-medium">{node.author}</div>
-            <div className="text-xs text-gray-500">{timeAgo(node.createdAt)}</div>
+            <div className="flex">
+              <div className="text-xs font-medium mr-2">{node.author}</div>
+              {/* If the author of the pin is the same user who commented,
+              the give the comment a "Creator" tag */}
+              {pinAuthor === node.userId && (
+                <div className="text-xs text-sky-600">Creator</div>
+              )}
+            </div>
+            <div className="text-xs text-gray-500">
+              {timeAgo(node.createdAt)}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 absolute top-0 right-0">
             <div className="flex flex-col items-center text-xs">
               <button
-                className={`px-1 py-0 ${((node.votes||{})[currentUser]===1)? 'text-orange-600 font-bold' : 'text-gray-500'}`}
-                onClick={() => onLike(node.id, 1)}
+                className={`px-1 py-0 ${
+                  (node.votes || {})[currentUser] === 1
+                    ? "text-blue-600 font-bold"
+                    : "text-gray-500"
+                } cursor-pointer hover:text-blue-500`}
+                onClick={() => onLike(node.id, 1, node.userId)}
                 title="Upvote"
               >
                 ▲
               </button>
-              <div className="text-xs font-medium leading-tight">{Object.values(node.votes||{}).reduce((s,v)=>s+v,0)}</div>
+              <div className="text-xs font-medium leading-tight">
+                {Object.values(node.votes || {}).reduce((s, v) => s + v, 0)}
+              </div>
               <button
-                className={`px-1 py-0 ${((node.votes||{})[currentUser]===-1)? 'text-blue-600 font-bold' : 'text-gray-500'}`}
-                onClick={() => onLike(node.id, -1)}
+                className={`px-1 py-0 ${
+                  (node.votes || {})[currentUser] === -1
+                    ? "text-orange-600 font-bold"
+                    : "text-gray-500"
+                } cursor-pointer hover:text-orange-500`}
+                onClick={() => onLike(node.id, -1, node.userId)}
                 title="Downvote"
               >
                 ▼
               </button>
             </div>
-            <div>
-              <button
-                className="px-1.5 py-0.5 text-xs text-blue-600"
-                onClick={() => onReply(node.id)}
-              >
-                Reply
-              </button>
-            </div>
           </div>
         </div>
 
-        <div className="mt-1 text-xs whitespace-pre-wrap break-words">{node.text}</div>
-        
+        {/* If edit comment is true, then show a textarea element for that comment */}
+        {/* Load the comment from the user*/}
+        {editComment && editCommentId === node.id ? (
+          <textarea
+            ref={editRef}
+            rows={2}
+            className="w-full border p-0.5 rounded text-xs resize-none mt-3.5"
+            value={editText}
+            onChange={(e) => {
+              setEditText(e.target.value); // change the edit text state to whatever is typed in textarea
+            }}
+            autoFocus
+          />
+        ) : (
+          <div className="mt-3 mb-1 text-xs whitespace-pre-wrap break-words">
+            {node.text}
+          </div>
+        )}
+
+        <div className="content-center flex">
+          {/* Comment user id is current user and edit comment is false, 
+        then show an edit and delete button for their comment
+        */}
+          {canEditAndDelete && editCommentId !== node.id && (
+            <div>
+              <button
+                className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditComment(node.text, node.id);
+                }}
+              >
+                Edit
+              </button>
+              <button
+                className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
+                onClick={() => handleDelete(node.id)}
+              >
+                Delete
+              </button>
+            </div>
+          )}
+
+          {/* Hide the reply button once the edit button is clicked */}
+          {currentUser && editCommentId !== node.id && (
+            <button
+              className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
+              onClick={() => onReply(node.id)}
+            >
+              Reply
+            </button>
+          )}
+        </div>
+
+        {/* User logged in, edit button was clicked then show save or cancel button */}
+        {currentUser && editComment && editCommentId === node.id && (
+          <div className="content-center">
+            <button
+              className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSave(node.id);
+              }}
+            >
+              Save
+            </button>
+            <button
+              className="mr-2 text-xs text-blue-600 cursor-pointer hover:text-blue-900"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCancel();
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {/* Initating a reply to a comment */}
         {replyTo === node.id && (
           <div className="mt-1">
             <textarea
@@ -286,13 +499,16 @@ function CommentNode({ node, onLike, onReply, depth, currentUser, replyTo, text,
             />
             <div className="flex justify-end gap-1 mt-0.5">
               <button
-                className="px-1.5 py-0.5 bg-gray-200 text-gray-700 rounded text-xs"
-                onClick={() => onReply(null)}
+                className="px-1.5 py-0.5 bg-gray-200 text-gray-700 rounded text-xs cursor-pointer hover:bg-gray-400"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReply(null);
+                }}
               >
                 Cancel
               </button>
               <button
-                className="px-1.5 py-0.5 bg-blue-600 text-white rounded text-xs"
+                className="px-1.5 py-0.5 bg-blue-600 text-white rounded text-xs  cursor-pointer hover:text-blue-900"
                 onClick={addComment}
               >
                 Reply
@@ -302,21 +518,30 @@ function CommentNode({ node, onLike, onReply, depth, currentUser, replyTo, text,
         )}
       </div>
 
+      {/* Load the replies of the comments */}
       {node.children && node.children.length > 0 && (
         <div className="mt-1 space-y-1">
           {node.children.map((ch) => (
-            <CommentNode 
-              key={ch.id} 
-              node={ch} 
-              onLike={onLike} 
-              onReply={onReply} 
-              depth={depth + 1} 
+            <CommentNode
+              key={ch.id}
+              node={ch}
+              onLike={onLike}
+              onReply={onReply}
+              depth={depth + 1}
               currentUser={currentUser}
               replyTo={replyTo}
               text={text}
               setText={setText}
               addComment={addComment}
               pinId={pinId}
+              editComment={editComment}
+              setEditComment={setEditComment}
+              editText={editText}
+              setEditText={setEditText}
+              canEditAndDelete={currentUser === ch.userId}
+              editCommentId={editCommentId}
+              setEditCommentId={setEditCommentId}
+              pinAuthor={pinAuthor}
             />
           ))}
         </div>

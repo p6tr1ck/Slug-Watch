@@ -6,6 +6,28 @@ export async function getUserID() {
   return data.user?.id || null;
 }
 
+// Realtime listener
+export function subscribeToComments(pinId, onChange) {
+  const channel = supabase
+    .channel(`comments-pin-${pinId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*", // INSERT, UPDATE, DELETE
+        schema: "public",
+        table: "comments",
+      },
+      (payload) => {
+        onChange(payload);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel); // cleanup
+  };
+}
+
 // Fetch all comments for a pin with their votes
 export async function fetchComments(pinId) {
   try {
@@ -19,9 +41,9 @@ export async function fetchComments(pinId) {
     if (commentsError) throw commentsError;
 
     // Fetch all votes for these comments
-    const commentIds = comments.map(c => c.id);
+    const commentIds = comments.map((c) => c.id);
     let votes = [];
-    
+
     if (commentIds.length > 0) {
       const { data: votesData, error: votesError } = await supabase
         .from("comment_votes")
@@ -33,10 +55,10 @@ export async function fetchComments(pinId) {
     }
 
     // Merge votes into comments
-    const commentsWithVotes = comments.map(comment => {
-      const commentVotes = votes.filter(v => v.comment_id === comment.id);
+    const commentsWithVotes = comments.map((comment) => {
+      const commentVotes = votes.filter((v) => v.comment_id === comment.id);
       const votesMap = {};
-      commentVotes.forEach(v => {
+      commentVotes.forEach((v) => {
         votesMap[v.user_id] = v.vote;
       });
 
@@ -44,6 +66,7 @@ export async function fetchComments(pinId) {
         id: comment.id,
         pinId: comment.pin_id,
         parentId: comment.parent_id,
+        userId: comment.user_id,
         author: comment.author,
         text: comment.text,
         createdAt: comment.created_at,
@@ -61,25 +84,18 @@ export async function fetchComments(pinId) {
 // Add a new comment
 export async function addComment({ pinId, parentId, text }) {
   try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError) throw userError;
-    
-    const userId = userData.user?.id;
+    const userId = await getUserID();
     if (!userId) {
       const err = new Error("Sign in to comment");
       err.code = "AUTH_REQUIRED";
       throw err;
     }
 
-    // Get user's name from metadata
-    const userMetadata = userData.user?.user_metadata || {};
-    const authorName = userMetadata.full_name || userMetadata.name || userMetadata.preferred_username || "UCSC Member";
-
     const commentData = {
       pin_id: pinId,
       parent_id: parentId || null,
       user_id: userId,
-      author: authorName,
+      author: "UCSC Member",
       text: text.trim(),
     };
 
@@ -96,6 +112,7 @@ export async function addComment({ pinId, parentId, text }) {
       id: data.id,
       pinId: data.pin_id,
       parentId: data.parent_id,
+      userId: userId,
       author: data.author,
       text: data.text,
       createdAt: data.created_at,
@@ -108,9 +125,15 @@ export async function addComment({ pinId, parentId, text }) {
 }
 
 // Toggle vote on a comment (upvote or downvote)
-export async function toggleVote({ commentId, vote }) {
+export async function toggleVote({ commentId, vote }, commentUserId) {
   try {
     const userId = await getUserID();
+    // User cannot upvote / downvote their own comment
+    console.log(userId, commentUserId);
+    if (userId === commentUserId) {
+      console.log("same");
+      return;
+    }
     if (!userId) {
       const err = new Error("Sign in to vote");
       err.code = "AUTH_REQUIRED";
@@ -197,8 +220,34 @@ export async function deleteComment(commentId) {
       .eq("id", commentId);
 
     if (deleteError) throw deleteError;
+    return comment;
   } catch (error) {
     console.error("Error deleting comment:", error);
+    throw error;
+  }
+}
+
+export async function editUserComment(commentId, updatedText) {
+  try {
+    const userId = await getUserID();
+    if (!userId) {
+      const err = new Error("Not authenticated");
+      err.code = "AUTH_REQUIRED";
+      throw err;
+    }
+
+    const { data: comment, error: fetchError } = await supabase
+      .from("comments")
+      .update({ text: updatedText })
+      .eq("id", commentId)
+      .eq("user_id", userId)
+      .select()
+      .single();
+
+    if (fetchError) throw fetchError;
+    return comment;
+  } catch (error) {
+    console.error("Error editing comment:", error);
     throw error;
   }
 }
