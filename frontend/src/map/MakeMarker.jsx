@@ -173,21 +173,18 @@ export default function MakeMarker({
   const showReportCtrl =
     (!!currUserID && m.user_id && m.user_id !== currUserID) || canReport;
 
-  // Show police pin when dashboard item is clicked
   useEffect(() => {
-    if (m.id && selectDashboardItem === m.id) {
-      console.log(id, selectDashboardItem);
-      markerRef.current.openPopup();
-      setSelectDashboardItem(null);
-    }
-  }, [selectDashboardItem]);
+    if (!markerRef.current) return;
 
-  // Show police pin when dashboard item is clicked
-  useEffect(() => {
-    if (m.id && selectDashboardItem === m.id) {
-      console.log(id, selectDashboardItem);
+    if (selectDashboardItem === m.id) {
+      console.log("Opening popup for:", m.id);
+
       markerRef.current.openPopup();
-      setSelectDashboardItem(null);
+
+      // Delay clearing so Leaflet has time to open
+      setTimeout(() => {
+        setSelectDashboardItem(null);
+      }, 100);
     }
   }, [selectDashboardItem]);
 
