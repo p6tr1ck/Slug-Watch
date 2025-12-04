@@ -11,6 +11,30 @@ const supabase = createClient(
   process.env.supabaseRoleKey
 );
 
+function trueDate(dStr){
+  if (!dStr) return null;
+  const d = new Date(dStr);
+}
+
+function makeKey({crime, date, lat, long}){
+  const d = date ? trueDate(date) : null;
+  if (d){
+    return `D|${crime}|${date}`;
+  }
+  return `N|${crime}|${lat}|${long}`;
+}
+
+
+async function grabEntries() {
+  const { data, error } = await supabase.from("police_logs").select("*");
+  if (error) {
+    console.error("Error getting pins from database: ", error);
+    return [];
+  }
+  return data;
+}
+
+
 function normDateTime(raw) {
   // Take only first part if it's a range like
   // "10/20/2025 5:00 PM - 10/23/2025 2:30 PM"
@@ -122,6 +146,9 @@ async function scrapeUCSC() {
 
   await browser.close();
 
+  const existingEntries = await grabEntries();
+  const seen = new Set(existingEntries.map(e => makeKey({crime: e.crime, date: e.date, lat: e.lat, long: e.long})));
+
   const rows = []; //rows to push to json
   for (const job of jobs) {
     const { category, number, date_time, location, disposition } = job;
@@ -140,8 +167,13 @@ async function scrapeUCSC() {
     const lat = coords.latitude;
     const long = coords.longitude;
 
-
-    //console.log("heres the parsed shit, %s, %s, %s, %s", category, format_date, lat, long);
+    const key = makeKey({crime: category, date: format_date, lat, long});
+    if (seen.has(key)){
+      console.log("dup found, here's what i got: ", key);
+      continue;
+    }
+    seen.add(key);
+    console.log("new entry found: ", key);
 
     let supaRow = {};
     if (format_date == null){
@@ -149,9 +181,8 @@ async function scrapeUCSC() {
     }else{
        supaRow = {crime: category, date: format_date, lat: lat, long: long};
     }
-    console.log(supaRow);
+    console.log("here's my pull for supa:",supaRow);
   
-    //console.log(supaRow);
     const {data, error} = await supabase.from("police_logs").insert([supaRow]);
 
      if (error){
