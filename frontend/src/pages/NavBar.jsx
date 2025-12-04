@@ -70,7 +70,12 @@ export default function NavBar() {
         {/* Dark/Light Mode Toggle */}
         <ThemeToggle />
         <div className="flex items-center space-x-3">
-          <Link to="/home" className="text-gray-800 dark:text-gray-200">
+          <Link
+            to="/home"
+            className={`${
+              theme === "light" ? "text-gray-900" : "text-gray-200"
+            }`}
+          >
             Home
           </Link>
           {canModerate && <Link to="/moderation">Moderation</Link>}
@@ -83,7 +88,11 @@ export default function NavBar() {
                 className="rounded-full h-9 w-9 object-cover border border-gray-300 dark:border-gray-600"
               />
             ) : (
-              <PersonIcon className="text-gray-800 dark:text-gray-200" />
+              <PersonIcon
+                className={`${
+                  theme === "light" ? "text-gray-900" : "text-gray-200"
+                }`}
+              />
             )}
           </Link>
         </div>

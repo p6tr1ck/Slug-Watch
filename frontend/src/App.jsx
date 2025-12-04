@@ -65,7 +65,7 @@ function App() {
             <div
               className={`flex flex-col overflow-hidden h-screen ${
                 width <= 600 ? "pb-20" : ""
-              }`}
+              } ${theme === "light" ? "bg-white" : "bg-zinc-800"}`}
             >
               {width > 600 ? <NavBar /> : <></>}
 
