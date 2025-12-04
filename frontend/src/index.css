@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+/* Leaflet popup styling overrides */
+.leaflet-popup-content-wrapper {
+  padding: 0 !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  width: auto !important;
+  min-width: 320px !important;
+}
+
+.leaflet-popup-tip-container {
+  margin-top: -1px;
+}

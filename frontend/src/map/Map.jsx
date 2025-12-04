@@ -81,8 +81,33 @@ export default function Map() {
     );
   }
 
+  const isDesktop = width > 600;
+
   return (
     <div className="relative h-full w-full">
+      {/* Desktop: Filter dropdown */}
+      {isDesktop && <FilterPins />}
+
+      {/* Desktop: Create Pin button */}
+      {isDesktop && (
+        <button
+          onClick={() => {
+            if (!session) {
+              window.location.href = "/signin";
+              return;
+            }
+            setCreateMode((v) => !v);
+          }}
+          className={`absolute bottom-4 right-4 z-[1000] px-4 py-2 rounded-lg shadow-md font-medium transition ${
+            createMode
+              ? "bg-red-600 text-white hover:bg-red-700"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
+        >
+          {createMode ? "Cancel" : "+ Create Pin"}
+        </button>
+      )}
+
       <MapContainer
         center={[36.992255, -122.058763]}
         zoom={14.8}

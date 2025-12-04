@@ -128,7 +128,7 @@ function App() {
             <Route path="/home" element={<Home />} />
             <Route path="/moderation" element={<Moderation />} />
           </Routes>
-          <BottomBar />
+          {width <= 600 && <BottomBar />}
         </div>
       </BrowserRouter>
     </AuthContext.Provider>

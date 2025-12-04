@@ -73,6 +73,12 @@ export default function MakeMarker({
   }, [m.id, m.upvotes, m.downvotes, m.myVote]);
 
   const fetchVotes = useCallback(async () => {
+    // Skip fetching votes for certified/police pins (they have prefixed IDs that aren't valid UUIDs)
+    if (isCertified || String(m.id).startsWith("police-")) {
+      setVotesLoading(false);
+      return;
+    }
+    
     setVotesLoading(true);
     const { data, error } = await supabase
       .from("votes")
@@ -102,7 +108,7 @@ export default function MakeMarker({
 
     setVoteState({ upvotes, downvotes, myVote });
     setVotesLoading(false);
-  }, [m.id, session?.user?.id]);
+  }, [m.id, session?.user?.id, isCertified]);
 
   useEffect(() => {
     fetchVotes();
@@ -193,7 +199,7 @@ export default function MakeMarker({
           position={[m.lat, m.long]}
           icon={makeIcon(m.category)}
         >
-          <Popup>
+          <Popup minWidth={320} maxWidth={400} autoPan={true}>
             <div className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden">
               <div className="px-3 pt-3 pb-2">
                 <div className="flex items-start justify-between gap-2">
