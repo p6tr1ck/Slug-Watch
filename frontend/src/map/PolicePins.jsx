@@ -4,7 +4,7 @@ import { AuthContext } from "../App";
 import MakeMarker from "./MakeMarker";
 
 export default function PolicePins() {
-  const { viewPolicePins, viewMyPins } = useContext(AuthContext);
+  const { viewPolicePins, viewMyPins, viewBookmarkedPins, bookmarks, toggleBookmark } = useContext(AuthContext);
   const [pins, setPins] = useState([]);
 
   // Pull police made pins from the database.
@@ -27,7 +27,7 @@ export default function PolicePins() {
           e.date
         ).toLocaleTimeString()}`, // Format as MM/DD/YY Time
         description: e.description,
-        category: e.category,
+        category: "Verified",
         certified: true,
       }));
 
@@ -37,13 +37,27 @@ export default function PolicePins() {
     getPins();
   }, []);
 
+  // Filter pins based on bookmarked state
+  const displayedPins = viewBookmarkedPins 
+    ? pins.filter(pin => bookmarks.includes(`police-${pin.id}`)) 
+    : pins;
+
   return (
     <>
       {!viewPolicePins && viewMyPins ? (
         <></>
       ) : (
-        pins.map((pin) => {
-          return <MakeMarker key={pin.id} m={pin} canReport={false} />;
+        displayedPins.map((pin) => {
+          const policePinId = `police-${pin.id}`;
+          return (
+            <MakeMarker
+              key={pin.id}
+              m={{...pin, id: policePinId}}
+              canReport={false}
+              isBookmarked={bookmarks.includes(policePinId)}
+              onBookmarkToggle={() => toggleBookmark(policePinId)}
+            />
+          );
         })
       )}
     </>

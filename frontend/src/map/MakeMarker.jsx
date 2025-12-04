@@ -1,15 +1,17 @@
-import { Marker, Popup } from "react-leaflet";
+import { Marker, Popup, useMap } from "react-leaflet";
 import { useState, useRef, useEffect, useContext, useCallback } from "react";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import makeIcon from "./MakeIcon";
+import CommentsPopup from "./CommentsPopup";
 import { ReportPost } from "./reportPopup";
 import MarkerWithPopup from "./MarkerWithPopup";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import { delInSupa } from "../supaPins.js";
 import { supabase } from "../../supabaseClient.js";
 import { AuthContext } from "../App";
 import { send_report_db } from "../sbReportHandle";
-import CommentsPopup from "./CommentsPopup";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
@@ -35,9 +37,12 @@ export default function MakeMarker({
   onReport,
   canReport = false,
   canModify = false,
+  isBookmarked = false,
+  onBookmarkToggle,
 }) {
   const { session } = useContext(AuthContext);
   const [expanded, setExpanded] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [editClicked, setEditClicked] = useState(false);
   const [voteState, setVoteState] = useState({
@@ -48,7 +53,32 @@ export default function MakeMarker({
   const [votesLoading, setVotesLoading] = useState(false);
 
   const markerRef = useRef(null);
+  const map = useMap();
   const isCertified = Boolean(m.certified);
+
+  // Check if marker is in top portion of screen and flip popup accordingly
+  const handlePopupOpen = useCallback(
+    (e) => {
+      if (!map) return;
+      const point = map.latLngToContainerPoint([m.lat, m.long]);
+      const mapHeight = map.getSize().y;
+      const shouldFlip = point.y < mapHeight * 0.4;
+
+      const popupEl = e.popup.getElement();
+      if (popupEl) {
+        // Always remove first to reset state
+        popupEl.classList.remove("popup-flipped");
+
+        if (shouldFlip) {
+          popupEl.classList.add("popup-flipped");
+          e.popup.options.autoPan = false;
+        } else {
+          e.popup.options.autoPan = true;
+        }
+      }
+    },
+    [map, m.lat, m.long]
+  );
 
   useEffect(() => {
     if (selectedPinId && selectedPinId === m.id && markerRef.current) {
@@ -66,6 +96,12 @@ export default function MakeMarker({
   }, [m.id, m.upvotes, m.downvotes, m.myVote]);
 
   const fetchVotes = useCallback(async () => {
+    // Skip fetching votes for certified/police pins (they have prefixed IDs that aren't valid UUIDs)
+    if (isCertified || String(m.id).startsWith("police-")) {
+      setVotesLoading(false);
+      return;
+    }
+
     setVotesLoading(true);
     const { data, error } = await supabase
       .from("votes")
@@ -99,12 +135,11 @@ export default function MakeMarker({
 
     setVoteState({ upvotes, downvotes, myVote });
     setVotesLoading(false);
-  }, [m.id, session?.user?.id]);
+  }, [m.id, session?.user?.id, isCertified]);
 
   useEffect(() => {
     fetchVotes();
   }, [fetchVotes]);
-  const [showComments, setShowComments] = useState(false);
 
   const directionsUrl = () => {
     return m.lat && m.long
@@ -205,8 +240,11 @@ export default function MakeMarker({
           ref={markerRef}
           position={[m.lat, m.long]}
           icon={makeIcon(m.category)}
+          eventHandlers={{
+            popupopen: handlePopupOpen,
+          }}
         >
-          <Popup>
+          <Popup minWidth={320} maxWidth={400} autoPan={true}>
             <div className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden">
               <div className="px-3 pt-3">
                 <div className="flex items-center justify-between gap-2">
@@ -371,7 +409,7 @@ export default function MakeMarker({
                   >
                     <path
                       fill="currentColor"
-                      d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7-7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5a2.5 2.5 0 0 1 0 5Z"
+                      d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5a2.5 2.5 0 0 1 0 5Z"
                     />
                   </svg>
                   Directions
@@ -391,6 +429,17 @@ export default function MakeMarker({
                   )}
               </div>
 
+              {/* Bookmark button */}
+              {onBookmarkToggle && (
+                <button
+                  title={isBookmarked ? "Remove bookmark" : "Bookmark"}
+                  className="p-2 bg-yellow-600 text-white rounded-full shadow"
+                  onClick={onBookmarkToggle}
+                >
+                  {isBookmarked ? <BookmarkIcon /> : <BookmarkBorderIcon />}
+                </button>
+              )}
+
               {/* Comments section */}
               {showComments && (
                 <div className="px-3 pb-3">
@@ -409,6 +458,16 @@ export default function MakeMarker({
                     uID={currUserID}
                     onSub={handleReportSub}
                     onCancel={() => setShowReport(false)}
+                  />
+                </div>
+              )}
+
+              {/* Comments section */}
+              {showComments && m.id && (
+                <div className="px-3 pb-3">
+                  <CommentsPopup
+                    pinId={m.id}
+                    onClose={() => setShowComments(false)}
                   />
                 </div>
               )}
