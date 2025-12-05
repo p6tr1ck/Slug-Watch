@@ -73,6 +73,7 @@ function App() {
                 <Route path="/" element={<Navigate to="/home" replace />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/home" element={<Home />} />
+                <Route path="/moderation" element={<Moderation />} />
               </Routes>
 
               {width <= 600 ? <BottomBar /> : <></>}

@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../App";
+import { AuthContext, DarkModeSwitch } from "../App";
 import { supabase } from "../../supabaseClient";
 import { del_report } from "../sbReportHandle";
 import {
@@ -42,6 +42,7 @@ function coerceBooleanFlag(value) {
 
 export default function Moderation() {
   const { session } = useContext(AuthContext);
+  const { theme } = useContext(DarkModeSwitch);
   const user = session?.user ?? null;
 
   const [permissionState, setPermissionState] = useState({
@@ -168,9 +169,7 @@ export default function Moderation() {
       try {
         const { data, error } = await supabase
           .from("reports")
-          .select(
-            "report_uid, post_id, reporter_id, category, desc, weight"
-          )
+          .select("report_uid, post_id, reporter_id, category, desc, weight")
           .order("weight", { ascending: false });
 
         if (!isMounted) return;
@@ -374,12 +373,30 @@ export default function Moderation() {
   }
 
   return (
-    <div className="flex-1 min-h-0 flex justify-center bg-slate-50 px-6 py-8 overflow-auto">
-      <div className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white/95 p-8 shadow-lg">
-        <h1 className="text-2xl font-semibold text-slate-900 mb-3">
+    <div
+      className={`flex-1 min-h-0 flex justify-center px-6 py-8 overflow-auto ${
+        theme === "light" ? "bg-white" : "bg-zinc-800"
+      }`}
+    >
+      <div
+        className={`w-full max-w-4xl rounded-2xl border border-slate-200 bg-white/95 p-8 shadow-lg ${
+          theme === "light" ? "text-gray-900" : "text-gray-200"
+        } ${theme === "light" ? "bg-white" : "bg-zinc-900"} ${
+          theme === "light" ? "border-white" : "border-zinc-800"
+        }`}
+      >
+        <h1
+          className={`text-2xl font-semibold mb-3 ${
+            theme === "light" ? "text-gray-900" : "text-gray-200"
+          }`}
+        >
           Moderation Dashboard
         </h1>
-        <p className="text-slate-600 mb-6">
+        <p
+          className={`mb-6${
+            theme === "light" ? "text-gray-900" : "text-gray-200"
+          }`}
+        >
           Pins that exceed the report threshold stream in from Supabase. Select
           any that require escalation or deletion.
         </p>
@@ -464,12 +481,8 @@ export default function Moderation() {
                           <td className="px-3 py-3 font-semibold text-slate-900">
                             {pin.report_weight ?? pin.reportWeight ?? 0}
                           </td>
-                          <td className="px-3 py-3">
-                            {vc.up}
-                          </td>
-                          <td className="px-3 py-3">
-                            {vc.down}
-                          </td>
+                          <td className="px-3 py-3">{vc.up}</td>
+                          <td className="px-3 py-3">{vc.down}</td>
                           <td className="px-3 py-3">
                             {pin.title ?? pin.name ?? "Untitled pin"}
                           </td>

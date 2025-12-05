@@ -8,8 +8,12 @@ import useWindowDimensions from "../WindowDimensions";
 import { Avatar, Button } from "@mui/material";
 
 // Background + centering wrapper
-const Wrapper = ({ children }) => (
-  <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-4">
+const Wrapper = ({ theme, children }) => (
+  <div
+    className={`min-h-screen from-slate-50 to-white flex items-center justify-center px-4  ${
+      theme === "light" ? "bg-white" : "bg-zinc-800"
+    }`}
+  >
     <div className="w-full max-w-lg mt-[-25vh]">{children}</div>
   </div>
 );
@@ -79,7 +83,7 @@ export default function SignIn() {
   const avatarUrl = session.user.user_metadata.avatar_url;
 
   return (
-    <Wrapper>
+    <Wrapper theme={theme}>
       <div
         className={`bg-white shadow-xl rounded-2xl p-8 border border-slate-200/70 ${
           theme === "light" ? "text-gray-900" : "text-gray-200"

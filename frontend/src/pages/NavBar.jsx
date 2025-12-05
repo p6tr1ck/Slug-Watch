@@ -49,7 +49,7 @@ export default function NavBar() {
   return (
     <nav
       className={`p-4 ${
-        theme === "light" ? "bg-white" : "bg-zinc-800"
+        theme === "light" ? "bg-gray-100" : "bg-zinc-800"
       } flex justify-between items-center`}
     >
       {/* Left side: Logo */}
