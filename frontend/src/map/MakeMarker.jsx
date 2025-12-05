@@ -10,12 +10,13 @@ import BookmarkIcon from "@mui/icons-material/Bookmark";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import { delInSupa } from "../supaPins.js";
 import { supabase } from "../../supabaseClient.js";
-import { AuthContext } from "../App";
+import { AuthContext, DarkModeSwitch } from "../App";
 import { send_report_db } from "../sbReportHandle";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import FlagIcon from "@mui/icons-material/Flag";
+import { darkModeSwitch } from "../dashboard/Darkmode.jsx";
 
 const categoryChip = (category = "") => {
   const c = category.toLowerCase();
@@ -53,7 +54,7 @@ export default function MakeMarker({
     myVote: Number(m.myVote ?? 0),
   });
   const [votesLoading, setVotesLoading] = useState(false);
-
+  const { theme } = useContext(DarkModeSwitch);
   const markerRef = useRef(null);
   const map = useMap();
   const isCertified = Boolean(m.certified);
@@ -238,15 +239,8 @@ export default function MakeMarker({
   useEffect(() => {
     if (!markerRef.current) return;
 
-    if (selectDashboardItem === m.id) {
-      console.log("Opening popup for:", m.id);
-
+    if (selectDashboardItem === m.id.substr(7)) {
       markerRef.current.openPopup();
-
-      // Delay clearing so Leaflet has time to open
-      setTimeout(() => {
-        setSelectDashboardItem(null);
-      }, 100);
     }
   }, [selectDashboardItem]);
 
@@ -268,7 +262,11 @@ export default function MakeMarker({
           }}
         >
           <Popup minWidth={320} maxWidth={400} autoPan={true}>
-            <div className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden">
+            <div
+              className={`min-w-[240px] max-w-[320px] ${
+                theme === "light" ? "bg-white" : "bg-neutral-800"
+              } border border-slate-200 rounded-xl shadow-md overflow-hidden`}
+            >
               <div className="px-3 pt-3">
                 <div className="flex items-center justify-between gap-2">
                   <span
@@ -338,7 +336,11 @@ export default function MakeMarker({
                   )}
                 </div>
               </div>
-              <h3 className="px-3 pt-3 pb-2 text-base font-semibold text-slate-900 leading-tight">
+              <h3
+                className={`px-3 pt-3 pb-2 text-base font-semibold ${
+                  theme === "light" ? "text-slate-900" : "text-white"
+                } leading-tight`}
+              >
                 {m.title || "Incident"}
               </h3>
               {/* Divider */}
@@ -347,17 +349,37 @@ export default function MakeMarker({
               <div className="px-3 py-2 text-[15px] text-slate-700 leading-snug space-y-1.5">
                 {m.created_at && (
                   <div className="flex gap-2">
-                    <span className="font-medium text-slate-900">Time:</span>
-                    <span>{m.created_at}</span>
+                    <span
+                      className={`font-medium ${
+                        theme === "light" ? "text-slate-900" : "text-white"
+                      }`}
+                    >
+                      Time:
+                    </span>
+                    <span
+                      className={`${
+                        theme === "light" ? "text-slate-700" : "text-stone-300"
+                      }`}
+                    >
+                      {m.created_at}
+                    </span>
                   </div>
                 )}
 
                 {m.description && (
                   <div>
-                    <span className="font-medium text-slate-900">
+                    <span
+                      className={`font-medium  ${
+                        theme === "light" ? "text-slate-900" : "text-white"
+                      }`}
+                    >
                       Description:
                     </span>{" "}
-                    <span className="text-slate-700">
+                    <span
+                      className={`${
+                        theme === "light" ? "text-slate-700" : "text-stone-300"
+                      }`}
+                    >
                       {expanded ? m.description : shortText(m.description)}
                     </span>
                     {m.description.length > 140 && (
@@ -373,12 +395,24 @@ export default function MakeMarker({
               </div>
 
               {!isCertified && (
-                <div className="px-3 pb-2 pt-2 border-t border-slate-200 bg-slate-50/70">
+                <div
+                  className={`px-3 pb-2 pt-2 border-t border-slate-200 ${
+                    theme === "light" ? "bg-slate-50/70" : "bg-neutral-800"
+                  }`}
+                >
                   <div className="flex items-center justify-between text-sm text-slate-800 mb-2">
-                    <span className="font-medium text-slate-900">
+                    <span
+                      className={`font-medium ${
+                        theme === "light" ? "text-slate-900" : "text-white"
+                      }`}
+                    >
                       Community votes
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span
+                      className={`text-xs ${
+                        theme === "light" ? "text-slate-500" : "text-stone-300"
+                      }`}
+                    >
                       Share if this feels accurate
                     </span>
                   </div>

@@ -19,8 +19,13 @@ export default function Dashboard() {
         .from("police_logs")
         .select("*")
         .limit(25);
-      if (error) console.error(error);
-      else setItems(data);
+      if (error) {
+        console.error(error);
+      } else {
+        // Sort by most recent date (descending)
+        const sorted = data.sort((a, b) => new Date(b.date) - new Date(a.date));
+        setItems(sorted);
+      }
       setLoading(false);
     }
     loadData();
@@ -29,7 +34,7 @@ export default function Dashboard() {
   if (loading) return <p className="p-4 text-xl">Loading...</p>;
 
   return (
-    <div className="p-1 mt-12 ml-2 w-46 bg-blue-50 border border-blue-200 rounded-lg shadow">
+    <div className="p-1 ml-2 w-54 bg-blue-50 border border-blue-200 rounded-xl shadow">
       <Accordion sx={{ borderRadius: "1rem", boxShadow: "none" }}>
         <AccordionSummary
           expandIcon={<ArrowDropDownIcon sx={{ color: "#2c3170" }} />}
@@ -38,7 +43,7 @@ export default function Dashboard() {
           sx={{
             backgroundColor: "#85c0ed",
             borderRadius: "1rem",
-            padding: "8px 12px",
+            padding: "0 8px",
           }}
         >
           <Typography sx={{ fontWeight: 600, color: "#2c3170" }}>
@@ -55,11 +60,9 @@ export default function Dashboard() {
         {items.map((item) => {
           // Check if this is the selected dashboard item
           const isSelected = selectDashboardItem === item.id;
-
           return (
             <AccordionDetails
               key={item.id}
-              onClick={() => setSelectDashboardItem(item.id)}
               sx={{
                 backgroundColor: isSelected ? "#1e40af" : "white",
                 borderRadius: "1rem",
@@ -69,7 +72,13 @@ export default function Dashboard() {
                 transition: "0.2s ease",
               }}
             >
-              <div className="p-2 rounded-lg">
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectDashboardItem(item.id);
+                }}
+                className="p-2 rounded-lg"
+              >
                 <h2
                   className={`text-sm font-semibold ${
                     isSelected ? "text-white" : "text-blue-700"
