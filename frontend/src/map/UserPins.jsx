@@ -2,6 +2,8 @@ import { useState, useContext, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 import { AuthContext } from "../App";
 import MakeMarker from "./MakeMarker";
+import MarkerWithPopup from "./MarkerWithPopup";
+import { send_report_db } from "../sbReportHandle";
 
 function mapPin(data) {
   return {
@@ -15,6 +17,10 @@ function mapPin(data) {
       data.created_at
     ).toLocaleTimeString()}`, // Format as MM/DD/YY Time
     description: data.description,
+    upvotes: Number(data.upvotes ?? 0),
+    downvotes: Number(data.downvotes ?? 0),
+    myVote: 0,
+    certified: Boolean(data.certified),
   };
 }
 
@@ -25,8 +31,12 @@ export default function UserPins() {
     viewPolicePins,
     selectedPinId,
     setSelectedPinId,
+    viewBookmarkedPins,
+    bookmarks,
+    toggleBookmark,
   } = useContext(AuthContext);
   const [pins, setPins] = useState([]);
+  const currUser = session?.user?.id ?? null;
 
   // subscribe to real time changes
   useEffect(() => {
@@ -91,7 +101,33 @@ export default function UserPins() {
 
       // Create an array of all the pins fetched from the database table.
       const mapped = data.map((e) => {
-        return mapPin(e);
+        // Convert ISO timestamp to datetime-local format (YYYY-MM-DDTHH:mm)
+        let datetimeLocal = "";
+        if (e.created_at) {
+          try {
+            const d = new Date(e.created_at);
+            datetimeLocal = d.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:mm"
+          } catch (err) {
+            console.warn("Failed to parse created_at:", e.created_at);
+          }
+        }
+
+        return {
+          id: e.id,
+          user_id: e.user_id,
+          title: e.title,
+          category: e.category,
+          lat: e.lat,
+          long: e.long,
+          address: e.location || "",
+          datetime: datetimeLocal,
+          created_at: `${new Date(
+            e.created_at
+          ).toLocaleDateString()} ${new Date(
+            e.created_at
+          ).toLocaleTimeString()}`, // Format as MM/DD/YY Time
+          description: e.description,
+        };
       });
 
       // Now set the pins, so the pins array has the pin data.
@@ -100,34 +136,76 @@ export default function UserPins() {
     getPins();
   }, []);
 
+  async function handleReport(ticket) {
+    //use supabase functions to send data (look at my old supaPins implem)
+    console.log("ticket to submit: ", ticket);
+    await send_report_db(ticket);
+  }
+
   if (viewPolicePins && !viewMyPins) return null;
+
+  // Handlers to update/remove pins locally after Supabase operations
+  function updatePin(id, patch) {
+    setPins((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  }
+
+  function removePin(id) {
+    setPins((prev) => prev.filter((p) => p.id !== id));
+  }
+
+  const displayedPins = viewBookmarkedPins
+    ? pins.filter((pin) => bookmarks.includes(pin.id))
+    : pins;
+
   return (
     <>
-      {session && viewMyPins // User only wants to see their pins on the map
-        ? pins.map((pin) => {
-            if (pin.user_id === session.user.id) {
+      {session && viewMyPins && !viewBookmarkedPins
+        ? displayedPins
+            .filter((pin) => pin.user_id === session.user.id)
+            .map((pin) => {
+              const m = {
+                id: pin.id,
+                supabaseId: pin.id,
+                ownerId: pin.user_id,
+                position: [pin.lat, pin.long],
+                title: pin.title,
+                category: pin.category,
+                description: pin.description,
+                address: pin.address || "",
+                datetime: pin.datetime || pin.created_at || "",
+                className: "marker-blue",
+                isNew: false,
+              };
+
               return (
-                <MakeMarker
+                <MarkerWithPopup
                   key={pin.id}
-                  id={pin.id}
-                  m={pin}
-                  selectedPinId={selectedPinId}
-                  setSelectedPinId={setSelectedPinId}
-                  // The person who created the pin can modify their pin
-                  canModify={true}
+                  m={m}
+                  updateMarker={updatePin}
+                  removeMarker={removePin}
+                  canModify={
+                    Boolean(session?.user?.id) &&
+                    pin.user_id === session.user.id
+                  }
                 />
               );
-            }
-          })
-        : pins.map((pin) => {
+            })
+        : displayedPins.map((pin) => {
+            const reportable =
+              !!session && currUser && pin.user_id !== currUser;
             return (
               <MakeMarker
                 key={pin.id}
                 m={pin}
                 selectedPinId={selectedPinId}
                 setSelectedPinId={setSelectedPinId}
+                currUserID={currUser}
+                onReport={handleReport}
                 // If the person logged in is the creator of the pin, they can modify it
                 canModify={pin.user_id === session?.user?.id ? true : false}
+                canReport={reportable}
+                isBookmarked={bookmarks.includes(pin.id)}
+                onBookmarkToggle={() => toggleBookmark(pin.id)}
               />
             );
           })}

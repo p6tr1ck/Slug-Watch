@@ -12,59 +12,65 @@ const areas = [
   "Family Student Housing",
   "West Remote Parking Lot",
   "East Remote Parking Lot",
-  "None",
-  "All",
 ];
 
-export default function Locations({ locations, setLocations }) {
+const categories = ["ICE", "TAPS", "Theft", "Suspicious Activity", "Other"];
+
+const selectableNotifications = [...areas, ...categories, "None", "All"];
+
+export default function LocationsCateogries({
+  notifications,
+  setNotifications,
+}) {
   const { session } = useContext(AuthContext);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    async function getLocations() {
+    // Get the notification preferences from the user on initial laod
+    async function getNotificationColumn() {
       if (!session) return;
       const { data, error } = await supabase
         .from("users")
-        .select("locations")
+        .select("notifications")
         .eq("UID", session.user.id)
         .single();
 
       if (error) {
-        console.error("Could not get locations from user, error: ", error);
+        console.error("Could not get notifications from user, error: ", error);
       }
 
-      // Make sure data exists and default to [] if null
-      setLocations(data?.locations ?? []);
+      if (data?.notifications) setNotifications(data.notifications);
       setIsLoaded(true);
     }
-    getLocations();
+
+    getNotificationColumn();
   }, []);
 
   const buttonEvent = (e) => {
-    // Unselect "None" if a location is clicked.
-    if (locations.includes("None") && e !== "None") {
-      setLocations((prev) => prev.filter((loc) => loc !== "None"));
+    // Unselect "None" if a location or category is clicked.
+    if (notifications.includes("None") && e !== "None") {
+      setNotifications((prev) => prev.filter((n) => n !== "None"));
       return;
     }
 
-    // Unselect all locations when None is clicked.
+    // Unselect all locations and categories when None is clicked.
     if (e === "None") {
-      setLocations([]);
+      setNotifications([]);
       return;
     }
 
-    // Unselect "All" if a location is clicked.
-    if (locations.includes("All") && e !== "All") {
-      setLocations((prev) => prev.filter((loc) => loc !== "All"));
+    // Unselect "All" if a location or category is clicked.
+    if (notifications.includes("All") && e !== "All") {
+      setNotifications((prev) => prev.filter((n) => n !== "All"));
     }
 
-    // Unselect all locations when All is clicked.
+    // Unselect all locations and categories when All is clicked.
     if (e === "All") {
-      setLocations([e]);
+      setNotifications([e]);
       return;
     }
 
-    setLocations((prev) => {
+    setNotifications((prev) => {
       if (!prev.includes(e)) {
         return [...prev, e];
       }
@@ -76,7 +82,7 @@ export default function Locations({ locations, setLocations }) {
     <div className="mt-6">
       <p className="text-slate-800 font-medium">Notification areas</p>
       <p className="text-slate-500 dark:text-slate-700 text-sm">
-        Select locations to receive alerts.
+        Select locations or categories to receive alerts.
       </p>
       <div
         className="mt-4 flex flex-wrap gap-2"
@@ -87,8 +93,8 @@ export default function Locations({ locations, setLocations }) {
           buttonEvent(text);
         }}
       >
-        {areas.map((label) => {
-          const isSelected = locations.includes(label);
+        {selectableNotifications.map((label) => {
+          const isSelected = notifications.includes(label);
           return (
             <button
               key={label}
@@ -96,7 +102,7 @@ export default function Locations({ locations, setLocations }) {
           hover:bg-slate-50 dark:hover:bg-slate-400
           ${
             isSelected ||
-            (isLoaded && label === "None" && locations.length === 0)
+            (isLoaded && label === "None" && notifications.length === 0)
               ? "bg-blue-500 text-white"
               : "bg-white"
           }`}

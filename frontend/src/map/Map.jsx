@@ -19,6 +19,7 @@ export default function Map() {
   const { width } = useWindowDimensions();
   const [markers, setMarkers] = useState([]);
   const [tempId, setTempId] = useState(0);
+  const currUserID = session?.user?.id ?? null;
 
   useEffect(() => {
     if (!session && createMode) {
@@ -52,7 +53,7 @@ export default function Map() {
       description: "",
       className: "marker-green",
       isNew: true,
-      ownerId: session?.user?.id,
+      ownerId: currUserID,
     };
     // increment the temp id for the next new marker
     setTempId(tempId + 1);
@@ -61,52 +62,58 @@ export default function Map() {
   }
 
   function updateMarker(id, patch) {
+    const userId = session?.user?.id || session;
     setMarkers((prev) =>
       prev.map((m) => {
         if (m.id !== id) return m;
-        if (!session || m.ownerId !== session) return m;
+        if (!currUserID || m.ownerId !== currUserID) return m;
         return { ...m, ...patch };
       })
     );
   }
 
   function removeMarker(id) {
-    setMarkers((prev) => prev.filter((m) => m.id !== id));
+    setMarkers((prev) =>
+      prev.filter((m) => {
+        if (m.id !== id) return true;
+        if (!currUserID || m.ownerId !== currUserID) return true;
+        return false;
+      })
+    );
   }
+
+  const isDesktop = width > 600;
 
   return (
     <div className="relative h-full w-full">
-      {/* Show the create pin button on the bottom right of the screen for logged in users */}
-      {session && width >= 600 ? (
-        <div
-          style={{ position: "absolute", right: 16, bottom: 16, zIndex: 1000 }}
+      {/* Desktop: Filter dropdown */}
+      {isDesktop && <FilterPins />}
+
+      {/* Desktop: Create Pin button */}
+      {isDesktop && (
+        <button
+          onClick={() => {
+            if (!session) {
+              window.location.href = "/signin";
+              return;
+            }
+            setCreateMode((v) => !v);
+          }}
+          className={`absolute bottom-4 right-4 z-[1000] px-4 py-2 rounded-lg shadow-md font-medium transition ${
+            createMode
+              ? "bg-red-600 text-white hover:bg-red-700"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
         >
-          <button
-            onClick={() => setCreateMode((v) => !v)}
-            aria-pressed={createMode}
-            aria-label={createMode ? "Cancel create pin" : "Create pin"}
-            style={{
-              backgroundColor: createMode ? "#dc2626" : "#2563eb",
-              color: "#fff",
-              padding: "10px 14px",
-              borderRadius: 8,
-              boxShadow: "0 8px 22px rgba(0,0,0,0.18)",
-              border: "none",
-              fontWeight: 700,
-              fontSize: 14,
-            }}
-          >
-            {createMode ? "Cancel" : "Create pin"}
-          </button>
-        </div>
-      ) : (
-        <></>
+          {createMode ? "Cancel" : "+ Create Pin"}
+        </button>
       )}
+
       <MapContainer
         center={[36.992255, -122.058763]}
         zoom={14.8}
         className="h-full"
-        maxBounds={bounds}
+        // maxBounds={bounds}
         maxBoundsViscosity={1.0}
         minZoom={14.5}
         maxZoom={17}
@@ -123,13 +130,11 @@ export default function Map() {
         .leaflet-marker-icon.marker-green { filter: hue-rotate(250deg); }
         .leaflet-marker-icon.marker-red  { filter: hue-rotate(130deg); }
       `}</style>
-        {/* If user is not on a mobile device, then put the filter pins button 
-        at the top right of screen. */}
-        {width >= 600 && <FilterPins />}
         <UserPins />
         <PolicePins />
         <MapClickHandler createMode={createMode} onMapClick={handleMapClick} />
         {markers.map((m) => {
+          const canModify = Boolean(currUserID) && m.ownerId === currUserID;
           return (
             <MarkerWithPopup
               key={m.id}
@@ -137,6 +142,7 @@ export default function Map() {
               updateMarker={updateMarker}
               removeMarker={removeMarker}
               setMarkers={setMarkers}
+              canModify={canModify}
             />
           );
         })}

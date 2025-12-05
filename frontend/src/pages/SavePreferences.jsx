@@ -3,7 +3,7 @@ import { supabase } from "../../supabaseClient";
 import { AuthContext } from "../App";
 import { Button } from "@mui/material";
 
-export default function SaveLocations({ locations }) {
+export default function SavePreferences({ notifications }) {
   const { session } = useContext(AuthContext);
   const [text, setText] = useState("Save preferences");
 
@@ -12,15 +12,15 @@ export default function SaveLocations({ locations }) {
 
     const { error } = await supabase
       .from("users")
-      .update({ locations })
+      .update({ notifications })
       .eq("UID", session.user.id);
 
     if (error) {
-      console.error("Error saving locations: ", error);
+      console.error("Error saving notifications: ", error);
       return;
     }
 
-    setText("Location saved!");
+    setText("Notifications saved!");
 
     setTimeout(() => {
       setText("Save preferences");

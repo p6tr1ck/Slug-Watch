@@ -24,11 +24,12 @@ const MenuProps = {
 
 export default function MultipleSelectCheckmarks() {
   const [filterName, setFilterName] = useState([]);
-  const { setViewMyPins, setViewPolicePins, session } = useContext(AuthContext);
+  const { setViewMyPins, setViewPolicePins, setViewBookmarkedPins, session } = useContext(AuthContext);
   const filters = ["Police Pins"];
 
   if (session) {
     filters.push("My Pins");
+    filters.push("Bookmarked Pins");
   }
 
   const handleChange = (event) => {
@@ -44,7 +45,8 @@ export default function MultipleSelectCheckmarks() {
   useEffect(() => {
     setViewMyPins(filterName.includes("My Pins"));
     setViewPolicePins(filterName.includes("Police Pins"));
-  }, [filterName, setViewMyPins, setViewPolicePins]);
+    setViewBookmarkedPins(filterName.includes("Bookmarked Pins"));
+  }, [filterName, setViewMyPins, setViewPolicePins, setViewBookmarkedPins]);
 
   return (
     <div>
