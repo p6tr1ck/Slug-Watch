@@ -11,22 +11,8 @@ const supabase = createClient(
   process.env.supabaseRoleKey
 );
 
-function trueDate(dStr){
-  if (!dStr) return null;
-  const d = new Date(dStr);
-}
-
-function makeKey({crime, date, lat, long}){
-  const d = date ? trueDate(date) : null;
-  if (d){
-    return `D|${crime}|${date}`;
-  }
-  return `N|${crime}|${lat}|${long}`;
-}
-
-
 async function grabEntries() {
-  const { data, error } = await supabase.from("police_logs").select("*");
+  const { data, error } = await supabase.from("police_logs").select("incid_num");
   if (error) {
     console.error("Error getting pins from database: ", error);
     return [];
@@ -114,6 +100,8 @@ async function scrapeUCSC() {
     const disposition = $(el).find('td.mat-column-disposition').text().trim();
     let location = $(el).find('td.mat-column-location').text().trim();
 
+    console.log("raw number: ", number);
+
     const lowerRow = $(el).text().trim().toLowerCase();
     if (lowerRow.includes('no records found')) return; //exclude days with no reported activity
     if (disposition.toLowerCase().includes('log note')) return; //exclude log notes
@@ -147,15 +135,23 @@ async function scrapeUCSC() {
   await browser.close();
 
   const existingEntries = await grabEntries();
-  const seen = new Set(existingEntries.map(e => makeKey({crime: e.crime, date: e.date, lat: e.lat, long: e.long})));
+  const seen = new Set(existingEntries.map(e => e.incid_num && e.incid_num.trim()).filter(Boolean));
 
   const rows = []; //rows to push to json
   for (const job of jobs) {
     const { category, number, date_time, location, disposition } = job;
 
     const coords = await fetchCoordinates(location); //calls encode for coords
-
-    
+    const caseNum = number && number.trim();
+    if (!caseNum) {
+      console.log("no case number, skipping row:", job);
+      continue;
+    }
+    if (seen.has(caseNum)) {
+      console.log("already have case number, skipping row:", job);
+      continue;
+    }
+      
     if (!coords || coords.latitude == null || coords.longitude == null) { //checks for existence
       console.log("couldn't find lat/long for the following: %s", job);
       continue;
@@ -167,19 +163,11 @@ async function scrapeUCSC() {
     const lat = coords.latitude;
     const long = coords.longitude;
 
-    const key = makeKey({crime: category, date: format_date, lat, long});
-    if (seen.has(key)){
-      console.log("dup found, here's what i got: ", key);
-      continue;
-    }
-    seen.add(key);
-    console.log("new entry found: ", key);
-
     let supaRow = {};
     if (format_date == null){
-       supaRow = {crime: category, lat: lat, long: long};
+       supaRow = {crime: category, lat: lat, long: long, incid_num: number};
     }else{
-       supaRow = {crime: category, date: format_date, lat: lat, long: long};
+       supaRow = {crime: category, date: format_date, lat: lat, long: long, incid_num: number};
     }
     console.log("here's my pull for supa:",supaRow);
   
@@ -194,6 +182,11 @@ async function scrapeUCSC() {
 
 }
 
-while (true){
-  await scrapeUCSC();
+async function main() {
+  while (true){
+    await scrapeUCSC();
+    await new Promise(r => setTimeout(r, 15* 60 * 1000)); //wait 15 minutes
+  }
 }
+
+main().catch(console.error);
