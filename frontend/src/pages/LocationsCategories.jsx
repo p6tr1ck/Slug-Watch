@@ -111,12 +111,27 @@ export default function LocationsCateogries({
               key={label}
               className={`px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 transition
           hover:bg-slate-50 dark:hover:bg-slate-400 ${
-            theme === "light" ? "bg-white" : "bg-zinc-700"
-          }
+            theme === "light" ? "text-black" : "text-white"
+          } ${
+                theme === "light" &&
+                !isSelected &&
+                label !== "None" &&
+                "bg-white"
+              }
+              
+              ${
+                theme === "dark" &&
+                !isSelected &&
+                label !== "None" &&
+                "bg-zinc-500"
+              }
+
           ${
             isSelected ||
             (isLoaded && label === "None" && notifications.length === 0)
               ? "bg-blue-500 text-white"
+              : theme === "dark"
+              ? "bg-zinc-500"
               : "bg-white"
           }`}
             >

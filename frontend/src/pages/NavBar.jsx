@@ -49,7 +49,7 @@ export default function NavBar() {
   return (
     <nav
       className={`p-4 ${
-        theme === "light" ? "bg-gray-100" : "bg-zinc-800"
+        theme === "light" ? "bg-gray-100" : "bg-neutral-900"
       } flex justify-between items-center`}
     >
       {/* Left side: Logo */}
@@ -78,8 +78,21 @@ export default function NavBar() {
           >
             Home
           </Link>
-          {canModerate && <Link to="/moderation">Moderation</Link>}
-          {session && <Notifications />}
+          {canModerate && (
+            <Link
+              to="/moderation"
+              className={`${
+                theme === "light" ? "text-gray-900" : "text-gray-200"
+              }`}
+            >
+              Moderation
+            </Link>
+          )}
+          {session && (
+            <Notifications
+              className={`${theme === "light" ? "bg-white" : "text-gray-200"}`}
+            />
+          )}
           <Link to="/signin">
             {session ? (
               <img

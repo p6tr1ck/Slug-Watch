@@ -428,9 +428,17 @@ export default function Moderation() {
 
         {activeTab === "pins" && (
           <>
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
-              <table className="min-w-full text-sm text-slate-800">
-                <thead className="bg-slate-100">
+            <div
+              className={`overflow-x-auto rounded-xl border ${
+                theme === "light" ? "border-slate-200" : "border-zinc-800"
+              }`}
+            >
+              <table className="min-w-full text-sm">
+                <thead
+                  className={`${
+                    theme === "light" ? "bg-slate-100" : "bg-neutral-800"
+                  }`}
+                >
                   <tr>
                     <th className="px-3 py-2 text-left">Report weight</th>
                     <th className="px-3 py-2 text-left">Likes</th>
@@ -478,7 +486,13 @@ export default function Moderation() {
                       const vc = voteCounts[pin.id] || { up: 0, down: 0 };
                       return (
                         <tr key={pin.id} className="border-t border-slate-100">
-                          <td className="px-3 py-3 font-semibold text-slate-900">
+                          <td
+                            className={`px-3 py-3 font-semibold ${
+                              theme === "light"
+                                ? "text-slate-900"
+                                : "text-slate-200"
+                            }`}
+                          >
                             {pin.report_weight ?? pin.reportWeight ?? 0}
                           </td>
                           <td className="px-3 py-3">{vc.up}</td>
@@ -486,10 +500,22 @@ export default function Moderation() {
                           <td className="px-3 py-3">
                             {pin.title ?? pin.name ?? "Untitled pin"}
                           </td>
-                          <td className="px-3 py-3 text-slate-600">
+                          <td
+                            className={`px-3 py-3 ${
+                              theme === "light"
+                                ? "text-slate-600"
+                                : "text-slate-200"
+                            }`}
+                          >
                             {pin.description || "No description"}
                           </td>
-                          <td className="px-3 py-3 font-mono text-xs text-slate-500">
+                          <td
+                            className={`px-3 py-3 font-mono text-xs ${
+                              theme === "light"
+                                ? "text-slate-500"
+                                : "text-slate-200"
+                            }`}
+                          >
                             {pin.id}
                           </td>
                           <td className="px-3 py-3 text-right">

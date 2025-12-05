@@ -6,11 +6,12 @@ import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { supabase } from "../../supabaseClient";
-import { AuthContext } from "../App";
+import { AuthContext, DarkModeSwitch } from "../App";
 import Box from "@mui/material/Box";
 
 export default function Notification() {
   const { session, setSelectedPinId } = useContext(AuthContext);
+  const { theme } = useContext(DarkModeSwitch);
 
   const [pinId, setPinId] = useState([]);
   const [pins, setPins] = useState([]);
@@ -289,7 +290,11 @@ export default function Notification() {
           badgeContent={unreadNotifications}
           overlap="circular"
         >
-          <NotificationsIcon />
+          <NotificationsIcon
+            sx={{
+              color: theme === "light" ? "black" : "white",
+            }}
+          />
         </Badge>
       </Button>
 
