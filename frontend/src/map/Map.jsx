@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useRef } from "react";
 import { MapContainer, TileLayer, useMapEvents } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
@@ -8,6 +8,7 @@ import { AuthContext } from "../App";
 import UserPins from "./UserPins";
 import PolicePins from "./PolicePins";
 import FilterPins from "./FilterPins";
+import markerIconUrl from "leaflet/dist/images/marker-icon.png";
 
 const bounds = [
   [36.97818, -122.07764], // southwest corner
@@ -19,6 +20,8 @@ export default function Map() {
   const { width } = useWindowDimensions();
   const [markers, setMarkers] = useState([]);
   const [tempId, setTempId] = useState(0);
+  const [cursorPosition, setCursorPosition] = useState(null);
+  const mapShellRef = useRef(null);
   const currUserID = session?.user?.id ?? null;
 
   useEffect(() => {
@@ -26,6 +29,12 @@ export default function Map() {
       setCreateMode(false);
     }
   }, [session, createMode]);
+
+  useEffect(() => {
+    if (!createMode) {
+      setCursorPosition(null);
+    }
+  }, [createMode]);
 
   function MapClickHandler({ createMode, onMapClick }) {
     useMapEvents({
@@ -84,8 +93,26 @@ export default function Map() {
 
   const isDesktop = width > 600;
 
+  function handleCursorMove(e) {
+    if (!createMode || !mapShellRef.current) return;
+    const rect = mapShellRef.current.getBoundingClientRect();
+    setCursorPosition({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  }
+
+  function handleCursorLeave() {
+    setCursorPosition(null);
+  }
+
   return (
-    <div className="relative h-full w-full">
+    <div
+      ref={mapShellRef}
+      className="relative h-full w-full"
+      onMouseMove={handleCursorMove}
+      onMouseLeave={handleCursorLeave}
+    >
       {/* Desktop: Filter dropdown */}
       {isDesktop && <FilterPins />}
 
@@ -112,7 +139,7 @@ export default function Map() {
       <MapContainer
         center={[36.992255, -122.058763]}
         zoom={14.8}
-        className="h-full"
+        className={`h-full ${createMode ? "cursor-none" : ""}`}
         // maxBounds={bounds}
         maxBoundsViscosity={1.0}
         minZoom={14.5}
@@ -155,6 +182,18 @@ export default function Map() {
           </div>
         )}
       </MapContainer>
+
+      {createMode && cursorPosition && (
+        <img
+          src={markerIconUrl}
+          alt="Pin cursor preview"
+          className="pointer-events-none absolute z-[1200] h-10 w-6 -translate-x-1/2 -translate-y-full"
+          style={{
+            left: cursorPosition.x,
+            top: cursorPosition.y,
+          }}
+        />
+      )}
     </div>
   );
 }
