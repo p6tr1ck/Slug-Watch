@@ -9,6 +9,7 @@ import UserPins from "./UserPins";
 import PolicePins from "./PolicePins";
 import FilterPins from "./FilterPins";
 import markerIconUrl from "leaflet/dist/images/marker-icon.png";
+import Dashboard from "../dashboard/Dashboard";
 
 const bounds = [
   [36.97818, -122.07764], // southwest corner
@@ -115,6 +116,7 @@ export default function Map() {
     >
       {/* Desktop: Filter dropdown */}
       {isDesktop && <FilterPins />}
+      {isDesktop && <Dashboard />}
 
       {/* Desktop: Create Pin button */}
       {isDesktop && (

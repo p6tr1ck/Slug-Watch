@@ -5,13 +5,14 @@ import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import Typography from "@mui/material/Typography";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import { AuthContext } from "../App";
+import { AuthContext, DarkModeSwitch } from "../App";
 
 export default function Dashboard() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const { selectDashboardItem, setSelectDashboardItem } =
     useContext(AuthContext);
+  const { theme } = useContext(DarkModeSwitch);
 
   useEffect(() => {
     async function loadData() {
@@ -34,8 +35,19 @@ export default function Dashboard() {
   if (loading) return <p className="p-4 text-xl">Loading...</p>;
 
   return (
-    <div className="p-1 ml-2 w-54 bg-blue-50 border border-blue-200 rounded-xl shadow">
-      <Accordion sx={{ borderRadius: "1rem", boxShadow: "none" }}>
+    <div
+      className={`p-1 ml-2 w-54 ${
+        theme === "light" ? "bg-blue-50" : "bg-blue-950"
+      }
+      border border-blue-200 rounded-xl shadow z-[1000] max-h-[87vh] overflow-y-auto absolute top-3 left-12`}
+    >
+      <Accordion
+        sx={{
+          borderRadius: "1rem",
+          boxShadow: "none",
+          bgcolor: theme === "light" ? "white" : "black",
+        }}
+      >
         <AccordionSummary
           expandIcon={<ArrowDropDownIcon sx={{ color: "#2c3170" }} />}
           aria-controls="panel2-content"

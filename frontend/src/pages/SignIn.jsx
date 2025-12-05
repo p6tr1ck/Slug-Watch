@@ -14,7 +14,7 @@ const Wrapper = ({ theme, children }) => (
       theme === "light" ? "bg-white" : "bg-zinc-800"
     }`}
   >
-    <div className="w-full max-w-lg mt-[-25vh]">{children}</div>
+    <div className="w-full max-w-lg mt-[-13vh]">{children}</div>
   </div>
 );
 
