@@ -15,7 +15,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadData() {
-      const { data, error } = await supabase.from("police_logs").select("*");
+      const { data, error } = await supabase
+        .from("police_logs")
+        .select("*")
+        .limit(25);
       if (error) console.error(error);
       else setItems(data);
       setLoading(false);
@@ -26,7 +29,7 @@ export default function Dashboard() {
   if (loading) return <p className="p-4 text-xl">Loading...</p>;
 
   return (
-    <div className="p-1 mt-10 ml-2 w-52 bg-blue-50 border border-blue-200 rounded-lg shadow">
+    <div className="p-1 mt-12 ml-2 w-40 bg-blue-50 border border-blue-200 rounded-lg shadow">
       <Accordion sx={{ borderRadius: "1rem", boxShadow: "none" }}>
         <AccordionSummary
           expandIcon={<ArrowDropDownIcon sx={{ color: "#2c3170" }} />}
