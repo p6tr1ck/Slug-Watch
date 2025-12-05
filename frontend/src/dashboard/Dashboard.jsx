@@ -34,6 +34,14 @@ export default function Dashboard() {
 
   if (loading) return <p className="p-4 text-xl">Loading...</p>;
 
+  const handleClick = (id) => {
+    if (selectDashboardItem) {
+      setSelectDashboardItem(null);
+      return;
+    }
+    setSelectDashboardItem(id);
+  };
+
   return (
     <div
       className={`p-1 ml-2 w-54 ${
@@ -87,7 +95,8 @@ export default function Dashboard() {
               <div
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSelectDashboardItem(item.id);
+                  handleClick(item.id);
+                  // setSelectDashboardItem(item.id);
                 }}
                 className="p-2 rounded-lg"
               >

@@ -238,6 +238,10 @@ export default function MakeMarker({
 
   useEffect(() => {
     if (!markerRef.current) return;
+    if (selectDashboardItem === null) {
+      markerRef.current.closePopup();
+      return;
+    }
 
     if (selectDashboardItem === m.id.substr(7)) {
       markerRef.current.openPopup();

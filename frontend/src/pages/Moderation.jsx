@@ -420,7 +420,7 @@ export default function Moderation() {
               activeTab === "reports"
                 ? "border-blue-600 text-blue-700"
                 : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
+            } ${theme === "dark" && "text-white"}`}
           >
             Report Log
           </button>
@@ -474,7 +474,9 @@ export default function Moderation() {
                     <tr>
                       <td
                         colSpan="7"
-                        className="px-3 py-6 text-center text-slate-500"
+                        className={`px-3 py-6 text-center ${
+                          theme === "light" ? "text-slate-500" : "text-white"
+                        }`}
                       >
                         No pins have crossed the report threshold yet.
                       </td>

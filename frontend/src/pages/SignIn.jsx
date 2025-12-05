@@ -10,11 +10,9 @@ import { Avatar, Button } from "@mui/material";
 // Background + centering wrapper
 const Wrapper = ({ theme, children }) => (
   <div
-    className={`min-h-screen from-slate-50 to-white flex items-center justify-center px-4  ${
-      theme === "light" ? "bg-white" : "bg-zinc-800"
-    }`}
+    className={`min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-4 `}
   >
-    <div className="w-full max-w-lg mt-[-13vh]">{children}</div>
+    <div className="w-full max-w-lg mt-[-25vh]">{children}</div>
   </div>
 );
 
@@ -66,15 +64,32 @@ export default function SignIn() {
   };
   if (!session) {
     return (
-      <div
-        className={`h-50 flex justify-center items-center flex-col space-y-5 ${
-          theme === "light" ? "text-gray-900" : "text-gray-200"
-        }`}
-      >
-        <div className="text-lg">Welcome!</div>
-        <div className="text-lg">Sign in with your UCSC email to continue:</div>
-        <GoogleButton onClick={signUp} />
-      </div>
+      <Wrapper>
+        <div className="bg-white shadow-xl rounded-2xl p-8 border border-slate-200/70">
+          <h1 className="text-2xl font-semibold text-slate-600 text-center">
+            Welcome
+          </h1>
+          <p className="text-slate-600 text-center mt-2">
+            Sign in with your <span className="font-medium">UCSC</span> email to
+            continue
+          </p>
+
+          <div className="mt-6 flex justify-center">
+            <GoogleButton onClick={() => signUp()}>
+              Continue with Google
+            </GoogleButton>
+          </div>
+
+          {busy && (
+            <div className="mt-6 flex justify-center">
+              <CircularProgress size={24} />
+            </div>
+          )}
+          {err && (
+            <p className="mt-4 text-center text-sm text-red-600">{err}</p>
+          )}
+        </div>
+      </Wrapper>
     );
   }
 
