@@ -433,7 +433,7 @@ export default function Moderation() {
                 theme === "light" ? "border-slate-200" : "border-zinc-800"
               }`}
             >
-              <table className="min-w-full text-sm">
+              <table className="min-w-full text-sm ">
                 <thead
                   className={`${
                     theme === "light" ? "bg-slate-100" : "bg-neutral-800"
@@ -550,8 +550,16 @@ export default function Moderation() {
 
         {activeTab === "reports" && (
           <div className="overflow-x-auto rounded-xl border border-slate-200 max-h-[450px] overflow-auto">
-            <table className="min-w-full text-sm text-slate-800">
-              <thead className="bg-slate-100">
+            <table
+              className={`min-w-full text-sm ${
+                theme === "light" ? "text-slate-800" : "text-slate-200"
+              }`}
+            >
+              <thead
+                className={`${
+                  theme === "light" ? "bg-slate-100" : "bg-neutral-800"
+                }`}
+              >
                 <tr>
                   <th className="px-3 py-2 text-left">Pin ID</th>
                   <th className="px-3 py-2 text-left">Reporter</th>
