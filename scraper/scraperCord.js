@@ -11,10 +11,24 @@ const supabase = createClient(
   process.env.supabaseRoleKey
 );
 
+async function grabEntries() {
+  const { data, error } = await supabase.from("police_logs").select("incid_num");
+  if (error) {
+    console.error("Error getting pins from database: ", error);
+    return [];
+  }
+  return data;
+}
+
+
 function normDateTime(raw) {
   // Take only first part if it's a range like
   // "10/20/2025 5:00 PM - 10/23/2025 2:30 PM"
+  if (!raw || typeof raw !== "string") {
+    return null;
+  }
   const firstPart = raw.split(" - ")[0].trim();
+
 
   // Handle "Unknown Time"
   if (/unknown time/i.test(firstPart)) {
@@ -58,6 +72,16 @@ function normDateTime(raw) {
 }
 
 
+
+function checkTime(str){
+  //check if the string has an "unknown time" indication
+
+  if (/unknown time/i.test(str)) {
+    return true;
+  }
+  return false;
+}
+
 async function fetchCoordinates(address) {
   try {
     const results = await geocoding.encode(address); // conversion from clean address to coords
@@ -87,8 +111,11 @@ async function scrapeUCSC() {
     const category = $(el).find('td.mat-column-nature').text().trim();
     const number = $(el).find('td.mat-column-number').text().trim();
     const date_time = $(el).find('td.mat-column-occurred').text().trim();
+    const reported = $(el).find('td.mat-column-reported').text().trim();
     const disposition = $(el).find('td.mat-column-disposition').text().trim();
     let location = $(el).find('td.mat-column-location').text().trim();
+
+    console.log("raw number: ", number);
 
     const lowerRow = $(el).text().trim().toLowerCase();
     if (lowerRow.includes('no records found')) return; //exclude days with no reported activity
@@ -116,43 +143,49 @@ async function scrapeUCSC() {
     // Standardize final location to "place, Santa Cruz, CA 95064"
     location = `${placeName}, Santa Cruz, CA 95064`;
     //console.log("this:%s, there:%s",category,location);
+    let inTime = date_time;
+    if (checkTime(date_time) == true){
+      inTime = reported;
+    }
+    
 
-    jobs.push({category, number, date_time, location, disposition}); //queue push
+    jobs.push({category, number, inTime, location, disposition}); //queue push
   });
 
   await browser.close();
 
+  const existingEntries = await grabEntries();
+  const seen = new Set(existingEntries.map(e => e.incid_num && e.incid_num.trim()).filter(Boolean));
+
   const rows = []; //rows to push to json
   for (const job of jobs) {
-    const { category, number, date_time, location, disposition } = job;
+    const { category, number, inTime, location, disposition } = job;
 
     const coords = await fetchCoordinates(location); //calls encode for coords
-
-    
-    if (!coords || coords.latitude == null || coords.longitude == null) { //checks for existence
-      console.log("couldn't find lat/long for the following: %s", job);
+    const caseNum = number && number.trim();
+    if (!caseNum) {
+      console.log("no case number, skipping row:", job);
       continue;
     }
-    const format_date = normDateTime(date_time)
-    rows.push({category, number, date_time, location, lat: coords.latitude, long: coords.longitude ,disposition}); //push to finshed array
-    //console.log(rows);
+    if (seen.has(caseNum)) {
+      console.log("already have case number, skipping row:", job);
+      continue;
+    }
 
     const lat = coords.latitude;
     const long = coords.longitude;
+    const format_date = normDateTime(job.inTime);
 
+    const supaRow =
+      format_date == null
+        ? { crime: category, lat: lat, long: long, incid_num: caseNum }
+        : { crime: category, date: format_date, lat: lat, long: long, incid_num: caseNum};
 
-    //console.log("heres the parsed shit, %s, %s, %s, %s", category, format_date, lat, long);
-
-    let supaRow = {};
-    if (format_date == null){
-       supaRow = {crime: category, lat: lat, long: long};
-    }else{
-       supaRow = {crime: category, date: format_date, lat: lat, long: long};
-    }
     console.log(supaRow);
-  
-    //console.log(supaRow);
-    const {data, error} = await supabase.from("police_logs").insert([supaRow]);
+
+    const { data, error } = await supabase
+      .from("police_logs")
+      .insert([supaRow]);
 
      if (error){
        console.log("Couldn't append this to supabase: %s", supaRow);
@@ -163,4 +196,11 @@ async function scrapeUCSC() {
 
 }
 
-scrapeUCSC();
+async function main() {
+  while (true){
+    await scrapeUCSC();
+    await new Promise(r => setTimeout(r, 15* 60 * 1000)); //wait 15 minutes
+  }
+}
+
+main().catch(console.error);
