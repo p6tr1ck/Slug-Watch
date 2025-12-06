@@ -12,7 +12,7 @@ const Wrapper = ({ theme, children }) => (
   <div
     className={`min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-4 `}
   >
-    <div className="w-full max-w-lg mt-[-25vh]">{children}</div>
+    <div className="w-full max-w-lg mt-[-13vh]">{children}</div>
   </div>
 );
 
@@ -20,9 +20,13 @@ export default function SignIn() {
   const { session } = useContext(AuthContext);
   const [notifications, setNotifications] = useState([]);
   const { theme } = useContext(DarkModeSwitch);
+  const [avatar, setAvatar] = useState(null);
   const { width } = useWindowDimensions();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const name = session?.user.user_metadata.full_name ?? "Student";
+  const email = session?.user.email ?? "";
+  const avatarUrl = session?.user.user_metadata?.picture;
 
   useEffect(() => {
     if (session) {
@@ -92,10 +96,6 @@ export default function SignIn() {
       </Wrapper>
     );
   }
-
-  const name = session.user.user_metadata.full_name ?? "Student";
-  const email = session.user.email ?? "";
-  const avatarUrl = session.user.user_metadata.avatar_url;
 
   return (
     <Wrapper theme={theme}>

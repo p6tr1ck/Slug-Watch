@@ -115,6 +115,8 @@ function App() {
           setCreateMode,
           viewPolicePins,
           setViewPolicePins,
+          selectedPinId,
+          setSelectedPinId,
           selectDashboardItem,
           setSelectDashboardItem,
           viewBookmarkedPins,
