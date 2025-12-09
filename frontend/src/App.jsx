@@ -8,7 +8,10 @@ import Moderation from "./pages/Moderation";
 import BottomBar from "./pages/BottomBar";
 import { supabase } from "../supabaseClient";
 import useWindowDimensions from "./WindowDimensions";
+import { ThemeProvider } from "./dashboard/Darkmode";
+
 export const AuthContext = createContext(null);
+export const DarkModeSwitch = createContext();
 
 function App() {
   const currentSession = supabase.auth.session?.() ?? null;
@@ -16,6 +19,8 @@ function App() {
   const [viewMyPins, setViewMyPins] = useState(false);
   const [viewPolicePins, setViewPolicePins] = useState(false);
   const [createMode, setCreateMode] = useState(false);
+  const [selectDashboardItem, setSelectDashboardItem] = useState(false);
+  const [theme, setTheme] = useState("light");
   // When user clicks on notification, pin should popup on map
   const [selectedPinId, setSelectedPinId] = useState(null);
   const [viewBookmarkedPins, setViewBookmarkedPins] = useState(false);
@@ -99,38 +104,50 @@ function App() {
   }, []);
 
   return (
-    <AuthContext.Provider
-      value={{
-        session,
-        setSession,
-        viewMyPins,
-        setViewMyPins,
-        createMode,
-        setCreateMode,
-        viewPolicePins,
-        setViewPolicePins,
-        selectedPinId,
-        setSelectedPinId,
-        viewBookmarkedPins,
-        setViewBookmarkedPins,
-        bookmarks,
-        setBookmarks,
-        toggleBookmark,
-      }}
-    >
-      <BrowserRouter>
-        <div className={`flex flex-col overflow-hidden h-screen `}>
-          {width > 600 ? <NavBar /> : <></>}
-          <Routes>
-            <Route path="/" element={<Navigate to="/home" replace />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/moderation" element={<Moderation />} />
-          </Routes>
-          {width <= 600 && <BottomBar />}
-        </div>
-      </BrowserRouter>
-    </AuthContext.Provider>
+    <ThemeProvider>
+      <AuthContext.Provider
+        value={{
+          session,
+          setSession,
+          viewMyPins,
+          setViewMyPins,
+          createMode,
+          setCreateMode,
+          viewPolicePins,
+          setViewPolicePins,
+          selectedPinId,
+          setSelectedPinId,
+          selectDashboardItem,
+          setSelectDashboardItem,
+          viewBookmarkedPins,
+          setViewBookmarkedPins,
+          bookmarks,
+          setBookmarks,
+          toggleBookmark,
+        }}
+      >
+        <DarkModeSwitch.Provider value={{ theme, setTheme }}>
+          <BrowserRouter>
+            <div
+              className={`flex flex-col overflow-hidden h-screen ${
+                width <= 600 ? "pb-20" : ""
+              } ${theme === "light" ? "bg-white" : "bg-zinc-800"}`}
+            >
+              {width > 600 ? <NavBar /> : <></>}
+
+              <Routes>
+                <Route path="/" element={<Navigate to="/home" replace />} />
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/home" element={<Home />} />
+                <Route path="/moderation" element={<Moderation />} />
+              </Routes>
+
+              {width <= 600 && <BottomBar />}
+            </div>
+          </BrowserRouter>
+        </DarkModeSwitch.Provider>
+      </AuthContext.Provider>
+    </ThemeProvider>
   );
 }
 

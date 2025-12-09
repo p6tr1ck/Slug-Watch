@@ -1,5 +1,5 @@
 import { useContext, useEffect } from "react";
-import { AuthContext } from "../App";
+import { AuthContext, DarkModeSwitch } from "../App";
 import { supabase } from "../../supabaseClient";
 import { useState } from "react";
 
@@ -23,6 +23,7 @@ export default function LocationsCateogries({
   setNotifications,
 }) {
   const { session } = useContext(AuthContext);
+  const { theme } = useContext(DarkModeSwitch);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -80,8 +81,18 @@ export default function LocationsCateogries({
 
   return (
     <div className="mt-6">
-      <p className="text-slate-800 font-medium">Notification areas</p>
-      <p className="text-slate-500 dark:text-slate-700 text-sm">
+      <p
+        className={`font-medium ${
+          theme === "light" ? "text-slate-800" : "text-slate-300"
+        }`}
+      >
+        Notification areas
+      </p>
+      <p
+        className={`text-sm ${
+          theme === "light" ? "text-slate-500" : "text-slate-100"
+        }`}
+      >
         Select locations or categories to receive alerts.
       </p>
       <div
@@ -99,11 +110,28 @@ export default function LocationsCateogries({
             <button
               key={label}
               className={`px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 transition
-          hover:bg-slate-50 dark:hover:bg-slate-400
+          hover:bg-slate-50 dark:hover:bg-slate-400 ${
+            theme === "light" ? "text-black" : "text-white"
+          } ${
+                theme === "light" &&
+                !isSelected &&
+                label !== "None" &&
+                "bg-white"
+              }
+              
+              ${
+                theme === "dark" &&
+                !isSelected &&
+                label !== "None" &&
+                "bg-zinc-500"
+              }
+
           ${
             isSelected ||
             (isLoaded && label === "None" && notifications.length === 0)
               ? "bg-blue-500 text-white"
+              : theme === "dark"
+              ? "bg-zinc-500"
               : "bg-white"
           }`}
             >

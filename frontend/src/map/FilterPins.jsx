@@ -7,7 +7,7 @@ import ListItemText from "@mui/material/ListItemText";
 import Select from "@mui/material/Select";
 import Checkbox from "@mui/material/Checkbox";
 import TuneIcon from "@mui/icons-material/Tune";
-import { AuthContext } from "../App";
+import { AuthContext, DarkModeSwitch } from "../App";
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -24,7 +24,10 @@ const MenuProps = {
 
 export default function MultipleSelectCheckmarks() {
   const [filterName, setFilterName] = useState([]);
-  const { setViewMyPins, setViewPolicePins, setViewBookmarkedPins, session } = useContext(AuthContext);
+  const { theme } = useContext(DarkModeSwitch);
+
+  const { setViewMyPins, setViewPolicePins, setViewBookmarkedPins, session } =
+    useContext(AuthContext);
   const filters = ["Police Pins"];
 
   if (session) {
@@ -55,17 +58,27 @@ export default function MultipleSelectCheckmarks() {
           m: 1,
           width: 200,
           position: "absolute",
-          top: "1rem",
-          right: "1rem",
+          top: "3px",
+          right: "4px",
           zIndex: 1000,
-          bgcolor: "white",
+          bgcolor: theme === "light" ? "white" : "#293240",
         }}
       >
-        <InputLabel id="demo-multiple-checkbox-label">
+        <InputLabel
+          id="demo-multiple-checkbox-label"
+          sx={{
+            color: theme === "dark" && "white",
+          }}
+        >
           <TuneIcon className="mr-2" />
           Filter Pins
         </InputLabel>
         <Select
+          sx={{
+            "& .MuiSelect-icon": {
+              color: theme === "dark" ? "white" : "black",
+            },
+          }}
           labelId="demo-multiple-checkbox-label"
           id="demo-multiple-checkbox"
           multiple

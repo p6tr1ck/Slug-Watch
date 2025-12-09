@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../App";
+import { AuthContext, DarkModeSwitch } from "../App";
 import { supabase } from "../../supabaseClient";
 import { del_report } from "../sbReportHandle";
 import {
@@ -42,6 +42,7 @@ function coerceBooleanFlag(value) {
 
 export default function Moderation() {
   const { session } = useContext(AuthContext);
+  const { theme } = useContext(DarkModeSwitch);
   const user = session?.user ?? null;
 
   const [permissionState, setPermissionState] = useState({
@@ -168,9 +169,7 @@ export default function Moderation() {
       try {
         const { data, error } = await supabase
           .from("reports")
-          .select(
-            "report_uid, post_id, reporter_id, category, desc, weight"
-          )
+          .select("report_uid, post_id, reporter_id, category, desc, weight")
           .order("weight", { ascending: false });
 
         if (!isMounted) return;
@@ -374,12 +373,30 @@ export default function Moderation() {
   }
 
   return (
-    <div className="flex-1 min-h-0 flex justify-center bg-slate-50 px-6 py-8 overflow-auto">
-      <div className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white/95 p-8 shadow-lg">
-        <h1 className="text-2xl font-semibold text-slate-900 mb-3">
+    <div
+      className={`flex-1 min-h-0 flex justify-center px-6 py-8 overflow-auto ${
+        theme === "light" ? "bg-white" : "bg-zinc-800"
+      }`}
+    >
+      <div
+        className={`w-full max-w-4xl rounded-2xl border border-slate-200 bg-white/95 p-8 shadow-lg ${
+          theme === "light" ? "text-gray-900" : "text-gray-200"
+        } ${theme === "light" ? "bg-white" : "bg-zinc-900"} ${
+          theme === "light" ? "border-white" : "border-zinc-800"
+        }`}
+      >
+        <h1
+          className={`text-2xl font-semibold mb-3 ${
+            theme === "light" ? "text-gray-900" : "text-gray-200"
+          }`}
+        >
           Moderation Dashboard
         </h1>
-        <p className="text-slate-600 mb-6">
+        <p
+          className={`mb-6${
+            theme === "light" ? "text-gray-900" : "text-gray-200"
+          }`}
+        >
           Pins that exceed the report threshold stream in from Supabase. Select
           any that require escalation or deletion.
         </p>
@@ -403,7 +420,7 @@ export default function Moderation() {
               activeTab === "reports"
                 ? "border-blue-600 text-blue-700"
                 : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
+            } ${theme === "light" ? "border-slate-200" : "border-zinc-800"}`}
           >
             Report Log
           </button>
@@ -411,9 +428,17 @@ export default function Moderation() {
 
         {activeTab === "pins" && (
           <>
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
-              <table className="min-w-full text-sm text-slate-800">
-                <thead className="bg-slate-100">
+            <div
+              className={`overflow-x-auto rounded-xl border ${
+                theme === "light" ? "border-slate-200" : "border-zinc-800"
+              }`}
+            >
+              <table className="min-w-full text-sm ">
+                <thead
+                  className={`${
+                    theme === "light" ? "bg-slate-100" : "bg-neutral-800"
+                  }`}
+                >
                   <tr>
                     <th className="px-3 py-2 text-left">Report weight</th>
                     <th className="px-3 py-2 text-left">Likes</th>
@@ -449,7 +474,9 @@ export default function Moderation() {
                     <tr>
                       <td
                         colSpan="7"
-                        className="px-3 py-6 text-center text-slate-500"
+                        className={`px-3 py-6 text-center ${
+                          theme === "light" ? "text-slate-500" : "text-white"
+                        }`}
                       >
                         No pins have crossed the report threshold yet.
                       </td>
@@ -461,22 +488,36 @@ export default function Moderation() {
                       const vc = voteCounts[pin.id] || { up: 0, down: 0 };
                       return (
                         <tr key={pin.id} className="border-t border-slate-100">
-                          <td className="px-3 py-3 font-semibold text-slate-900">
+                          <td
+                            className={`px-3 py-3 font-semibold ${
+                              theme === "light"
+                                ? "text-slate-900"
+                                : "text-slate-200"
+                            }`}
+                          >
                             {pin.report_weight ?? pin.reportWeight ?? 0}
                           </td>
-                          <td className="px-3 py-3">
-                            {vc.up}
-                          </td>
-                          <td className="px-3 py-3">
-                            {vc.down}
-                          </td>
+                          <td className="px-3 py-3">{vc.up}</td>
+                          <td className="px-3 py-3">{vc.down}</td>
                           <td className="px-3 py-3">
                             {pin.title ?? pin.name ?? "Untitled pin"}
                           </td>
-                          <td className="px-3 py-3 text-slate-600">
+                          <td
+                            className={`px-3 py-3 ${
+                              theme === "light"
+                                ? "text-slate-600"
+                                : "text-slate-200"
+                            }`}
+                          >
                             {pin.description || "No description"}
                           </td>
-                          <td className="px-3 py-3 font-mono text-xs text-slate-500">
+                          <td
+                            className={`px-3 py-3 font-mono text-xs ${
+                              theme === "light"
+                                ? "text-slate-500"
+                                : "text-slate-200"
+                            }`}
+                          >
                             {pin.id}
                           </td>
                           <td className="px-3 py-3 text-right">
@@ -509,8 +550,16 @@ export default function Moderation() {
 
         {activeTab === "reports" && (
           <div className="overflow-x-auto rounded-xl border border-slate-200 max-h-[450px] overflow-auto">
-            <table className="min-w-full text-sm text-slate-800">
-              <thead className="bg-slate-100">
+            <table
+              className={`min-w-full text-sm ${
+                theme === "light" ? "text-slate-800" : "text-slate-200"
+              }`}
+            >
+              <thead
+                className={`${
+                  theme === "light" ? "bg-slate-100" : "bg-neutral-800"
+                }`}
+              >
                 <tr>
                   <th className="px-3 py-2 text-left">Pin ID</th>
                   <th className="px-3 py-2 text-left">Reporter</th>
@@ -545,7 +594,9 @@ export default function Moderation() {
                   <tr>
                     <td
                       colSpan="6"
-                      className="px-3 py-6 text-center text-slate-500"
+                      className={`px-3 py-6 text-center text-slate-500 ${
+                        theme === "light" ? "text-slate-500" : "text-white"
+                      }`}
                     >
                       No reports have been submitted yet.
                     </td>
@@ -561,17 +612,41 @@ export default function Moderation() {
                       }
                       className="border-t border-slate-100"
                     >
-                      <td className="px-3 py-3 font-semibold text-slate-900">
+                      <td
+                        className={`px-3 py-3 font-semibold${
+                          theme === "light"
+                            ? "text-slate-900"
+                            : "text-slate-200"
+                        }`}
+                      >
                         {r.post_id ?? 0}
                       </td>
                       <td className="px-3 py-3">{r.reporter_id}</td>
-                      <td className="px-3 py-3 font-mono text-xs text-slate-500">
+                      <td
+                        className={`px-3 py-3 font-mono text-xs ${
+                          theme === "light"
+                            ? "text-slate-500"
+                            : "text-slate-200"
+                        }`}
+                      >
                         {r.category}
                       </td>
-                      <td className="px-3 py-3 font-mono text-xs text-slate-500">
+                      <td
+                        className={`px-3 py-3 font-mono text-xs ${
+                          theme === "light"
+                            ? "text-slate-500"
+                            : "text-slate-300"
+                        }`}
+                      >
                         {r.weight}
                       </td>
-                      <td className="px-3 py-3 text-slate-600 max-w-xs">
+                      <td
+                        className={`px-3 py-3  max-w-xs${
+                          theme === "light"
+                            ? "text-slate-600"
+                            : "text-slate-400"
+                        }`}
+                      >
                         {r.desc || "No details"}
                       </td>
                       <td className="px-3 py-3 text-right">

@@ -10,12 +10,13 @@ import BookmarkIcon from "@mui/icons-material/Bookmark";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import { delInSupa } from "../supaPins.js";
 import { supabase } from "../../supabaseClient.js";
-import { AuthContext } from "../App";
+import { AuthContext, DarkModeSwitch } from "../App";
 import { send_report_db } from "../sbReportHandle";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import FlagIcon from "@mui/icons-material/Flag";
+import { darkModeSwitch } from "../dashboard/Darkmode.jsx";
 
 const categoryChip = (category = "") => {
   const c = category.toLowerCase();
@@ -42,6 +43,8 @@ export default function MakeMarker({
 }) {
   const { session } = useContext(AuthContext);
   const [expanded, setExpanded] = useState(false);
+  const { selectDashboardItem, setSelectDashboardItem } =
+    useContext(AuthContext);
   const [showComments, setShowComments] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [editClicked, setEditClicked] = useState(false);
@@ -51,7 +54,7 @@ export default function MakeMarker({
     myVote: Number(m.myVote ?? 0),
   });
   const [votesLoading, setVotesLoading] = useState(false);
-
+  const { theme } = useContext(DarkModeSwitch);
   const markerRef = useRef(null);
   const map = useMap();
   const isCertified = Boolean(m.certified);
@@ -129,7 +132,13 @@ export default function MakeMarker({
         row.user_id === session.user.id &&
         myVote === 0
       ) {
-        myVote = val;
+        if (
+          session?.user?.id &&
+          row.user_id === session.user.id &&
+          myVote === 0
+        ) {
+          myVote = val;
+        }
       }
     });
 
@@ -227,6 +236,18 @@ export default function MakeMarker({
   const showReportCtrl =
     (!!currUserID && m.user_id && m.user_id !== currUserID) || canReport;
 
+  useEffect(() => {
+    if (!markerRef.current) return;
+    if (selectDashboardItem === null) {
+      markerRef.current.closePopup();
+      return;
+    }
+
+    if (selectDashboardItem === m.id.substr(7)) {
+      markerRef.current.openPopup();
+    }
+  }, [selectDashboardItem]);
+
   return (
     <>
       {editClicked ? (
@@ -245,7 +266,11 @@ export default function MakeMarker({
           }}
         >
           <Popup minWidth={320} maxWidth={400} autoPan={true}>
-            <div className="min-w-[240px] max-w-[320px] bg-white border border-slate-200 rounded-xl shadow-md overflow-hidden">
+            <div
+              className={`min-w-[240px] max-w-[320px] ${
+                theme === "light" ? "bg-white" : "bg-neutral-800"
+              } border border-slate-200 rounded-xl shadow-md overflow-hidden`}
+            >
               <div className="px-3 pt-3">
                 <div className="flex items-center justify-between gap-2">
                   <span
@@ -261,7 +286,11 @@ export default function MakeMarker({
                     {showReportCtrl && (
                       <button
                         type="button"
-                        className="inline-flex-items-center gap-1 rounded-lg border border-rose-300 px-2.5 py-1.5 text-sm test-rose-700 hover:bg-rose-50 transition cursor-pointer"
+                        className={`inline-flex-items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm transition cursor-pointer  ${
+                          theme === "light"
+                            ? "bg-white hover:bg-rose-50 text-rose-700"
+                            : "bg-zinc-800 hover:bg-rose-700 text-rose-500"
+                        }`}
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowReport((v) => !v);
@@ -315,7 +344,11 @@ export default function MakeMarker({
                   )}
                 </div>
               </div>
-              <h3 className="px-3 pt-3 pb-2 text-base font-semibold text-slate-900 leading-tight">
+              <h3
+                className={`px-3 pt-3 pb-2 text-base font-semibold ${
+                  theme === "light" ? "text-slate-900" : "text-white"
+                } leading-tight`}
+              >
                 {m.title || "Incident"}
               </h3>
               {/* Divider */}
@@ -324,17 +357,37 @@ export default function MakeMarker({
               <div className="px-3 py-2 text-[15px] text-slate-700 leading-snug space-y-1.5">
                 {m.created_at && (
                   <div className="flex gap-2">
-                    <span className="font-medium text-slate-900">Time:</span>
-                    <span>{m.created_at}</span>
+                    <span
+                      className={`font-medium ${
+                        theme === "light" ? "text-slate-900" : "text-white"
+                      }`}
+                    >
+                      Time:
+                    </span>
+                    <span
+                      className={`${
+                        theme === "light" ? "text-slate-700" : "text-stone-300"
+                      }`}
+                    >
+                      {m.created_at}
+                    </span>
                   </div>
                 )}
 
                 {m.description && (
                   <div>
-                    <span className="font-medium text-slate-900">
+                    <span
+                      className={`font-medium  ${
+                        theme === "light" ? "text-slate-900" : "text-white"
+                      }`}
+                    >
                       Description:
                     </span>{" "}
-                    <span className="text-slate-700">
+                    <span
+                      className={`${
+                        theme === "light" ? "text-slate-700" : "text-stone-300"
+                      }`}
+                    >
                       {expanded ? m.description : shortText(m.description)}
                     </span>
                     {m.description.length > 140 && (
@@ -350,12 +403,24 @@ export default function MakeMarker({
               </div>
 
               {!isCertified && (
-                <div className="px-3 pb-2 pt-2 border-t border-slate-200 bg-slate-50/70">
+                <div
+                  className={`px-3 pb-2 pt-2 border-t border-slate-200 ${
+                    theme === "light" ? "bg-slate-50/70" : "bg-neutral-800"
+                  }`}
+                >
                   <div className="flex items-center justify-between text-sm text-slate-800 mb-2">
-                    <span className="font-medium text-slate-900">
+                    <span
+                      className={`font-medium ${
+                        theme === "light" ? "text-slate-900" : "text-white"
+                      }`}
+                    >
                       Community votes
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span
+                      className={`text-xs ${
+                        theme === "light" ? "text-slate-500" : "text-stone-300"
+                      }`}
+                    >
                       Share if this feels accurate
                     </span>
                   </div>
@@ -399,7 +464,11 @@ export default function MakeMarker({
                   href={directionsUrl()}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm hover:bg-slate-50 transition"
+                  className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-sm transition ${
+                    theme === "light"
+                      ? "border-slate-300 bg-white hover:bg-slate-50 text-cyan-900"
+                      : "border-slate-300 bg-zinc-800 hover:bg-slate-700 text-cyan-200"
+                  }`}
                 >
                   <svg
                     width="16"
@@ -420,7 +489,11 @@ export default function MakeMarker({
                   !m.category.toLowerCase().includes("verified") && (
                     <button
                       title="Comments"
-                      className="px-2.5 py-1.5 border rounded-lg border-gray-300 text-black shadow cursor-pointer hover:bg-gray-100 text-sm flex"
+                      className={`px-2.5 py-1.5 border rounded-lg shadow cursor-pointer text-sm flex ${
+                        theme === "light"
+                          ? "border-gray-300 bg-white hover:bg-gray-100 text-black"
+                          : "border-gray-300 bg-zinc-800 hover:bg-gray-700 text-white"
+                      }`}
                       onClick={() => setShowComments((s) => !s)}
                     >
                       <div className="mr-2">💬</div>
