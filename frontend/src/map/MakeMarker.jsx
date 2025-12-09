@@ -492,7 +492,7 @@ export default function MakeMarker({
                       className={`px-2.5 py-1.5 border rounded-lg shadow cursor-pointer text-sm flex ${
                         theme === "light"
                           ? "border-gray-300 bg-white hover:bg-gray-100 text-black"
-                          : "border-gray-300 bg-slate-800 hover:bg-gray-700 text-white"
+                          : "border-gray-300 bg-zinc-800 hover:bg-gray-700 text-white"
                       }`}
                       onClick={() => setShowComments((s) => !s)}
                     >

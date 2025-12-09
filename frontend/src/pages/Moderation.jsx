@@ -612,17 +612,41 @@ export default function Moderation() {
                       }
                       className="border-t border-slate-100"
                     >
-                      <td className="px-3 py-3 font-semibold text-slate-900">
+                      <td
+                        className={`px-3 py-3 font-semibold${
+                          theme === "light"
+                            ? "text-slate-900"
+                            : "text-slate-200"
+                        }`}
+                      >
                         {r.post_id ?? 0}
                       </td>
                       <td className="px-3 py-3">{r.reporter_id}</td>
-                      <td className="px-3 py-3 font-mono text-xs text-slate-500">
+                      <td
+                        className={`px-3 py-3 font-mono text-xs ${
+                          theme === "light"
+                            ? "text-slate-500"
+                            : "text-slate-200"
+                        }`}
+                      >
                         {r.category}
                       </td>
-                      <td className="px-3 py-3 font-mono text-xs text-slate-500">
+                      <td
+                        className={`px-3 py-3 font-mono text-xs ${
+                          theme === "light"
+                            ? "text-slate-500"
+                            : "text-slate-300"
+                        }`}
+                      >
                         {r.weight}
                       </td>
-                      <td className="px-3 py-3 text-slate-600 max-w-xs">
+                      <td
+                        className={`px-3 py-3  max-w-xs${
+                          theme === "light"
+                            ? "text-slate-600"
+                            : "text-slate-400"
+                        }`}
+                      >
                         {r.desc || "No details"}
                       </td>
                       <td className="px-3 py-3 text-right">
