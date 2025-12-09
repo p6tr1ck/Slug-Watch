@@ -8,7 +8,6 @@ import Moderation from "./pages/Moderation";
 import BottomBar from "./pages/BottomBar";
 import { supabase } from "../supabaseClient";
 import useWindowDimensions from "./WindowDimensions";
-
 export const AuthContext = createContext(null);
 
 function App() {
@@ -30,7 +29,7 @@ function App() {
           .from("bookmarks")
           .select("pin_id")
           .eq("user_id", session.user.id);
-        
+
         if (error) {
           console.error("Error loading bookmarks:", error);
         } else {

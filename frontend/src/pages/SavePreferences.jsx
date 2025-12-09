@@ -2,6 +2,7 @@ import { useContext, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import { AuthContext } from "../App";
 import { Button } from "@mui/material";
+import { enablePushForUser } from "../push";
 
 export default function SavePreferences({ notifications }) {
   const { session } = useContext(AuthContext);
@@ -20,6 +21,7 @@ export default function SavePreferences({ notifications }) {
       return;
     }
 
+    enablePushForUser(session.user);
     setText("Notifications saved!");
 
     setTimeout(() => {
