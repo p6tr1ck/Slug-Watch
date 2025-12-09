@@ -129,6 +129,7 @@ export default function Notification() {
     setAdminUnread(0);
   };
 
+  // Enabling realtime notifications
   useEffect(() => {
     if (!session) return;
 
@@ -149,6 +150,39 @@ export default function Notification() {
             if (userId === session.user.id) {
               setPinId((prev) => [...prev, newPinId]);
               setPinUnread((prev) => prev + 1);
+            }
+
+            const { data } = await supabase
+              .from("example_pins")
+              .select("*")
+              .eq("id", newPinId)
+              .single();
+
+            const category = data?.category;
+            const location = data?.location;
+            console.log(category, location);
+
+            // Fetch subscription for this user
+            const { data: subs } = await supabase
+              .from("push_subscriptions")
+              .select("*")
+              .eq("user_id", session.user.id);
+
+            if (subs.length === 0) return;
+
+            // Loop through the user’s subscriptions
+            for (const s of subs) {
+              await supabase.functions.invoke("sendNotification", {
+                body: {
+                  subscription: s.subscription,
+                  title: "New Safety Alert!",
+                  body: `A ${
+                    category ? `${category} pin` : "pin"
+                  } was recently created${
+                    location ? ` near ${location}.` : "."
+                  }`,
+                },
+              });
             }
           }
 
@@ -195,6 +229,11 @@ export default function Notification() {
             .select("*")
             .eq("id", id)
             .single();
+
+          if (data === null || data.length === 0) {
+            console.log("No pin found");
+            return;
+          }
 
           if (error) {
             console.log("Error loading pins: ", error);
