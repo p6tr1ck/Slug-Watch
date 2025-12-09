@@ -286,7 +286,11 @@ export default function MakeMarker({
                     {showReportCtrl && (
                       <button
                         type="button"
-                        className="inline-flex-items-center gap-1 rounded-lg border border-rose-300 px-2.5 py-1.5 text-sm test-rose-700 hover:bg-rose-50 transition cursor-pointer"
+                        className={`inline-flex-items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm transition cursor-pointer  ${
+                          theme === "light"
+                            ? "bg-white hover:bg-rose-50 text-rose-700"
+                            : "bg-zinc-800 hover:bg-rose-700 text-rose-500"
+                        }`}
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowReport((v) => !v);
@@ -460,7 +464,11 @@ export default function MakeMarker({
                   href={directionsUrl()}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm hover:bg-slate-50 transition"
+                  className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-sm transition ${
+                    theme === "light"
+                      ? "border-slate-300 bg-white hover:bg-slate-50 text-cyan-900"
+                      : "border-slate-300 bg-zinc-800 hover:bg-slate-700 text-cyan-200"
+                  }`}
                 >
                   <svg
                     width="16"
@@ -481,7 +489,11 @@ export default function MakeMarker({
                   !m.category.toLowerCase().includes("verified") && (
                     <button
                       title="Comments"
-                      className="px-2.5 py-1.5 border rounded-lg border-gray-300 text-black shadow cursor-pointer hover:bg-gray-100 text-sm flex"
+                      className={`px-2.5 py-1.5 border rounded-lg shadow cursor-pointer text-sm flex ${
+                        theme === "light"
+                          ? "border-gray-300 bg-white hover:bg-gray-100 text-black"
+                          : "border-gray-300 bg-slate-800 hover:bg-gray-700 text-white"
+                      }`}
                       onClick={() => setShowComments((s) => !s)}
                     >
                       <div className="mr-2">💬</div>

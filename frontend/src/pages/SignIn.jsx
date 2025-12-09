@@ -10,7 +10,9 @@ import { Avatar, Button } from "@mui/material";
 // Background + centering wrapper
 const Wrapper = ({ theme, children }) => (
   <div
-    className={`min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-4 `}
+    className={`min-h-screen flex items-center justify-center px-4 ${
+      theme === "light" ? "bg-white" : "bg-zinc-800"
+    } `}
   >
     <div className="w-full max-w-lg mt-[-13vh]">{children}</div>
   </div>
