@@ -70,7 +70,7 @@ export default function SignIn() {
   };
   if (!session) {
     return (
-      <Wrapper>
+      <Wrapper theme={theme}>
         <div className="bg-white shadow-xl rounded-2xl p-8 border border-slate-200/70">
           <h1 className="text-2xl font-semibold text-slate-600 text-center">
             Welcome
