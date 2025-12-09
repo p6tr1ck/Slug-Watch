@@ -203,7 +203,7 @@ export default function CommentsPopup({ pinId, onClose, pinAuthor }) {
   }, [comments]);
 
   return (
-    <div className="p-1.5 bg-white rounded shadow max-h-90 flex flex-col border text-xs w-full">
+    <div className="p-1.5 bg-white rounded shadow max-h-90 flex flex-col border text-xs w-full h-60">
       <div className="flex items-center justify-between mb-1 flex-shrink-0">
         <strong className="text-xs">Comments</strong>
         <div className="flex items-center gap-1.5">

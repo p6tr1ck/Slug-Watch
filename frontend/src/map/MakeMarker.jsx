@@ -440,7 +440,7 @@ export default function MakeMarker({
 
               {/* Comments section */}
               {showComments && (
-                <div className="px-3 pb-3">
+                <div className=" absolute top-20 right-0 w-full z-[999]">
                   <CommentsPopup
                     pinId={m.id}
                     pinAuthor={m.user_id}
