@@ -8,9 +8,11 @@ import MenuItem from "@mui/material/MenuItem";
 import { supabase } from "../../supabaseClient";
 import { AuthContext } from "../App";
 import Box from "@mui/material/Box";
+import useWindowDimensions from "../WindowDimensions";
 
 export default function Notification() {
   const { session, setSelectedPinId } = useContext(AuthContext);
+  const { width } = useWindowDimensions();
 
   const [pinId, setPinId] = useState([]);
   const [pins, setPins] = useState([]);
@@ -22,6 +24,8 @@ export default function Notification() {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+
+  const isMobile = window.innerWidth <= 600;
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -298,6 +302,16 @@ export default function Notification() {
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
+        anchorOrigin={
+          isMobile
+            ? { vertical: "top", horizontal: "center" }
+            : { vertical: "bottom", horizontal: "center" }
+        }
+        transformOrigin={
+          isMobile
+            ? { vertical: "bottom", horizontal: "center" }
+            : { vertical: "top", horizontal: "center" }
+        }
         slotProps={{
           list: {
             "aria-labelledby": "notifications-button",
