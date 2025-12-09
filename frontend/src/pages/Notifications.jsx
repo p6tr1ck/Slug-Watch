@@ -151,6 +151,16 @@ export default function Notification() {
               setPinUnread((prev) => prev + 1);
             }
 
+            const { data } = await supabase
+              .from("example_pins")
+              .select("*")
+              .eq("id", newPinId)
+              .single();
+
+            const category = data?.category;
+            const location = data?.location;
+            console.log(category, location);
+
             // Fetch subscription for this user
             const { data: subs } = await supabase
               .from("push_subscriptions")
@@ -165,7 +175,11 @@ export default function Notification() {
                 body: {
                   subscription: s.subscription,
                   title: "New Safety Alert!",
-                  body: "A new pin was created near your location.",
+                  body: `A ${
+                    category ? `${category} pin` : "pin"
+                  } was recently created${
+                    location ? ` near ${location}.` : "."
+                  }`,
                 },
               });
             }
@@ -215,7 +229,7 @@ export default function Notification() {
             .eq("id", id)
             .single();
 
-          if (data.length === 0) {
+          if (data === null || data.length === 0) {
             console.log("No pin found");
             return;
           }
