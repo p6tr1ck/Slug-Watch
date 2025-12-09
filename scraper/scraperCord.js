@@ -1,9 +1,9 @@
-require("dotenv").config()
-const puppeteer = require('puppeteer');
-const cheerio = require('cheerio');
-const fs = require('fs');
-const geocoding = require('@aashari/nodejs-geocoding');
-const { createClient } = require('@supabase/supabase-js');
+require("dotenv").config();
+const puppeteer = require("puppeteer");
+const cheerio = require("cheerio");
+const fs = require("fs");
+const geocoding = require("@aashari/nodejs-geocoding");
+const { createClient } = require("@supabase/supabase-js");
 const { format } = require("path");
 
 const supabase = createClient(
@@ -12,14 +12,15 @@ const supabase = createClient(
 );
 
 async function grabEntries() {
-  const { data, error } = await supabase.from("police_logs").select("incid_num");
+  const { data, error } = await supabase
+    .from("police_logs")
+    .select("incid_num");
   if (error) {
     console.error("Error getting pins from database: ", error);
     return [];
   }
   return data;
 }
-
 
 function normDateTime(raw) {
   // Take only first part if it's a range like
@@ -29,13 +30,12 @@ function normDateTime(raw) {
   }
   const firstPart = raw.split(" - ")[0].trim();
 
-
   // Handle "Unknown Time"
   if (/unknown time/i.test(firstPart)) {
     return null;
   }
 
-  // match: MM/DD/YYYY HH:MM AM/PM    OR    MM/DD/YYYY
+  // match: MM/DD/YYYY HH:MM AM/PM or MM/DD/YYYY
   const m = firstPart.match(
     /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})\s*(AM|PM))?$/i
   );
@@ -60,10 +60,9 @@ function normDateTime(raw) {
 
     // 12-hour → 24-hour
     if (/AM/i.test(ampm)) {
-      if (hour === 12) hour = 0; // 12 AM => 00
+      if (hour === 12) hour = 0; // 12 AM → 00
     } else {
-      // PM
-      if (hour !== 12) hour += 12; // 1 PM => 13, but 12 PM => 12
+      if (hour !== 12) hour += 12; // PM conversion
     }
   }
 
@@ -71,9 +70,7 @@ function normDateTime(raw) {
   return dt.toISOString();
 }
 
-
-
-function checkTime(str){
+function checkTime(str) {
   //check if the string has an "unknown time" indication
 
   if (/unknown time/i.test(str)) {
@@ -84,80 +81,87 @@ function checkTime(str){
 
 async function fetchCoordinates(address) {
   try {
-    const results = await geocoding.encode(address); // conversion from clean address to coords
+    const results = await geocoding.encode(address);
     if (results) return results[0];
-    //if (results && typeof results === 'object') return results[0];
   } catch {
     return null;
   }
   return null;
 }
 
-
 async function scrapeUCSC() {
-  const url = 'https://ucsc.citizenrims.com/daily-crime-fire-log-bulletin';
+  const url = "https://ucsc.citizenrims.com/daily-crime-fire-log-bulletin";
   const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
 
-  await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
-  await page.waitForSelector('table.mat-mdc-table');
+  await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
+  await page.waitForSelector("table.mat-mdc-table");
 
   const html = await page.content();
   const $ = cheerio.load(html);
 
-  const jobs = []; //queue to allow time for encode to work
+  const jobs = [];
 
-  $('table.mat-mdc-table tbody tr').each((i, el) => {
-    const category = $(el).find('td.mat-column-nature').text().trim();
-    const number = $(el).find('td.mat-column-number').text().trim();
-    const date_time = $(el).find('td.mat-column-occurred').text().trim();
-    const reported = $(el).find('td.mat-column-reported').text().trim();
-    const disposition = $(el).find('td.mat-column-disposition').text().trim();
-    let location = $(el).find('td.mat-column-location').text().trim();
+  $("table.mat-mdc-table tbody tr").each((i, el) => {
+    const category = $(el).find("td.mat-column-nature").text().trim();
+    const number = $(el).find("td.mat-column-number").text().trim();
+    const date_time = $(el).find("td.mat-column-occurred").text().trim();
+    const reported = $(el).find("td.mat-column-reported").text().trim();
+    const disposition = $(el).find("td.mat-column-disposition").text().trim();
+    let location = $(el).find("td.mat-column-location").text().trim();
 
     console.log("raw number: ", number);
 
     const lowerRow = $(el).text().trim().toLowerCase();
-    if (lowerRow.includes('no records found')) return; //exclude days with no reported activity
-    if (disposition.toLowerCase().includes('log note')) return; //exclude log notes
+    if (lowerRow.includes("no records found")) return;
+    if (disposition.toLowerCase().includes("log note")) return;
 
-    // Clean up and normalize the address string
+    // Clean & normalize address
     location = location
-      .replace(/\s*\(Campus\)/gi, '')            // remove "(Campus)"
-      .replace(/\b(\d+)\s+block\s+of\s+/i, '$1 ') // "500 block of Heller Dr" → "500 Heller Dr"
-      .replace(/\bCllge\b/gi, 'College')
-      .replace(/Mc\s+Laughlin/gi, 'McLaughlin')
-      .replace(/\bMchenry\b/gi, 'McHenry')
-      .replace(/Stevenson Service Rd\b/gi, 'Stevenson Service Road')
-      .replace(/\bRd\b/gi, 'Road')
-      .replace(/\bDr\b/gi, 'Drive')
-      .replace(/\bSt\b/gi, 'Street')
-      .replace(/Cowell-?stevenson/gi, 'Cowell Stevenson')
-      .replace(/Porter-?kresge/gi, 'Porter Kresge')
+      .replace(/\s*\(Campus\)/gi, "")
+      .replace(/\b(\d+)\s+block\s+of\s+/i, "$1 ")
+      .replace(/\bCllge\b/gi, "College")
+      .replace(/Mc\s+Laughlin/gi, "McLaughlin")
+      .replace(/\bMchenry\b/gi, "McHenry")
+      .replace(/Stevenson Service Rd\b/gi, "Stevenson Service Road")
+      .replace(/\bRd\b/gi, "Road")
+      .replace(/\bDr\b/gi, "Drive")
+      .replace(/\bSt\b/gi, "Street")
+      .replace(/Cowell-?stevenson/gi, "Cowell Stevenson")
+      .replace(/Porter-?kresge/gi, "Porter Kresge")
       .trim();
-
 
     const placeMatch = location.match(/^([^,]+)/);
     const placeName = placeMatch ? placeMatch[1].trim() : location;
 
-    // Standardize final location to "place, Santa Cruz, CA 95064"
+    // Standardize final address
     location = `${placeName}, Santa Cruz, CA 95064`;
     //console.log("this:%s, there:%s",category,location);
     let inTime = date_time;
-    if (checkTime(date_time) == true){
+    if (checkTime(date_time) == true) {
       inTime = reported;
     }
-    
 
-    jobs.push({category, number, inTime, location, disposition}); //queue push
+    jobs.push({ category, number, inTime, location, disposition }); //queue push
   });
 
   await browser.close();
 
   const existingEntries = await grabEntries();
-  const seen = new Set(existingEntries.map(e => e.incid_num && e.incid_num.trim()).filter(Boolean));
+  const seen = new Set(
+    existingEntries
+      .map((e) => e.incid_num && e.incid_num.trim())
+      .filter(Boolean)
+  );
 
-  const rows = []; //rows to push to json
+  const existingEntries = await grabEntries();
+  const seen = new Set(
+    existingEntries
+      .map((e) => e.incid_num && e.incid_num.trim())
+      .filter(Boolean)
+  );
+
+  const rows = [];
   for (const job of jobs) {
     const { category, number, inTime, location, disposition } = job;
 
@@ -179,7 +183,13 @@ async function scrapeUCSC() {
     const supaRow =
       format_date == null
         ? { crime: category, lat: lat, long: long, incid_num: caseNum }
-        : { crime: category, date: format_date, lat: lat, long: long, incid_num: caseNum};
+        : {
+            crime: category,
+            date: format_date,
+            lat: lat,
+            long: long,
+            incid_num: caseNum,
+          };
 
     console.log(supaRow);
 
@@ -187,19 +197,28 @@ async function scrapeUCSC() {
       .from("police_logs")
       .insert([supaRow]);
 
-     if (error){
-       console.log("Couldn't append this to supabase: %s", supaRow);
-     }else{
-       console.log("pushed into supabase: %s", supaRow);
-     }
-  }
+    if (error) {
+      console.log("Couldn't append to supabase:", supaRow);
+    } else {
+      console.log("Pushed into supabase:", supaRow);
+    }
 
+    rows.push({
+      category,
+      number,
+      date_time,
+      location,
+      lat,
+      long,
+      disposition,
+    });
+  }
 }
 
 async function main() {
-  while (true){
+  while (true) {
     await scrapeUCSC();
-    await new Promise(r => setTimeout(r, 15* 60 * 1000)); //wait 15 minutes
+    await new Promise((r) => setTimeout(r, 15 * 60 * 1000)); //wait 15 minutes
   }
 }
 

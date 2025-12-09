@@ -1,5 +1,6 @@
 import React from "react";
 import Map from "../map/Map";
+import Dashboard from "../dashboard/Dashboard";
 import useWindowDimensions from "../WindowDimensions";
 
 export default function Home() {

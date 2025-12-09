@@ -1,31 +1,41 @@
-import { CircularProgress, Button, Avatar } from "@mui/material";
-import { useEffect, useContext, useState } from "react";
+import { useState, useEffect, useContext } from "react";
 import { supabase } from "../../supabaseClient";
 import GoogleButton from "react-google-button";
-import { AuthContext } from "../App";
+import { AuthContext, DarkModeSwitch } from "../App";
 import LocationsCategories from "./LocationsCategories";
 import SavePreferences from "./SavePreferences";
+import useWindowDimensions from "../WindowDimensions";
+import { Avatar, Button } from "@mui/material";
 
 // Background + centering wrapper
-const Wrapper = ({ children }) => (
-  <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-4">
-    <div className="w-full max-w-lg mt-[-25vh]">{children}</div>
+const Wrapper = ({ theme, children }) => (
+  <div
+    className={`min-h-screen flex items-center justify-center px-4 ${
+      theme === "light" ? "bg-white" : "bg-zinc-800"
+    } `}
+  >
+    <div className="w-full max-w-lg mt-[-13vh]">{children}</div>
   </div>
 );
 
 export default function SignIn() {
   const { session } = useContext(AuthContext);
   const [notifications, setNotifications] = useState([]);
+  const { theme } = useContext(DarkModeSwitch);
+  const [avatar, setAvatar] = useState(null);
+  const { width } = useWindowDimensions();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const name = session?.user.user_metadata.full_name ?? "Student";
+  const email = session?.user.email ?? "";
+  const avatarUrl = session?.user.user_metadata?.picture;
 
   useEffect(() => {
-    if (!session) return;
-    let cancelled = false;
-
-    (async () => {
-      try {
-        setBusy(true);
+    if (session) {
+      // upload the user information to Supabase
+      async function uploadUserInfo() {
+        // insert user information to users table
+        // if the user already exists, it ignores the query
         const { error } = await supabase
           .from("users")
           .upsert(
@@ -33,40 +43,31 @@ export default function SignIn() {
             { onConflict: "UID", ignoreDuplicates: true }
           )
           .select();
-        if (error && !cancelled) setErr("Couldn’t save your profile.");
-      } catch {
-        if (!cancelled) setErr("Something went wrong.");
-      } finally {
-        if (!cancelled) setBusy(false);
+        if (error) {
+          console.error(error);
+        }
       }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
+      uploadUserInfo();
+    }
   }, [session]);
 
+  // sign out the user and deletes the stored session
   const signOut = async () => {
-    try {
-      setBusy(true);
-      await supabase.auth.signOut();
-    } catch (e) {
-      setErr("Sign out failed.");
-    } finally {
-      setBusy(false);
-    }
+    await supabase.auth.signOut().catch(console.error);
   };
 
   const signUp = async () => {
+    // redirect user to the sign in page after logging in
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/signin`,
-        queryParams: { hd: "ucsc.edu" },
+        queryParams: {
+          hd: "ucsc.edu",
+        },
       },
     });
   };
-
   if (!session) {
     return (
       <Wrapper>
@@ -98,20 +99,30 @@ export default function SignIn() {
     );
   }
 
-  const name = session.user.user_metadata.full_name ?? "Student";
-  const email = session.user.email ?? "";
-  const avatarUrl = session.user.user_metadata.avatar_url;
-
   return (
-    <Wrapper>
-      <div className="bg-white shadow-xl rounded-2xl p-8 border border-slate-200/70">
+    <Wrapper theme={theme}>
+      <div
+        className={`bg-white shadow-xl rounded-2xl p-8 border border-slate-200/70 ${
+          theme === "light" ? "text-gray-900" : "text-gray-200"
+        } ${theme === "light" ? "bg-white" : "bg-zinc-800"}`}
+      >
         <div className="flex items-center gap-4">
           <Avatar src={avatarUrl} alt={name} sx={{ width: 56, height: 56 }} />
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2
+              className={`text-xl font-semibold ${
+                theme === "light" ? "text-slate-900" : "text-gray-200"
+              }`}
+            >
               Welcome, {name.split(" ")[0]} 👋
             </h2>
-            <p className="text-slate-600">{email}</p>
+            <p
+              className={`${
+                theme === "light" ? "text-slate-600" : "text-gray-200"
+              }`}
+            >
+              {email}
+            </p>
           </div>
         </div>
         <LocationsCategories
