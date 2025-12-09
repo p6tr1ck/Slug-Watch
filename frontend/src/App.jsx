@@ -8,24 +8,7 @@ import Moderation from "./pages/Moderation";
 import BottomBar from "./pages/BottomBar";
 import { supabase } from "../supabaseClient";
 import useWindowDimensions from "./WindowDimensions";
-import { askPermission, subscribeUser } from "./push";
-
 export const AuthContext = createContext(null);
-
-const PUBLIC_VAPID_KEY =
-  "BKGdHJDnBcbf9fOn9LWXsBwdplAmfAvB6YRV-sYux-U0tnm8arDAcfdUDURC1-aFaYkI6uwmVfwJhxzLDEJRd6U";
-
-async function enablePushForUser(user) {
-  const granted = await askPermission();
-  if (!granted) return;
-
-  const subscription = await subscribeUser(PUBLIC_VAPID_KEY);
-
-  await supabase.from("push_subscriptions").insert({
-    user_id: user.id,
-    subscription,
-  });
-}
 
 function App() {
   const currentSession = supabase.auth.session?.() ?? null;
@@ -37,13 +20,6 @@ function App() {
   const [selectedPinId, setSelectedPinId] = useState(null);
   const [viewBookmarkedPins, setViewBookmarkedPins] = useState(false);
   const [bookmarks, setBookmarks] = useState([]);
-
-  // Enable push notifications for user
-  useEffect(() => {
-    if (session?.user) {
-      enablePushForUser(session.user);
-    }
-  }, [session]);
 
   // Load bookmarks from Supabase when user signs in
   useEffect(() => {

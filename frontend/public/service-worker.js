@@ -7,10 +7,14 @@ self.addEventListener("activate", () => {
 });
 
 self.addEventListener("push", (event) => {
-  const data = event.data.json();
+  console.log("PUSH EVENT FIRED!", event);
 
-  self.registration.showNotification(data.title, {
-    body: data.body,
-    icon: "/slug_watch_logo.png",
-  });
+  const data = event.data?.json() || {};
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/slug_watch_logo_192x192.png",
+    })
+  );
 });
