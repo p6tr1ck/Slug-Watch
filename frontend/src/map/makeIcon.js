@@ -5,6 +5,7 @@ import shadowUrl from "leaflet/dist/images/marker-shadow.png";
 import PoliceCar from "../assets/police-car-emoji.png";
 import SuspiciousPerson from "../assets/suspicious-person-icon.png";
 import VerifiedCheckmark from "../assets/verified-checkmark.png";
+import TheftEmoji from "../assets/theft-icon.png";
 
 const tapsIcon = (category) => {
   return new L.Icon({
@@ -48,6 +49,16 @@ const blueMarker = (category) => {
   });
 };
 
+const theftEmoji = (category) => {
+  return new L.Icon({
+    iconUrl: TheftEmoji,
+    iconSize: [27, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [-3, -34],
+    category,
+  });
+};
+
 export default function makeIcon(category) {
   if (category == "TAPS") {
     return tapsIcon(category);
@@ -55,6 +66,8 @@ export default function makeIcon(category) {
     return suspiciousPerson(category);
   } else if (category == "Verified") {
     return verifiedCheckmark(category);
+  } else if (category == "Theft") {
+    return theftEmoji(category);
   } else {
     return blueMarker(category);
   }
