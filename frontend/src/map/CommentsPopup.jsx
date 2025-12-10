@@ -41,6 +41,7 @@ export default function CommentsPopup({ pinId, onClose, pinAuthor }) {
     async function loadComments() {
       try {
         setLoading(true);
+        // Fetch the comments from the database
         const data = await fetchComments(pinId);
         if (mounted) {
           setComments(data);
@@ -110,21 +111,27 @@ export default function CommentsPopup({ pinId, onClose, pinAuthor }) {
   }, [pinId]);
 
   async function addComment() {
+    // Error handling checks
     if (!text.trim()) return;
     if (!currentUser) {
       alert("Please sign in to comment");
       return;
     }
 
+    // Once new comment is created, add it to the
+    // comments table on Supabase
     try {
       const newComment = await addCommentToSupa({
-        pinId,
-        parentId: replyTo,
-        text: text.trim(),
+        pinId, // the comment of the pin
+        parentId: replyTo, // the author of the original comment to the reply
+        text: text.trim(), // remove any whitespace
       });
 
+      // Add the new comment to the comments state
       setComments((s) => [newComment, ...s]);
+      // Reset the text of the comment textbox
       setText("");
+      // Reset the parentId of the reply
       setReplyTo(null);
     } catch (e) {
       console.error("Failed to add comment:", e);
@@ -327,9 +334,10 @@ function CommentNode({
     setEditComment(false);
   };
 
-  // When comment is edited, update the table
+  // When comment is edited, update the comments table
   const handleSave = (id) => {
     async function updateComment(id, editText) {
+      // Try to update the comment in supabase
       const newComment = await editUserComment(id, editText);
       if (!newComment) {
         console.error("Error updating comment");
@@ -340,8 +348,10 @@ function CommentNode({
     updateComment(id, editText);
   };
 
+  // User deleting their comment
   const handleDelete = (id) => {
     async function deleteUserComment(id) {
+      // Try to delete the comment in Supabase
       const data = await deleteComment(id);
       if (!data) {
         console.error("Error deleting comment");
@@ -351,6 +361,9 @@ function CommentNode({
     deleteUserComment(id);
   };
 
+  // When user tries to edit their comment
+  // make it so the edit is at the end of the text
+  // and not the beginning.
   useEffect(() => {
     if (editComment && editRef.current) {
       const el = editRef.current;

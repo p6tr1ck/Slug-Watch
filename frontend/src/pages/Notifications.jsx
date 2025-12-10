@@ -27,9 +27,11 @@ export default function Notification() {
 
   const isMobile = window.innerWidth <= 600;
 
+  // MUI State
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
 
+    // Mark all pin notifications as read in the DB
     async function readNotifications() {
       if (!session) return;
 
@@ -45,7 +47,7 @@ export default function Notification() {
           console.error("Error setting is_read column: ", error);
         }
       }
-
+      // Reset unread counter after reading notifications
       setPinUnread(0);
     }
 
@@ -56,9 +58,11 @@ export default function Notification() {
     setAnchorEl(null);
   };
 
+  // User deletes notification
   const handleClearOne = (event, id) => {
     event.stopPropagation();
 
+    // Delete notification from database
     async function deleteNotifications() {
       const { error } = await supabase
         .from("notifications")

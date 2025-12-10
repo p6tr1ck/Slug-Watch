@@ -49,6 +49,7 @@ export default function Map() {
   }
 
   function handleMapClick(latlng) {
+    // Non logged in user cannot create a pin
     if (!session) {
       setCreateMode(false);
       return;
@@ -65,16 +66,20 @@ export default function Map() {
       isNew: true,
       ownerId: currUserID,
     };
-    // increment the temp id for the next new marker
+    // Increment the temp id for the next new marker
     setTempId(tempId + 1);
+    // Add new marker to local state
     setMarkers((m) => [...m, newMarker]);
+    // Exit create mode after placing pin
     setCreateMode(false);
   }
 
+  // Update an existing marker's fields
   function updateMarker(id, patch) {
     const userId = session?.user?.id || session;
     setMarkers((prev) =>
       prev.map((m) => {
+        // Only update marker if IDs match AND user owns marker
         if (m.id !== id) return m;
         if (!currUserID || m.ownerId !== currUserID) return m;
         return { ...m, ...patch };
@@ -82,6 +87,8 @@ export default function Map() {
     );
   }
 
+  // Remove a user-created temporary marker because
+  // Supabase realtime will show the pin on the map
   function removeMarker(id) {
     setMarkers((prev) =>
       prev.filter((m) => {

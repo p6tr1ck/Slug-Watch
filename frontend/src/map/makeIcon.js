@@ -59,6 +59,7 @@ const thiefEmoji = (category) => {
   });
 };
 
+// Create an icon for the pin based off of the category
 export default function makeIcon(category) {
   if (category == "TAPS") {
     return tapsIcon(category);

@@ -18,7 +18,9 @@ import MenuItem from "@mui/material/MenuItem";
 import FlagIcon from "@mui/icons-material/Flag";
 import { darkModeSwitch } from "../dashboard/Darkmode.jsx";
 
+// Top left chip for the pin that described the category of the pin
 const categoryChip = (category = "") => {
+  // Applies Tailwind color classes depending on pin category
   const c = category.toLowerCase();
   if (c.includes("theft")) return "bg-amber-100 text-amber-800 ring-amber-200";
   if (c.includes("suspicious"))
@@ -36,10 +38,10 @@ export default function MakeMarker({
   selectedPinId,
   currUserID,
   onReport,
-  canReport = false,
-  canModify = false,
-  isBookmarked = false,
-  onBookmarkToggle,
+  canReport = false, // allow reporting of the pin
+  canModify = false, // allow editing/deleting
+  isBookmarked = false, // bookmarked state
+  onBookmarkToggle, // toggle bookmark action
 }) {
   const { session } = useContext(AuthContext);
   const [expanded, setExpanded] = useState(false);
@@ -48,6 +50,7 @@ export default function MakeMarker({
   const [showComments, setShowComments] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [editClicked, setEditClicked] = useState(false);
+  // Voting state
   const [voteState, setVoteState] = useState({
     upvotes: Number(m.upvotes ?? 0),
     downvotes: Number(m.downvotes ?? 0),
@@ -83,6 +86,7 @@ export default function MakeMarker({
     [map, m.lat, m.long]
   );
 
+  // Open popup if selected from inbox
   useEffect(() => {
     if (selectedPinId && selectedPinId === m.id && markerRef.current) {
       markerRef.current.openPopup();
@@ -90,6 +94,7 @@ export default function MakeMarker({
     }
   }, [selectedPinId, m.id, setSelectedPinId]);
 
+  // Refresh vote state when marker data changes
   useEffect(() => {
     setVoteState({
       upvotes: Number(m.upvotes ?? 0),
@@ -98,6 +103,7 @@ export default function MakeMarker({
     });
   }, [m.id, m.upvotes, m.downvotes, m.myVote]);
 
+  // Load votes from Supabase
   const fetchVotes = useCallback(async () => {
     // Skip fetching votes for certified/police pins (they have prefixed IDs that aren't valid UUIDs)
     if (isCertified || String(m.id).startsWith("police-")) {
@@ -150,15 +156,18 @@ export default function MakeMarker({
     fetchVotes();
   }, [fetchVotes]);
 
+  // Build Google Maps directions link
   const directionsUrl = () => {
     return m.lat && m.long
       ? `https://www.google.com/maps?q=${m.lat},${m.long}`
       : `https://www.google.com/maps`;
   };
 
+  // Truncate long text
   const shortText = (t, n = 140) =>
     t && t.length > n ? t.slice(0, n) + "..." : t;
 
+  // Delete pin in Supabase
   async function onDelete() {
     handleClose();
     try {
@@ -169,6 +178,7 @@ export default function MakeMarker({
     }
   }
 
+  // Menu state for edit/delete button
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const handleClick = (event) => {
@@ -183,6 +193,7 @@ export default function MakeMarker({
     setEditClicked(!editClicked);
   };
 
+  // Upvote/downvote handler
   const onVote = async (direction) => {
     if (!session?.user?.id) return;
     setVotesLoading(true);
@@ -213,6 +224,7 @@ export default function MakeMarker({
     }
   };
 
+  // Submit report
   async function handleReportSub(ticket) {
     try {
       const reporterId = session?.user?.id ?? currUserID;
@@ -233,9 +245,11 @@ export default function MakeMarker({
     }
   }
 
+  // Whether user is allowed to report a pin
   const showReportCtrl =
     (!!currUserID && m.user_id && m.user_id !== currUserID) || canReport;
 
+  // Dashboard selects pin then open popup
   useEffect(() => {
     if (!markerRef.current) return;
     if (selectDashboardItem === null) {
