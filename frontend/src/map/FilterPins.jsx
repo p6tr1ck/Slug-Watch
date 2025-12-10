@@ -9,6 +9,7 @@ import Checkbox from "@mui/material/Checkbox";
 import TuneIcon from "@mui/icons-material/Tune";
 import { AuthContext, DarkModeSwitch } from "../App";
 
+// Styling for the menu items
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
 const MenuProps = {
@@ -22,6 +23,7 @@ const MenuProps = {
   },
 };
 
+// Handle multiple selection of the menu items
 export default function MultipleSelectCheckmarks() {
   const [filterName, setFilterName] = useState([]);
   const { theme } = useContext(DarkModeSwitch);
@@ -30,11 +32,15 @@ export default function MultipleSelectCheckmarks() {
     useContext(AuthContext);
   const filters = ["Police Pins"];
 
+  // If user is logged in, then the filter pins menu
+  // will have a my pins and bookmarked pins to the menu.
   if (session) {
     filters.push("My Pins");
     filters.push("Bookmarked Pins");
   }
 
+  // If menu item is clicked then set the filter name to
+  // the name of the menu item.
   const handleChange = (event) => {
     const {
       target: { value },
@@ -45,6 +51,8 @@ export default function MultipleSelectCheckmarks() {
     );
   };
 
+  // If the state changes for viewing police pins, my pins,
+  // or bookmarked pins, then update it
   useEffect(() => {
     setViewMyPins(filterName.includes("My Pins"));
     setViewPolicePins(filterName.includes("Police Pins"));

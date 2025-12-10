@@ -3,11 +3,13 @@ import { supabase } from "../supabaseClient";
 const PUBLIC_VAPID_KEY =
   "BKGdHJDnBcbf9fOn9LWXsBwdplAmfAvB6YRV-sYux-U0tnm8arDAcfdUDURC1-aFaYkI6uwmVfwJhxzLDEJRd6U";
 
+// Ask user to enable notifications
 export async function askPermission() {
   const permission = await Notification.requestPermission();
   return permission === "granted";
 }
 
+// Registers a push subscription with the browser
 export async function subscribeUser() {
   const registration = await navigator.serviceWorker.ready;
 

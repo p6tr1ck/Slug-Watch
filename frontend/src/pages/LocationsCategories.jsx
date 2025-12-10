@@ -3,6 +3,7 @@ import { AuthContext, DarkModeSwitch } from "../App";
 import { supabase } from "../../supabaseClient";
 import { useState } from "react";
 
+// List of campus areas a user can subscribe to notifications for
 const areas = [
   "College Nine & John R. Lewis College",
   "Cowell & Stevenson College",
@@ -14,8 +15,10 @@ const areas = [
   "East Remote Parking Lot",
 ];
 
+// Notification categories
 const categories = ["ICE", "TAPS", "Theft", "Suspicious Activity", "Other"];
 
+// Combined list that will be rendered as selectable buttons
 const selectableNotifications = [...areas, ...categories, "None", "All"];
 
 export default function LocationsCateogries({
@@ -73,9 +76,9 @@ export default function LocationsCateogries({
 
     setNotifications((prev) => {
       if (!prev.includes(e)) {
-        return [...prev, e];
+        return [...prev, e]; // Add new notification
       }
-      return prev.filter((loc) => loc !== e);
+      return prev.filter((loc) => loc !== e); // Remove old notification
     });
   };
 

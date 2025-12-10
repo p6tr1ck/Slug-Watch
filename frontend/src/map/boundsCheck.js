@@ -73,6 +73,9 @@ export default function isInBounds(pinLat, pinLng) {
     const [latSouth, lngWest] = sw;
     const [latNorth, lngEast] = ne;
 
+    // Radius check to see if pinLat and pinLng are
+    // in bounds of location, if it is, then return
+    // the location the pin is inbounds of.
     if (
       pinLat >= latSouth &&
       pinLat <= latNorth &&

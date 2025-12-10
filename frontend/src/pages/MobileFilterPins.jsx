@@ -20,13 +20,14 @@ export default function MobileFilterPins({
   const [open, setOpen] = useState(false);
   const anchorRef = useRef(null);
 
-  // checkbox states
+  // Checkbox states
   const [filters, setFilters] = useState({
     police: false,
     mine: false,
     saved: false,
   });
 
+  // MUI States
   const handleToggleFilter = (key) => {
     setFilters((prev) => ({ ...prev, [key]: !prev[key] }));
   };

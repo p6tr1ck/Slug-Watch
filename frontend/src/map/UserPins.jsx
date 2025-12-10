@@ -5,6 +5,7 @@ import MakeMarker from "./MakeMarker";
 import MarkerWithPopup from "./MarkerWithPopup";
 import { send_report_db } from "../sbReportHandle";
 
+// Helper function to normalize DB pin data
 function mapPin(data) {
   return {
     id: data.id,
@@ -17,6 +18,7 @@ function mapPin(data) {
       data.created_at
     ).toLocaleTimeString()}`, // Format as MM/DD/YY Time
     description: data.description,
+    // Voting metadata
     upvotes: Number(data.upvotes ?? 0),
     downvotes: Number(data.downvotes ?? 0),
     myVote: 0,
